@@ -50,13 +50,13 @@ __metadata:
   linkType: hard
 
 "@humanwhocodes/config-array@npm:^0.11.6":
-  version: 0.11.6
-  resolution: "@humanwhocodes/config-array@npm:0.11.6"
+  version: 0.11.7
+  resolution: "@humanwhocodes/config-array@npm:0.11.7"
   dependencies:
     "@humanwhocodes/object-schema": "npm:^1.2.1"
     debug: "npm:^4.1.1"
-    minimatch: "npm:^3.0.4"
-  checksum: e261b7b486429dbb6d8c1524173d6d89550842d003b5b3bd92c035cb6ca54fa91854bffe70720a21605ba5096dd19974ed88fecba2aa2c596915b7047837c7a3
+    minimatch: "npm:^3.0.5"
+  checksum: 36b949c975774cd6ce2e06651066bfdac549398a9b677b7e85005c520fd6ab2e313964a0cf5f0df39f50ee1e45be20867f6d79ae71a7428b509cbd7a1ddd07c2
   languageName: node
   linkType: hard
 
@@ -137,9 +137,9 @@ __metadata:
   linkType: hard
 
 "@types/semver@npm:^7.3.12":
-  version: 7.3.12
-  resolution: "@types/semver@npm:7.3.12"
-  checksum: 35ae8150669b266e91d64c514415e69eabedb4d969aa61056b21028d9f35fdb856d745274d163a8c3a72650cd9abbfd78e878a28b79f41894da585a7d7c8229c
+  version: 7.3.13
+  resolution: "@types/semver@npm:7.3.13"
+  checksum: a76156ff60ddbd17bf2120c09dca3cd8ac7db4f8d8c69614a9ebc5202f05d1044def7fd8cf77415f7284ea8edfa1092b6e04dac07dc17c94762904c69dd2c85b
   languageName: node
   linkType: hard
 
@@ -306,11 +306,11 @@ __metadata:
   linkType: hard
 
 "acorn@npm:^8.8.0":
-  version: 8.8.0
-  resolution: "acorn@npm:8.8.0"
+  version: 8.8.1
+  resolution: "acorn@npm:8.8.1"
   bin:
     acorn: bin/acorn
-  checksum: 15b10fb381a8a0394a718eba147e120b9d1ae6ed087e61612ee5fda94f98182e5fcd78ef6725c027dc3c5677ce920617c14c359d7777e8ef6a058d2ba113f81f
+  checksum: f8a84cf59173c5c07cb6b8097c716370f799244189b23d58358eadf9729e0d62660bc11339e03f08517fa33d1ef4b69b84b0bdebe0c0d783acaa8d2c44a66345
   languageName: node
   linkType: hard
 
@@ -1957,7 +1957,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimatch@npm:^3.0.4, minimatch@npm:^3.1.1, minimatch@npm:^3.1.2":
+"minimatch@npm:^3.0.5, minimatch@npm:^3.1.1, minimatch@npm:^3.1.2":
   version: 3.1.2
   resolution: "minimatch@npm:3.1.2"
   dependencies:
