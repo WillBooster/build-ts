@@ -15,25 +15,25 @@
   },
   "prettier": "@willbooster/prettier-config",
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "5.42.0",
-    "@typescript-eslint/parser": "5.42.0",
+    "@typescript-eslint/eslint-plugin": "5.42.1",
+    "@typescript-eslint/parser": "5.42.1",
     "@willbooster/eslint-config-ts": "10.0.8",
     "@willbooster/prettier-config": "9.1.1",
     "@willbooster/renovate-config": "9.4.2",
-    "eslint": "8.26.0",
+    "eslint": "8.27.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-import-resolver-typescript": "3.5.2",
     "eslint-plugin-import": "2.26.0",
     "eslint-plugin-sort-class-members": "1.15.2",
     "eslint-plugin-sort-destructure-keys": "1.4.0",
     "eslint-plugin-unicorn": "44.0.2",
-    "husky": "8.0.1",
+    "husky": "8.0.2",
     "lint-staged": "13.0.3",
     "micromatch": "4.0.5",
     "pinst": "3.0.0",
     "prettier": "2.7.1",
-    "sort-package-json": "2.0.0",
+    "sort-package-json": "2.1.0",
     "typescript": "4.8.4"
   },
-  "packageManager": "yarn@4.0.0-rc.27"
+  "packageManager": "yarn@4.0.0-rc.28"
 }
