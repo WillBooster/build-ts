@@ -2,6 +2,7 @@
   "name": "build-ts",
   "repository": "github:WillBooster/build-ts",
   "license": "UNLICENSED",
+  "type": "module",
   "scripts": {
     "cleanup": "yarn format && yarn lint-fix",
     "format": "sort-package-json && yarn prettify",
@@ -11,6 +12,7 @@
     "prepack": "pinst --disable",
     "postpack": "pinst --enable",
     "prettify": "prettier --color --write \"**/{.*/,}*.{cjs,css,cts,htm,html,js,json,json5,jsx,md,mjs,mts,scss,ts,tsx,vue,yaml,yml}\" \"!**/test-fixtures/**\"",
+    "start": "node --loader ts-node/esm src/index.ts",
     "typecheck": "tsc --noEmit --Pretty"
   },
   "prettier": "@willbooster/prettier-config",
@@ -19,13 +21,26 @@
     "yargs": "17.6.2"
   },
   "devDependencies": {
+    "@babel/core": "7.20.2",
+    "@babel/plugin-proposal-class-properties": "7.18.6",
+    "@babel/plugin-proposal-numeric-separator": "7.18.6",
+    "@babel/preset-env": "7.20.2",
+    "@babel/preset-typescript": "7.18.6",
+    "@babel/register": "7.18.9",
+    "@swc-node/register": "1.5.4",
+    "@swc/core": "1.3.17",
+    "@types/babel__core": "^7",
+    "@types/babel__preset-env": "^7",
     "@types/node": "18.11.9",
     "@types/yargs": "17.0.13",
     "@typescript-eslint/eslint-plugin": "5.42.1",
     "@typescript-eslint/parser": "5.42.1",
+    "@willbooster/babel-configs": "1.3.0",
     "@willbooster/eslint-config-ts": "10.0.8",
     "@willbooster/prettier-config": "9.1.1",
     "@willbooster/renovate-config": "9.4.2",
+    "babel-plugin-transform-remove-console": "6.9.4",
+    "core-js": "3.26.1",
     "eslint": "8.27.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-import-resolver-typescript": "3.5.2",
@@ -39,6 +54,7 @@
     "pinst": "3.0.0",
     "prettier": "2.7.1",
     "sort-package-json": "2.1.0",
+    "ts-node": "10.9.1",
     "typescript": "4.8.4"
   },
   "packageManager": "yarn@4.0.0-rc.26"
