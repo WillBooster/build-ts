@@ -2262,7 +2262,7 @@ __metadata:
     micromatch: "npm:4.0.5"
     pinst: "npm:3.0.0"
     prettier: "npm:2.7.1"
-    rollup: "npm:3.2.5"
+    rollup: "npm:3.3.0"
     sort-package-json: "npm:2.1.0"
     ts-node: "npm:10.9.1"
     typescript: "npm:4.8.4"
@@ -4965,9 +4965,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup@npm:3.2.5":
-  version: 3.2.5
-  resolution: "rollup@npm:3.2.5"
+"rollup@npm:3.3.0":
+  version: 3.3.0
+  resolution: "rollup@npm:3.3.0"
   dependencies:
     fsevents: "npm:~2.3.2"
   dependenciesMeta:
@@ -4975,7 +4975,7 @@ __metadata:
       optional: true
   bin:
     rollup: dist/bin/rollup
-  checksum: 3409d696a7511d8224f4d7155a0f95acd32c1013f2dcd3202ad79724704db83f98f7be4d9b54f6f74f291b783f7b666d1ce522376abe0964aed344e857ee798c
+  checksum: 2a0b1c1aaaa6c2f837d63682e944c354399b51acd461e85f18b2d911ec67e5eacf76f514ee27eabbac0a08641cff190d0209cdc14a3de81e0f0b118389ae3bb9
   languageName: node
   linkType: hard
 

@@ -17,7 +17,7 @@
   },
   "prettier": "@willbooster/prettier-config",
   "dependencies": {
-    "rollup": "3.2.5",
+    "rollup": "3.3.0",
     "yargs": "17.6.2"
   },
   "devDependencies": {
