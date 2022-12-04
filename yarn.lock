@@ -1172,11 +1172,11 @@ __metadata:
   linkType: hard
 
 "fastq@npm:^1.6.0":
-  version: 1.13.0
-  resolution: "fastq@npm:1.13.0"
+  version: 1.14.0
+  resolution: "fastq@npm:1.14.0"
   dependencies:
     reusify: "npm:^1.0.4"
-  checksum: 150b77dcf0d1e023aaed9bb5f9789f9c8828497fa44b050ba79b039798aeee6c4bcab7e533b5bacb6476811ca9c0eb7f1d021fd7ff8da54f67e3db9b35efd84c
+  checksum: be0073e4efd01fd3c68c93cb9c6fc03f650848bfdc5868bf536d3c9c63bb39f36d526f460ecd814dc562e04ddd2d4a20e7bf881d292aa5ff5d533825d2c87213
   languageName: node
   linkType: hard
 
@@ -1485,9 +1485,9 @@ __metadata:
   linkType: hard
 
 "ignore@npm:^5.2.0":
-  version: 5.2.0
-  resolution: "ignore@npm:5.2.0"
-  checksum: 0086b6992b2e2c9ec23f009e5939022323f1b4ad291607507045cc67b0a3b5d9724fc425f5300b3ba6d10ef74311bdf71cd26040227c30a182cf1b2a5971226b
+  version: 5.2.1
+  resolution: "ignore@npm:5.2.1"
+  checksum: 6b24bc1067595721e6158dd4d0f88e9ebf5f9542e8b69156a93400cc2d1428102e8437b851883c3da2d2c70842330efd4d90519c2027113ee2c8142745cfb357
   languageName: node
   linkType: hard
 
@@ -1871,15 +1871,15 @@ __metadata:
   linkType: hard
 
 "listr2@npm:^5.0.5":
-  version: 5.0.5
-  resolution: "listr2@npm:5.0.5"
+  version: 5.0.6
+  resolution: "listr2@npm:5.0.6"
   dependencies:
     cli-truncate: "npm:^2.1.0"
     colorette: "npm:^2.0.19"
     log-update: "npm:^4.0.0"
     p-map: "npm:^4.0.0"
     rfdc: "npm:^1.3.0"
-    rxjs: "npm:^7.5.6"
+    rxjs: "npm:^7.5.7"
     through: "npm:^2.3.8"
     wrap-ansi: "npm:^7.0.0"
   peerDependencies:
@@ -1887,7 +1887,7 @@ __metadata:
   peerDependenciesMeta:
     enquirer:
       optional: true
-  checksum: d7d9789a38f7c90257bdcb303ed313d4af6e38bf01a84f3e1c3d1805586943e5e3073d2a67c4e2ccbf5cd5349c358553a27b26cff5ebb8fb9a7f38ce6f14d738
+  checksum: 2dce2cec3476b16257451acf2abf94b7b4bdfb9b53e5d4c89320eca42cff92de54d058ffa0e5f9a6c20086b456882f4c1dc453d061cf24d722e516b9b28c6503
   languageName: node
   linkType: hard
 
@@ -2479,12 +2479,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rxjs@npm:^7.5.6":
-  version: 7.5.7
-  resolution: "rxjs@npm:7.5.7"
+"rxjs@npm:^7.5.7":
+  version: 7.6.0
+  resolution: "rxjs@npm:7.6.0"
   dependencies:
     tslib: "npm:^2.1.0"
-  checksum: 9f40c5ba7904afbffe4a8c5fec9cb35dbd21cac55e20e004fe405f9712efef11d23a0baa23682a16d448976d5795ed66fd843c5f00329dd6e491676373610a79
+  checksum: 061c02f4e345b803b8737e6853e401f6c571b6d82179a8966e196c096e458be3e1a50923f2ed0b65ff76a1ab70eff290ca4d6f50fba06a0daca3fc1fd7986c33
   languageName: node
   linkType: hard
 
