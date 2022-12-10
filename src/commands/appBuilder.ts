@@ -1,5 +1,3 @@
-// import { terser } from 'rollup-plugin-terser';
-
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -7,6 +5,7 @@ import { babel } from '@rollup/plugin-babel';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
+import terser from '@rollup/plugin-terser';
 import { rollup, RollupBuild } from 'rollup';
 import { externals } from 'rollup-plugin-node-externals';
 import type { CommandModule, InferredOptionTypes } from 'yargs';
@@ -50,9 +49,9 @@ export const appBuilder: CommandModule<unknown, InferredOptionTypes<typeof build
       (commonjs as any)(),
       babel({ extensions, babelHelpers: 'bundled', exclude: 'node_modules/**' }),
     ];
-    // if (process.env.NODE_ENV === 'production') {
-    //   plugins.push(terser());
-    // }
+    if (process.env.NODE_ENV === 'production') {
+      plugins.push((terser as any)());
+    }
 
     const packageJsonText = fs.readFileSync(argv.packageJson, 'utf8');
     const packageJson = JSON.parse(packageJsonText);
