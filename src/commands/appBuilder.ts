@@ -8,6 +8,7 @@ import resolve from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 import { rollup, RollupBuild } from 'rollup';
 import { externals } from 'rollup-plugin-node-externals';
+import { string } from 'rollup-plugin-string';
 import type { CommandModule, InferredOptionTypes } from 'yargs';
 
 const builder = {
@@ -48,6 +49,7 @@ export const appBuilder: CommandModule<unknown, InferredOptionTypes<typeof build
       (resolve as any)({ extensions }),
       (commonjs as any)(),
       babel({ extensions, babelHelpers: 'bundled', exclude: 'node_modules/**' }),
+      string({ include: ['**/*.csv', '**/*.txt'] }),
     ];
     if (process.env.NODE_ENV === 'production') {
       plugins.push((terser as any)());
@@ -81,16 +83,18 @@ export const appBuilder: CommandModule<unknown, InferredOptionTypes<typeof build
     let bundle: RollupBuild | undefined;
     let buildFailed = false;
     try {
-      bundle = await rollup(options);
+      const [_bundle] = await Promise.all([
+        rollup(options),
+        fs.promises.rm(path.dirname(outputFile), { recursive: true, force: true }),
+      ]);
+      bundle = _bundle;
       await bundle.write(options.output);
     } catch (error) {
       buildFailed = true;
       // do some error reporting
       console.error(error);
     }
-    if (bundle) {
-      await bundle.close();
-    }
+    await bundle?.close();
     process.exit(buildFailed ? 1 : 0);
   },
 };
