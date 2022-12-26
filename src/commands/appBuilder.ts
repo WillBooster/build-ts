@@ -46,10 +46,10 @@ export const appBuilder: CommandModule<unknown, InferredOptionTypes<typeof build
   async handler(argv) {
     const extensions = ['.cjs', '.mjs', '.js', '.json', '.cts', '.mts', '.ts'];
     const plugins = [
-      (json as any)(),
+      json(),
       externals({ deps: true, devDeps: false }),
-      (resolve as any)({ extensions }),
-      (commonjs as any)(),
+      resolve({ extensions }),
+      commonjs(),
       babel({
         configFile: path.join(getBuildTsRootPath(), 'babel.app.config.mjs'),
         extensions,
@@ -59,7 +59,7 @@ export const appBuilder: CommandModule<unknown, InferredOptionTypes<typeof build
       string({ include: ['**/*.csv', '**/*.txt'] }),
     ];
     if (process.env.NODE_ENV === 'production') {
-      plugins.push((terser as any)());
+      plugins.push(terser());
     }
 
     let packageJsonPath = argv.packagePath;
