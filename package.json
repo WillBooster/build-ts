@@ -10,7 +10,7 @@
   "files": [
     "bin/",
     "dist/",
-    "babel.*.config.mjs"
+    "babel.*.config.*"
   ],
   "scripts": {
     "build": "NODE_ENV=production yarn start app --no-core-js",
