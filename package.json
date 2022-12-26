@@ -9,7 +9,8 @@
   "bin": "bin/index.mjs",
   "files": [
     "bin/",
-    "dist/"
+    "dist/",
+    "babel.*.config.mjs"
   ],
   "scripts": {
     "build": "yarn start app",
