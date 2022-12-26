@@ -31,11 +31,10 @@ const builder = {
     type: 'string',
     alias: 'f',
   },
-  command: {
-    description: 'A build command',
-    type: 'string',
-    default: 'yarn build',
-    alias: 'c',
+  'core-js': {
+    description: 'Whether core-js is employed or not',
+    type: 'boolean',
+    default: true,
   },
 } as const;
 
@@ -44,6 +43,7 @@ export const appBuilder: CommandModule<unknown, InferredOptionTypes<typeof build
   describe: 'Build app',
   builder,
   async handler(argv) {
+    const babelConfigFile = argv.coreJs ? 'babel.app.config.mjs' : 'babel.app-no-core-js.config.json';
     const extensions = ['.cjs', '.mjs', '.js', '.json', '.cts', '.mts', '.ts'];
     const plugins = [
       json(),
@@ -51,7 +51,7 @@ export const appBuilder: CommandModule<unknown, InferredOptionTypes<typeof build
       resolve({ extensions }),
       commonjs(),
       babel({
-        configFile: path.join(getBuildTsRootPath(), 'babel.app.config.mjs'),
+        configFile: path.join(getBuildTsRootPath(), babelConfigFile),
         extensions,
         babelHelpers: 'bundled',
         exclude: 'node_modules/**',
