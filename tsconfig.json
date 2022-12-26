@@ -6,7 +6,7 @@
     "esModuleInterop": true,
     "importHelpers": false,
     "module": "esnext",
-    "moduleResolution": "nodenext",
+    "moduleResolution": "node",
     "outDir": "dist",
     "resolveJsonModule": true,
     "skipLibCheck": true,

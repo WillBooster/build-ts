@@ -11,6 +11,8 @@ import { externals } from 'rollup-plugin-node-externals';
 import { string } from 'rollup-plugin-string';
 import type { CommandModule, InferredOptionTypes } from 'yargs';
 
+import { getBuildTsRootPath } from '../pathUtil.js';
+
 const builder = {
   input: {
     description: 'A file path of main source code',
@@ -18,10 +20,10 @@ const builder = {
     default: 'src/index.ts',
     alias: 'i',
   },
-  packageJson: {
-    description: 'A file path of package.json',
+  packagePath: {
+    description: 'A directory path containing package.json',
     type: 'string',
-    default: 'package.json',
+    default: '.',
     alias: 'p',
   },
   firebaseJson: {
@@ -48,33 +50,51 @@ export const appBuilder: CommandModule<unknown, InferredOptionTypes<typeof build
       externals({ deps: true, devDeps: false }),
       (resolve as any)({ extensions }),
       (commonjs as any)(),
-      babel({ extensions, babelHelpers: 'bundled', exclude: 'node_modules/**' }),
+      babel({
+        configFile: path.join(getBuildTsRootPath(), 'babel.app.config.mjs'),
+        extensions,
+        babelHelpers: 'bundled',
+        exclude: 'node_modules/**',
+      }),
       string({ include: ['**/*.csv', '**/*.txt'] }),
     ];
     if (process.env.NODE_ENV === 'production') {
       plugins.push((terser as any)());
     }
 
-    const packageJsonText = fs.readFileSync(argv.packageJson, 'utf8');
+    let packageJsonPath = argv.packagePath;
+    if (!packageJsonPath.endsWith('package.json')) {
+      packageJsonPath = path.join(packageJsonPath, 'package.json');
+    }
+    const packageJsonText = await fs.promises.readFile(packageJsonPath, 'utf8');
     const packageJson = JSON.parse(packageJsonText);
-    let outputFile = packageJson.main;
+    if (!packageJson.main) {
+      console.error('Please add "main" property in package.json.');
+      process.exit(1);
+    }
+    let outputFile = path.join(argv.packagePath, packageJson.main);
 
     const isFirebase = argv.firebaseJson && fs.existsSync(argv.firebaseJson);
     if (isFirebase) {
-      const firebaseJsonText = fs.readFileSync(argv.firebaseJson, 'utf8');
+      const firebaseJsonText = await fs.promises.readFile(argv.firebaseJson, 'utf8');
       const firebaseJson = JSON.parse(firebaseJsonText);
-      outputFile = path.resolve(
-        path.dirname(argv.firebaseJson),
-        firebaseJson.functions.source,
-        path.basename(packageJson.main)
-      );
+      const packageDirPath = path.resolve(path.dirname(argv.firebaseJson), firebaseJson.functions.source);
+      outputFile = path.resolve(packageDirPath, path.basename(packageJson.main));
+
+      await fs.promises.rm(packageDirPath, { recursive: true, force: true });
+      await fs.promises.mkdir(packageDirPath, { recursive: true });
+
+      packageJson.name += '-dist';
+      packageJson.main = path.relative(packageDirPath, outputFile);
+      delete packageJson.devDependencies;
+      await fs.promises.writeFile(path.join(packageDirPath, 'package.json'), JSON.stringify(packageJson));
     }
 
     const options = {
       input: argv.input,
       output: {
         file: outputFile,
-        format: 'commonjs',
+        format: path.extname(outputFile) === '.mjs' ? 'module' : 'commonjs',
         sourcemap: true,
       },
       plugins,
@@ -85,14 +105,13 @@ export const appBuilder: CommandModule<unknown, InferredOptionTypes<typeof build
     try {
       const [_bundle] = await Promise.all([
         rollup(options),
-        fs.promises.rm(path.dirname(outputFile), { recursive: true, force: true }),
+        !isFirebase && fs.promises.rm(path.dirname(outputFile), { recursive: true, force: true }),
       ]);
       bundle = _bundle;
       await bundle.write(options.output);
     } catch (error) {
       buildFailed = true;
-      // do some error reporting
-      console.error(error);
+      console.error('Filed to build due to:', error);
     }
     await bundle?.close();
     process.exit(buildFailed ? 1 : 0);
