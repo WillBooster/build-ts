@@ -36,6 +36,16 @@ const builder = {
     type: 'boolean',
     default: true,
   },
+  minify: {
+    description: 'Whether minification is enabled or not.',
+    type: 'boolean',
+    default: true,
+  },
+  sourcemap: {
+    description: 'Whether sourcemap is enabled or not',
+    type: 'boolean',
+    default: true,
+  },
 } as const;
 
 export const appBuilder: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
@@ -58,7 +68,7 @@ export const appBuilder: CommandModule<unknown, InferredOptionTypes<typeof build
       }),
       string({ include: ['**/*.csv', '**/*.txt'] }),
     ];
-    if (process.env.NODE_ENV === 'production') {
+    if (argv.minify) {
       plugins.push(terser());
     }
 
@@ -95,7 +105,7 @@ export const appBuilder: CommandModule<unknown, InferredOptionTypes<typeof build
       output: {
         file: outputFile,
         format: path.extname(outputFile) === '.mjs' ? 'module' : 'commonjs',
-        sourcemap: true,
+        sourcemap: argv.sourcemap,
       },
       plugins,
     } as const;
