@@ -46,6 +46,10 @@ const builder = {
     type: 'boolean',
     default: true,
   },
+  external: {
+    description: 'Additional external dependencies',
+    type: 'array',
+  },
 } as const;
 
 export const appBuilder: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
@@ -53,11 +57,28 @@ export const appBuilder: CommandModule<unknown, InferredOptionTypes<typeof build
   describe: 'Build app',
   builder,
   async handler(argv) {
+    let packageJsonPath = argv.packagePath;
+    if (!packageJsonPath.endsWith('package.json')) {
+      packageJsonPath = path.join(packageJsonPath, 'package.json');
+    }
+    const packageJsonText = await fs.promises.readFile(packageJsonPath, 'utf8');
+    const packageJson = JSON.parse(packageJsonText);
+    if (!packageJson.main) {
+      console.error('Please add "main" property in package.json.');
+      process.exit(1);
+    }
+    let outputFile = path.join(argv.packagePath, packageJson.main);
+
+    const externalDeps = [...(argv.external ?? [])].map((item) => item.toString());
+    if (packageJson?.dependencies?.['@prisma/client']) {
+      externalDeps.push('prisma-client');
+    }
+
     const babelConfigFile = argv.coreJs ? 'babel.app.config.mjs' : 'babel.app-no-core-js.config.json';
     const extensions = ['.cjs', '.mjs', '.js', '.json', '.cts', '.mts', '.ts'];
     const plugins = [
       json(),
-      externals({ deps: true, devDeps: false }),
+      externals({ deps: true, devDeps: false, include: externalDeps }),
       resolve({ extensions }),
       commonjs(),
       babel({
@@ -71,18 +92,6 @@ export const appBuilder: CommandModule<unknown, InferredOptionTypes<typeof build
     if (argv.minify) {
       plugins.push(terser());
     }
-
-    let packageJsonPath = argv.packagePath;
-    if (!packageJsonPath.endsWith('package.json')) {
-      packageJsonPath = path.join(packageJsonPath, 'package.json');
-    }
-    const packageJsonText = await fs.promises.readFile(packageJsonPath, 'utf8');
-    const packageJson = JSON.parse(packageJsonText);
-    if (!packageJson.main) {
-      console.error('Please add "main" property in package.json.');
-      process.exit(1);
-    }
-    let outputFile = path.join(argv.packagePath, packageJson.main);
 
     const isFirebase = argv.firebaseJson && fs.existsSync(argv.firebaseJson);
     if (isFirebase) {
