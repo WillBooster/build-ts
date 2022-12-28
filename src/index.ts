@@ -1,6 +1,7 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
-import { appBuilder } from './commands/appBuilder.js';
+import { buildCommand } from './commands/buildCommand.js';
+import { runCommand } from './commands/runCommand.js';
 
-await yargs(hideBin(process.argv)).command(appBuilder).demandCommand().help().argv;
+await yargs(hideBin(process.argv)).command(buildCommand).command(runCommand).demandCommand().help().argv;

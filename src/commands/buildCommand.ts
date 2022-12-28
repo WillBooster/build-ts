@@ -20,13 +20,7 @@ const builder = {
     default: 'src/index.ts',
     alias: 'i',
   },
-  packagePath: {
-    description: 'A directory path containing package.json',
-    type: 'string',
-    default: '.',
-    alias: 'p',
-  },
-  firebaseJson: {
+  firebase: {
     description: 'A file path of firebase.json',
     type: 'string',
     alias: 'f',
@@ -52,22 +46,22 @@ const builder = {
   },
 } as const;
 
-export const appBuilder: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
-  command: 'app',
-  describe: 'Build app',
+export const buildCommand: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
+  command: 'build [package]',
+  describe: 'Build a package',
   builder,
   async handler(argv) {
-    let packageJsonPath = argv.packagePath;
+    let packageJsonPath = argv.package?.toString() ?? '.';
     if (!packageJsonPath.endsWith('package.json')) {
       packageJsonPath = path.join(packageJsonPath, 'package.json');
     }
     const packageJsonText = await fs.promises.readFile(packageJsonPath, 'utf8');
     const packageJson = JSON.parse(packageJsonText);
-    if (!packageJson.main) {
+    if (!packageJson || !packageJson.main) {
       console.error('Please add "main" property in package.json.');
       process.exit(1);
     }
-    let outputFile = path.join(argv.packagePath, packageJson.main);
+    let outputFile = path.join(path.dirname(packageJsonPath), packageJson.main);
 
     const externalDeps = [...(argv.external ?? [])].map((item) => item.toString());
     if (packageJson?.dependencies?.['@prisma/client']) {
@@ -93,11 +87,11 @@ export const appBuilder: CommandModule<unknown, InferredOptionTypes<typeof build
       plugins.push(terser());
     }
 
-    const isFirebase = argv.firebaseJson && fs.existsSync(argv.firebaseJson);
+    const isFirebase = argv.firebase && fs.existsSync(argv.firebase);
     if (isFirebase) {
-      const firebaseJsonText = await fs.promises.readFile(argv.firebaseJson, 'utf8');
+      const firebaseJsonText = await fs.promises.readFile(argv.firebase, 'utf8');
       const firebaseJson = JSON.parse(firebaseJsonText);
-      const packageDirPath = path.resolve(path.dirname(argv.firebaseJson), firebaseJson.functions.source);
+      const packageDirPath = path.resolve(path.dirname(argv.firebase), firebaseJson.functions.source);
       outputFile = path.resolve(packageDirPath, path.basename(packageJson.main));
 
       await fs.promises.rm(packageDirPath, { recursive: true, force: true });
@@ -133,6 +127,6 @@ export const appBuilder: CommandModule<unknown, InferredOptionTypes<typeof build
       console.error('Filed to build due to:', error);
     }
     await bundle?.close();
-    process.exit(buildFailed ? 1 : 0);
+    if (buildFailed) process.exit(1);
   },
 };
