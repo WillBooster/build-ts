@@ -10,7 +10,7 @@
   "files": [
     "bin/",
     "dist/",
-    "babel.*.config.*"
+    "babel.*"
   ],
   "scripts": {
     "build": "yarn start build -t app",
