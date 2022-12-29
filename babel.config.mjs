@@ -46,13 +46,22 @@ const config = {
   },
 };
 
-const rootPath = url.fileURLToPath(path.dirname(import.meta.url));
-const packageJson = JSON.parse(fs.readFileSync(path.join(rootPath, 'package.json'), 'utf8'));
-const [major, minor] = packageJson.dependencies['core-js'].split('.');
+if (process.env.BUILD_TS_COREJS) {
+  const rootPath = url.fileURLToPath(path.dirname(import.meta.url));
+  const packageJson = JSON.parse(fs.readFileSync(path.join(rootPath, 'package.json'), 'utf8'));
+  const [major, minor] = packageJson.dependencies['core-js'].split('.');
 
-/** @type {import('@babel/core').PluginItem} */
-const presetEnvConfig = config.presets[0][1];
-presetEnvConfig.useBuiltIns = 'usage';
-presetEnvConfig.corejs = `${major}.${minor}`;
+  if (process.env.BUILD_TS_TARGET === 'app') {
+    /** @type {import('@babel/core').PluginItem} */
+    const presetEnvConfig = config.presets[0][1];
+    presetEnvConfig.useBuiltIns = 'usage';
+    presetEnvConfig.corejs = `${major}.${minor}`;
+  } else if (process.env.BUILD_TS_TARGET === 'lib') {
+    config.plugins.push(['polyfill-corejs3', { method: 'usage-pure', version: `${major}.${minor}` }]);
+  }
+}
+if (process.env.BUILD_TS_VERBOSE) {
+  console.info('Babel config:', JSON.stringify(config, undefined, 2));
+}
 
 export default config;
