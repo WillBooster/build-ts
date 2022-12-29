@@ -7,6 +7,7 @@ import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 import terser from '@rollup/plugin-terser';
+import dotenv from 'dotenv';
 import { OutputOptions, Plugin, rollup, RollupBuild } from 'rollup';
 import analyze from 'rollup-plugin-analyzer';
 import { externals } from 'rollup-plugin-node-externals';
@@ -55,8 +56,17 @@ const builder = {
   },
   verbose: {
     description: 'Whether or not verbose mode is enabled.',
-    type: 'array',
+    type: 'boolean',
     alias: 'v',
+  },
+  env: {
+    description: 'Environment variables to be inlined.',
+    type: 'array',
+    alias: 'e',
+  },
+  dotenv: {
+    description: '.env files to be inlined.',
+    type: 'array',
   },
 } as const;
 
@@ -72,7 +82,7 @@ export const build: CommandModule<unknown, InferredOptionTypes<typeof builder>> 
 
     let packageJsonPath = argv.package?.toString() ?? '.';
     if (!packageJsonPath.endsWith('package.json')) {
-      packageJsonPath = path.join(packageJsonPath, 'package.json');
+      packageJsonPath = path.resolve(packageJsonPath, 'package.json');
     }
 
     const packageJsonText = await fs.promises.readFile(packageJsonPath, 'utf8');
@@ -82,10 +92,9 @@ export const build: CommandModule<unknown, InferredOptionTypes<typeof builder>> 
       process.exit(1);
     }
     const mainFile = packageJson.main;
-    const packageDirPath = path.resolve(path.dirname(packageJsonPath));
+    const packageDirPath = path.dirname(packageJsonPath);
     const inputFile = argv.input || path.join(packageDirPath, 'src', 'index.ts');
     let outputFile = path.join(packageDirPath, mainFile);
-    process.chdir(packageDirPath);
     if (argv.coreJs) {
       process.env.BUILD_TS_COREJS = '1';
     }
@@ -103,6 +112,7 @@ export const build: CommandModule<unknown, InferredOptionTypes<typeof builder>> 
     }
     const outputOptions = createOutputOptions(argv, outputFile, packageJson, nameWithoutNamespace);
 
+    process.chdir(packageDirPath);
     let bundle: RollupBuild | undefined;
     let buildFailed = false;
     try {
@@ -124,7 +134,7 @@ export const build: CommandModule<unknown, InferredOptionTypes<typeof builder>> 
   },
 };
 
-export function getNamespaceAndName(packageJson: Record<string, any>): [string | undefined, string | undefined] {
+export function getNamespaceAndName(packageJson: PackageJson): [string | undefined, string | undefined] {
   const packageName = packageJson.name?.toString() || '';
   const match = /@([^/]+)\/(.+)/.exec(packageName);
   const [, namespace, name] = match || [];
@@ -149,7 +159,7 @@ function createPlugins(
     replace({
       delimiters: ['', ''],
       preventAssignment: true,
-      values: {},
+      values: loadEnvironmentVariables(argv),
     }),
     json(),
     externals({
@@ -186,6 +196,21 @@ function createPlugins(
   return plugins;
 }
 
+function loadEnvironmentVariables(
+  argv: ArgumentsCamelCase<InferredOptionTypes<typeof builder>>
+): Record<string, string> {
+  const envVars: Record<string, string> = {};
+  for (const name of (argv.env ?? []).map((e) => e.toString())) {
+    envVars[`process.env.${name}`] = JSON.stringify(process.env[name]);
+  }
+  for (const dotenvPath of argv.dotenv ?? []) {
+    const parsed = dotenv.config({ path: dotenvPath.toString() }).parsed || {};
+    for (const [key, value] of Object.entries(parsed)) {
+      envVars[`process.env.${key}`] = JSON.stringify(value);
+    }
+  }
+  return envVars;
+}
 async function analyzeFirebaseJson(
   firebaseJsonPath: string,
   outputFile: string,
@@ -195,7 +220,7 @@ async function analyzeFirebaseJson(
   const firebaseJsonText = await fs.promises.readFile(firebaseJsonPath, 'utf8');
   const firebaseJson = JSON.parse(firebaseJsonText);
   const packageDirPath = path.resolve(path.dirname(firebaseJsonPath), firebaseJson.functions.source);
-  outputFile = path.resolve(packageDirPath, path.basename(mainFile));
+  outputFile = path.join(packageDirPath, path.basename(mainFile));
 
   await fs.promises.rm(packageDirPath, { recursive: true, force: true });
   await fs.promises.mkdir(packageDirPath, { recursive: true });
