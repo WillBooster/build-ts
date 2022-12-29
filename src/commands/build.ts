@@ -60,7 +60,7 @@ const builder = {
   },
 } as const;
 
-export const buildCommand: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
+export const build: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
   command: 'build [package]',
   describe: 'Build a package',
   builder,

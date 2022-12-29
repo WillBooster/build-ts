@@ -17,7 +17,7 @@ const builder = {
   },
 } as const;
 
-export const runCommand: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
+export const run: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
   command: 'run <file>',
   describe: 'Run script',
   builder,
