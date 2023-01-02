@@ -14,8 +14,7 @@ import { externals } from 'rollup-plugin-node-externals';
 import { string } from 'rollup-plugin-string';
 import ts from 'rollup-plugin-ts';
 import { PackageJson } from 'type-fest';
-import type { CommandModule, InferredOptionTypes } from 'yargs';
-import { ArgumentsCamelCase } from 'yargs';
+import type { ArgumentsCamelCase, CommandModule, InferredOptionTypes } from 'yargs';
 
 import { getBuildTsRootPath } from '../pathUtil.js';
 

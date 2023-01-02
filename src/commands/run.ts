@@ -35,7 +35,8 @@ export const run: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
       args.push('--loader', 'ts-node/esm');
     }
     args.push(file);
-    child_process.spawnSync('node', args, {
+    const [, ...additionalArguments] = argv._;
+    child_process.spawnSync('node', [...args, ...additionalArguments.map((arg) => arg.toString())], {
       shell: true,
       stdio: 'inherit',
       env: { ...process.env, TS_NODE_TRANSPILE_ONLY: '1' },
