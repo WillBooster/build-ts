@@ -14,7 +14,8 @@ import { externals } from 'rollup-plugin-node-externals';
 import { string } from 'rollup-plugin-string';
 import ts from 'rollup-plugin-ts';
 import { PackageJson } from 'type-fest';
-import type { ArgumentsCamelCase, CommandModule, InferredOptionTypes } from 'yargs';
+import type { CommandModule, InferredOptionTypes } from 'yargs';
+import yargs from 'yargs';
 
 import { getBuildTsRootPath } from '../pathUtil.js';
 
@@ -155,20 +156,20 @@ function createPlugins(
   const babelConfigPath = path.join(getBuildTsRootPath(), 'babel.config.mjs');
 
   const plugins: Plugin[] = [
-    replace({
+    replace.default({
       delimiters: ['', ''],
       preventAssignment: true,
       values: loadEnvironmentVariables(argv),
     }),
-    json(),
+    json.default(),
     externals({
       deps: true,
       devDeps: false,
       include: externalDeps,
       exclude: namespace && new RegExp(`${namespace}\\/.+`),
     }),
-    resolve({ extensions }),
-    commonjs(),
+    resolve.default({ extensions }),
+    commonjs.default(),
   ];
   if (argv.target === 'app') {
     plugins.push(
@@ -189,14 +190,14 @@ function createPlugins(
   }
   plugins.push(string({ include: ['**/*.csv', '**/*.txt'] }));
   if (argv.minify) {
-    plugins.push(terser());
+    plugins.push(terser.default());
   }
-  plugins.push(analyze({ summaryOnly: true }));
+  plugins.push(analyze.default({ summaryOnly: true }));
   return plugins;
 }
 
 function loadEnvironmentVariables(
-  argv: ArgumentsCamelCase<InferredOptionTypes<typeof builder>>
+  argv: yargs.ArgumentsCamelCase<InferredOptionTypes<typeof builder>>
 ): Record<string, string> {
   const envVars: Record<string, string> = {};
   for (const name of (argv.env ?? []).map((e) => e.toString())) {
@@ -236,7 +237,7 @@ async function analyzeFirebaseJson(
 }
 
 function createOutputOptions(
-  argv: ArgumentsCamelCase<InferredOptionTypes<typeof builder>>,
+  argv: yargs.ArgumentsCamelCase<InferredOptionTypes<typeof builder>>,
   outputFile: string,
   packageJson: PackageJson,
   nameWithoutNamespace: string | undefined
