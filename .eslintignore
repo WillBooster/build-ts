@@ -29,12 +29,10 @@ test-fixtures/
 .yarn/
 .pnp.js
 .devcontainer/
+.venv/
 dist/
 temp/
-Icon[
-]
-*.sqlite3
-*.sqlite3-journal
+Icon[]
 # Created by https://www.toptal.com/developers/gitignore/api/windows
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows
 
@@ -76,8 +74,7 @@ $RECYCLE.BIN/
 .LSOverride
 
 # Icon must end with two \r
-Icon
-
+Icon
 
 # Thumbnails
 ._*
@@ -171,7 +168,7 @@ Temporary Items
 # *.ipr
 
 # CMake
-cmake-index-*/
+cmake-build-*/
 
 # Mongo Explorer plugin
 .idea/**/mongoSettings.xml
@@ -197,7 +194,7 @@ atlassian-ide-plugin.xml
 # Crashlytics plugin (for Android Studio and IntelliJ)
 com_crashlytics_export_strings.xml
 crashlytics.properties
-crashlytics-index.properties
+crashlytics-build.properties
 fabric.properties
 
 # Editor-based Rest Client
@@ -411,7 +408,7 @@ bower_components
 .lock-wscript
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
-index/Release
+build/Release
 
 # Dependency directories
 node_modules/
@@ -458,11 +455,11 @@ web_modules/
 .cache
 .parcel-cache
 
-# Next.js index output
+# Next.js build output
 .next
 out
 
-# Nuxt.js index / generate output
+# Nuxt.js build / generate output
 .nuxt
 dist
 
@@ -472,7 +469,7 @@ dist
 # https://nextjs.org/blog/next-9-1#public-directory-support
 # public
 
-# vuepress index output
+# vuepress build output
 .vuepress/dist
 
 # vuepress v2.x temp and cache directory
@@ -499,7 +496,7 @@ dist
 # yarn v2
 .yarn/cache
 .yarn/unplugged
-.yarn/index-state.yml
+.yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
 
@@ -509,7 +506,7 @@ dist
 
 # Optional stylelint cache
 
-# SvelteKit index / generate output
+# SvelteKit build / generate output
 .svelte-kit
 
 # End of https://www.toptal.com/developers/gitignore/api/node
