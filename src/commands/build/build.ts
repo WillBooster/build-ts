@@ -76,7 +76,7 @@ export const build: CommandModule<unknown, InferredOptionTypes<typeof builder>> 
     let buildFailed = false;
     try {
       const _bundle = await rollup({
-        input: argv.input || path.join('src', 'index.ts'),
+        input: path.join(packageDirPath, argv.input || path.join('src', 'index.ts')),
         plugins,
       });
       bundle = _bundle;
