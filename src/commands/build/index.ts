@@ -7,7 +7,6 @@ import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 import terser from '@rollup/plugin-terser';
-import dotenv from 'dotenv';
 import { OutputOptions, Plugin, rollup, RollupBuild } from 'rollup';
 import analyze from 'rollup-plugin-analyzer';
 import { externals } from 'rollup-plugin-node-externals';
@@ -16,61 +15,13 @@ import ts from 'rollup-plugin-ts';
 import { PackageJson } from 'type-fest';
 import type { ArgumentsCamelCase, CommandModule, InferredOptionTypes } from 'yargs';
 
-import { getBuildTsRootPath } from '../pathUtil.js';
+import { getBuildTsRootPath } from '../../pathUtil.js';
 
-const builder = {
-  target: {
-    description: 'A target format: app or lib',
-    type: 'string',
-    require: true,
-    alias: 't',
-  },
-  input: {
-    description: 'A file path of main source code. Default value is "src/index.ts" from package directory.',
-    type: 'string',
-    alias: 'i',
-  },
-  firebase: {
-    description: 'A file path of firebase.json.',
-    type: 'string',
-  },
-  'core-js': {
-    description: 'Whether or not core-js is employed.',
-    type: 'boolean',
-    default: false,
-  },
-  minify: {
-    description: 'Whether or not minification is enabled.',
-    type: 'boolean',
-    default: true,
-  },
-  sourcemap: {
-    description: 'Whether or not sourcemap is enabled.',
-    type: 'boolean',
-    default: true,
-  },
-  external: {
-    description: 'Additional external dependencies.',
-    type: 'array',
-  },
-  verbose: {
-    description: 'Whether or not verbose mode is enabled.',
-    type: 'boolean',
-    alias: 'v',
-  },
-  env: {
-    description: 'Environment variables to be inlined.',
-    type: 'array',
-    alias: 'e',
-  },
-  dotenv: {
-    description: '.env files to be inlined.',
-    type: 'array',
-  },
-} as const;
+import { loadEnvironmentVariables } from './env.js';
+import { builder } from './options.js';
 
-export const build: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
-  command: 'build [package]',
+export const index: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
+  command: 'index [package]',
   describe: 'Build a package',
   builder,
   async handler(argv) {
@@ -86,14 +37,9 @@ export const build: CommandModule<unknown, InferredOptionTypes<typeof builder>> 
 
     const packageJsonText = await fs.promises.readFile(packageJsonPath, 'utf8');
     const packageJson = JSON.parse(packageJsonText) as PackageJson;
-    if (!packageJson || !packageJson.main) {
-      console.error('Please add "main" property in package.json.');
-      process.exit(1);
-    }
     const mainFile = packageJson.main;
     const packageDirPath = path.dirname(packageJsonPath);
     const inputFile = argv.input || path.join(packageDirPath, 'src', 'index.ts');
-    let outputFile = path.join(packageDirPath, mainFile);
     if (argv.coreJs) {
       process.env.BUILD_TS_COREJS = '1';
     }
@@ -105,28 +51,41 @@ export const build: CommandModule<unknown, InferredOptionTypes<typeof builder>> 
     const [namespace, nameWithoutNamespace] = getNamespaceAndName(packageJson);
     const plugins = createPlugins(argv, packageJson, namespace);
 
-    const isFirebase = argv.target === 'app' && argv.firebase && fs.existsSync(argv.firebase);
-    if (isFirebase) {
-      outputFile = await analyzeFirebaseJson(argv.firebase, outputFile, packageJson, mainFile);
+    let outputOptions;
+    if (argv.target === 'app') {
+      if (!mainFile) {
+        console.error('Please add "main" property always in package.json.');
+        process.exit(1);
+      }
+      let outputFile = path.join(packageDirPath, mainFile);
+      const isFirebase = argv.firebase && fs.existsSync(argv.firebase);
+      if (isFirebase) {
+        outputFile = await analyzeFirebaseJson(argv.firebase, outputFile, packageJson, mainFile);
+      } else {
+        await fs.promises.rm(path.dirname(outputFile), { recursive: true, force: true });
+      }
+      outputOptions = [createOutputOptionsForApp(argv, outputFile, packageJson)];
+    } else {
+      outputOptions = await createOutputOptionsForLibrary(argv, packageJson, nameWithoutNamespace);
     }
-    const outputOptions = createOutputOptions(argv, outputFile, packageJson, nameWithoutNamespace);
+    if (outputOptions.length === 0) {
+      console.error('Failed to detect output files.');
+      process.exit(1);
+    }
 
     process.chdir(packageDirPath);
     let bundle: RollupBuild | undefined;
     let buildFailed = false;
     try {
-      const [_bundle] = await Promise.all([
-        rollup({
-          input: inputFile,
-          plugins,
-        }),
-        !isFirebase && fs.promises.rm(path.dirname(outputFile), { recursive: true, force: true }),
-      ]);
+      const _bundle = await rollup({
+        input: inputFile,
+        plugins,
+      });
       await Promise.all(outputOptions.map((opt) => _bundle.write(opt)));
       bundle = _bundle;
     } catch (error) {
       buildFailed = true;
-      console.error('Filed to build due to:', error);
+      console.error('Filed to index due to:', error);
     }
     await bundle?.close();
     if (buildFailed) process.exit(1);
@@ -195,25 +154,6 @@ function createPlugins(
   return plugins;
 }
 
-function loadEnvironmentVariables(
-  argv: ArgumentsCamelCase<InferredOptionTypes<typeof builder>>
-): Record<string, string> {
-  const envVars: Record<string, string> = {};
-  for (const name of (argv.env ?? []).map((e) => e.toString())) {
-    if (process.env[name] === undefined) continue;
-
-    envVars[`process.env.${name}`] = JSON.stringify(process.env[name]);
-  }
-  for (const dotenvPath of argv.dotenv ?? []) {
-    const parsed = dotenv.config({ path: dotenvPath.toString() }).parsed || {};
-    for (const [key, value] of Object.entries(parsed)) {
-      if (value === undefined) continue;
-
-      envVars[`process.env.${key}`] = JSON.stringify(value);
-    }
-  }
-  return envVars;
-}
 async function analyzeFirebaseJson(
   firebaseJsonPath: string,
   outputFile: string,
@@ -234,44 +174,51 @@ async function analyzeFirebaseJson(
   await fs.promises.writeFile(path.join(packageDirPath, 'package.json'), JSON.stringify(packageJson));
   return outputFile;
 }
-
-function createOutputOptions(
+function createOutputOptionsForApp(
   argv: ArgumentsCamelCase<InferredOptionTypes<typeof builder>>,
   outputFile: string,
+  packageJson: PackageJson
+): OutputOptions {
+  return {
+    file: outputFile,
+    format: packageJson?.type === 'module' ? 'module' : 'commonjs',
+    sourcemap: argv.sourcemap,
+  };
+}
+
+async function createOutputOptionsForLibrary(
+  argv: ArgumentsCamelCase<InferredOptionTypes<typeof builder>>,
   packageJson: PackageJson,
   nameWithoutNamespace: string | undefined
-): OutputOptions[] {
+): Promise<OutputOptions[]> {
   const outputOptions: OutputOptions[] = [];
-  if (argv.target === 'app') {
+  const promises: Promise<void>[] = [];
+  const inputs = [
+    [packageJson.main, 'commonjs'],
+    [packageJson.module, 'module'],
+  ] as const;
+  for (const [file, format] of inputs) {
+    if (!file) continue;
+
+    promises.push(fs.promises.rm(path.dirname(file), { recursive: true, force: true }));
     outputOptions.push({
-      file: outputFile,
-      format: path.extname(outputFile) === '.mjs' ? 'module' : 'commonjs',
+      dir: fixOutputDirForMonorepo(path.dirname(file), nameWithoutNamespace),
+      entryFileNames: format === 'commonjs' ? '[name].cjs' : '[name].mjs',
+      format,
+      preserveModules: true,
       sourcemap: argv.sourcemap,
     });
-  } else {
-    const inputs = [
-      [packageJson.main, path.extname(packageJson.main ?? '') === '.mjs' ? 'module' : 'commonjs'],
-      [packageJson.module, 'module'],
-    ] as const;
-    for (const [file, format] of inputs) {
-      if (!file) continue;
-
-      outputOptions.push({
-        dir: fixOutputDir(path.dirname(file), nameWithoutNamespace),
-        format,
-        preserveModules: true,
-        sourcemap: argv.sourcemap,
-      });
-    }
   }
+  await Promise.allSettled(promises);
   return outputOptions;
 }
 
-function fixOutputDir(dirPath: string, packageName?: string): string {
+function fixOutputDirForMonorepo(dirPath: string, packageName?: string): string {
   if (!packageName) return dirPath;
 
   const index = dirPath.indexOf(packageName);
   if (index < 0) return dirPath;
 
+  // e.g. dist/cjs/packageA/src/index.js -> dist/cjs
   return dirPath.slice(0, index);
 }
