@@ -38,15 +38,14 @@ export const build: CommandModule<unknown, InferredOptionTypes<typeof builder>> 
     const plugins = createPlugins(argv, packageJson, namespace);
     const isEsm = packageJson.type === 'module';
 
-    process.chdir(packageDirPath);
-    await fs.promises.rm('dist', { recursive: true, force: true });
+    await fs.promises.rm(path.join(packageDirPath, 'dist'), { recursive: true, force: true });
 
     let outputOptionsList: OutputOptions[];
     if (argv.target === 'app' || argv.target === 'functions') {
       packageJson.main = isEsm ? 'index.mjs' : 'index.cjs';
       outputOptionsList = [
         {
-          file: path.join('dist', packageJson.main),
+          file: path.join(packageDirPath, 'dist', packageJson.main),
           format: isEsm ? 'module' : 'commonjs',
           sourcemap: argv.sourcemap,
         },
@@ -54,12 +53,12 @@ export const build: CommandModule<unknown, InferredOptionTypes<typeof builder>> 
     } else {
       outputOptionsList = [
         {
-          file: path.join('dist', 'cjs', 'index.cjs'),
+          file: path.join(packageDirPath, 'dist', 'cjs', 'index.cjs'),
           format: 'commonjs',
           sourcemap: argv.sourcemap,
         },
         {
-          dir: path.join('dist', 'esm'),
+          dir: path.join(packageDirPath, 'dist', 'esm'),
           entryFileNames: '[name].mjs',
           format: 'module',
           preserveModules: true,
@@ -85,7 +84,7 @@ export const build: CommandModule<unknown, InferredOptionTypes<typeof builder>> 
       if (argv.target === 'functions') {
         packageJson.name += '-dist';
         delete packageJson.devDependencies;
-        await fs.promises.writeFile(path.join('dist', 'package.json'), JSON.stringify(packageJson));
+        await fs.promises.writeFile(path.join(packageDirPath, 'dist', 'package.json'), JSON.stringify(packageJson));
       }
     } catch (error) {
       buildFailed = true;
