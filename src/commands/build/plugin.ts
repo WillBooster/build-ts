@@ -63,10 +63,10 @@ export function createPlugins(
       })
     );
   }
-  // plugins.push(string({ include: ['**/*.csv', '**/*.txt'] }));
-  // if (argv.minify) {
-  //   plugins.push(terser());
-  // }
+  plugins.push(string({ include: ['**/*.csv', '**/*.txt'] }));
+  if (argv.minify) {
+    plugins.push(terser());
+  }
   plugins.push(analyze({ summaryOnly: true }));
   return plugins;
 }
