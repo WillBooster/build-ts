@@ -81,7 +81,7 @@ export const build: CommandModule<unknown, InferredOptionTypes<typeof builder>> 
       });
       bundle = _bundle;
 
-      await Promise.allSettled(outputOptionsList.map((opts) => _bundle.write(opts)));
+      await Promise.all(outputOptionsList.map((opts) => _bundle.write(opts)));
       if (argv.target === 'functions') {
         packageJson.name += '-dist';
         delete packageJson.devDependencies;
