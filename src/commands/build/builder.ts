@@ -1,6 +1,6 @@
 export const builder = {
   target: {
-    description: 'A target format: app or lib',
+    description: 'A target format: app, lib or functions',
     type: 'string',
     require: true,
     alias: 't',
@@ -9,10 +9,6 @@ export const builder = {
     description: 'A file path of main source code. Default value is "src/index.ts" from package directory.',
     type: 'string',
     alias: 'i',
-  },
-  firebase: {
-    description: 'A file path of firebase.json.',
-    type: 'string',
   },
   'core-js': {
     description: 'Whether or not core-js is employed.',

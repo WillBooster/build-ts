@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import { ArgumentsCamelCase, InferredOptionTypes } from 'yargs';
 
-import { builder } from './options.js';
+import { builder } from './builder.js';
 
 export function loadEnvironmentVariables(
   argv: ArgumentsCamelCase<InferredOptionTypes<typeof builder>>

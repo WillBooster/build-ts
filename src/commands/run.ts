@@ -1,8 +1,9 @@
 import * as child_process from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 
 import type { CommandModule, InferredOptionTypes } from 'yargs';
+
+import { readPackageJson } from '../utils.js';
 
 const builder = {
   module: {
@@ -54,16 +55,10 @@ async function detectModuleType(file: string, module?: string): Promise<'cjs' | 
 
   let dirPath = path.dirname(file);
   for (;;) {
-    const packageJsonPath = path.join(dirPath, 'package.json');
-    if (fs.existsSync(packageJsonPath)) {
-      try {
-        const packageJsonText = await fs.promises.readFile(packageJsonPath, 'utf8');
-        const packageJson = JSON.parse(packageJsonText);
-        if (packageJson.type === 'module') {
-          return 'esm';
-        }
-      } catch {
-        // do nothing
+    const packageJson = await readPackageJson(dirPath);
+    if (packageJson) {
+      if (packageJson.type === 'module') {
+        return 'esm';
       }
       break;
     }
