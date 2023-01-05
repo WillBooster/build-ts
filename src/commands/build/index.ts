@@ -20,8 +20,8 @@ import { getBuildTsRootPath } from '../../pathUtil.js';
 import { loadEnvironmentVariables } from './env.js';
 import { builder } from './options.js';
 
-export const index: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
-  command: 'index [package]',
+export const build: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
+  command: 'build [package]',
   describe: 'Build a package',
   builder,
   async handler(argv) {
