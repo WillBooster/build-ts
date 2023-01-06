@@ -4,4 +4,4 @@ import { hideBin } from 'yargs/helpers';
 import { build } from './commands/build/build.js';
 import { run } from './commands/run.js';
 
-await yargs(hideBin(process.argv)).command(build).command(run).demandCommand().help().argv;
+await yargs(hideBin(process.argv)).command(build).command(run).demandCommand().strict().help().argv;

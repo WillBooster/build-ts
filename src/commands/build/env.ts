@@ -1,11 +1,9 @@
 import dotenv from 'dotenv';
-import { ArgumentsCamelCase, InferredOptionTypes } from 'yargs';
+import type { InferredOptionTypes } from 'yargs';
 
-import { builder } from './builder.js';
+import type { builder } from './builder.js';
 
-export function loadEnvironmentVariables(
-  argv: ArgumentsCamelCase<InferredOptionTypes<typeof builder>>
-): Record<string, string> {
+export function loadEnvironmentVariables(argv: InferredOptionTypes<typeof builder>): Record<string, string> {
   const envVars: Record<string, string> = {};
   for (const name of (argv.env ?? []).map((e) => e.toString())) {
     if (process.env[name] === undefined) continue;

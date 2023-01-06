@@ -11,16 +11,16 @@ import analyze from 'rollup-plugin-analyzer';
 import { externals } from 'rollup-plugin-node-externals';
 import { string } from 'rollup-plugin-string';
 import ts from 'rollup-plugin-ts';
-import { PackageJson } from 'type-fest';
-import type { ArgumentsCamelCase, InferredOptionTypes } from 'yargs';
+import type { PackageJson } from 'type-fest';
+import type { InferredOptionTypes } from 'yargs';
 
 import { getBuildTsRootPath } from '../../utils.js';
 
-import { builder } from './builder.js';
+import type { builder } from './builder.js';
 import { loadEnvironmentVariables } from './env.js';
 
 export function createPlugins(
-  argv: ArgumentsCamelCase<InferredOptionTypes<typeof builder>>,
+  argv: InferredOptionTypes<typeof builder>,
   packageJson: PackageJson,
   namespace: string | undefined
 ): Plugin[] {
