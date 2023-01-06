@@ -14,8 +14,10 @@ export const build: CommandModule<unknown, InferredOptionTypes<typeof builder>> 
   describe: 'Build a package',
   builder,
   async handler(argv) {
+    const cwd = process.cwd();
+
     if (argv.target !== 'app' && argv.target !== 'lib' && argv.target !== 'functions') {
-      console.error('target option must be "app", "lib" or "functions');
+      console.error('target option must be "app", "lib" or "functions"');
       process.exit(1);
     }
 
@@ -25,6 +27,8 @@ export const build: CommandModule<unknown, InferredOptionTypes<typeof builder>> 
       console.error('Failed to parse package.json');
       process.exit(1);
     }
+    const [namespace] = getNamespaceAndName(packageJson);
+    const isEsm = packageJson.type === 'module';
 
     if (argv.coreJs) {
       process.env.BUILD_TS_COREJS = '1';
@@ -33,12 +37,6 @@ export const build: CommandModule<unknown, InferredOptionTypes<typeof builder>> 
       process.env.BUILD_TS_VERBOSE = '1';
     }
     process.env.BUILD_TS_TARGET = argv.target;
-
-    const [namespace] = getNamespaceAndName(packageJson);
-    const plugins = createPlugins(argv, packageJson, namespace);
-    const isEsm = packageJson.type === 'module';
-
-    await fs.promises.rm(path.join(packageDirPath, 'dist'), { recursive: true, force: true });
 
     let outputOptionsList: OutputOptions[];
     if (argv.target === 'app' || argv.target === 'functions') {
@@ -74,10 +72,14 @@ export const build: CommandModule<unknown, InferredOptionTypes<typeof builder>> 
     let bundle: RollupBuild | undefined;
     let buildFailed = false;
     try {
-      const _bundle = await rollup({
-        input: argv.input || path.join(packageDirPath, path.join('src', 'index.ts')),
-        plugins,
-      });
+      process.chdir(packageDirPath);
+      const [_bundle] = await Promise.all([
+        rollup({
+          input: argv.input ? path.join(cwd, argv.input) : path.join(packageDirPath, path.join('src', 'index.ts')),
+          plugins: createPlugins(argv, packageJson, namespace, cwd),
+        }),
+        fs.promises.rm(path.join(packageDirPath, 'dist'), { recursive: true, force: true }),
+      ]);
       bundle = _bundle;
 
       await Promise.all(outputOptionsList.map((opts) => _bundle.write(opts)));

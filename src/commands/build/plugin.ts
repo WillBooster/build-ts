@@ -22,7 +22,8 @@ import { loadEnvironmentVariables } from './env.js';
 export function createPlugins(
   argv: InferredOptionTypes<typeof builder>,
   packageJson: PackageJson,
-  namespace: string | undefined
+  namespace: string | undefined,
+  cwd: string
 ): Plugin[] {
   const externalDeps = [...(argv.external ?? [])].map((item) => item.toString());
   if (packageJson?.dependencies?.['@prisma/client']) {
@@ -34,7 +35,7 @@ export function createPlugins(
     replace({
       delimiters: ['', ''],
       preventAssignment: true,
-      values: loadEnvironmentVariables(argv),
+      values: loadEnvironmentVariables(argv, cwd),
     }),
     json(),
     externals({
