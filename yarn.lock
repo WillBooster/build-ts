@@ -2115,16 +2115,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/babel__core@npm:7.1.20":
-  version: 7.1.20
-  resolution: "@types/babel__core@npm:7.1.20"
+"@types/babel__core@npm:7.20.0":
+  version: 7.20.0
+  resolution: "@types/babel__core@npm:7.20.0"
   dependencies:
-    "@babel/parser": "npm:^7.1.0"
-    "@babel/types": "npm:^7.0.0"
+    "@babel/parser": "npm:^7.20.7"
+    "@babel/types": "npm:^7.20.7"
     "@types/babel__generator": "npm:*"
     "@types/babel__template": "npm:*"
     "@types/babel__traverse": "npm:*"
-  checksum: 4667028c09cfedb3aafdd08fa9efc20ed62275b65a7bfdbf724e9901babcc75904f6a2807e2ccafbf6acbad855f8a844e6603d4185cd5e478fa279a1b10ca1f2
+  checksum: bf92f75954f36771eec94945ec0b38add06f3fb4605b67b7652d641604d60e9c6fd074810746f654bb3414efcc7fad648da4092ae7975d1b44dd2de59f86a577
   languageName: node
   linkType: hard
 
@@ -2271,12 +2271,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/yargs@npm:17.0.19":
-  version: 17.0.19
-  resolution: "@types/yargs@npm:17.0.19"
+"@types/yargs@npm:17.0.20":
+  version: 17.0.20
+  resolution: "@types/yargs@npm:17.0.20"
   dependencies:
     "@types/yargs-parser": "npm:*"
-  checksum: cd721988a571d91770150ee0455e2030d7368e1cfd2b443f5be9158ab3eddc22ad9f64f25d8580ac5bf6759a212e051f4e318ab807a0f95ad0b0a352d61edcce
+  checksum: 2200d4e22c9a3ffb14ad95d7db67b12e13722146b4f1b4ca2de8857069c7d5978b41176e8166ac7b4d2d7910065af962b8d299af562086708e47b45ccf0a4838
   languageName: node
   linkType: hard
 
@@ -2923,12 +2923,12 @@ __metadata:
     "@rollup/plugin-replace": "npm:5.0.2"
     "@rollup/plugin-terser": "npm:0.3.0"
     "@rollup/pluginutils": "npm:5.0.2"
-    "@types/babel__core": "npm:7.1.20"
+    "@types/babel__core": "npm:7.20.0"
     "@types/babel__plugin-transform-runtime": "npm:7.9.2"
     "@types/babel__preset-env": "npm:7.9.2"
     "@types/eslint": "npm:8.4.10"
     "@types/node": "npm:18.11.18"
-    "@types/yargs": "npm:17.0.19"
+    "@types/yargs": "npm:17.0.20"
     "@typescript-eslint/eslint-plugin": "npm:5.48.2"
     "@typescript-eslint/parser": "npm:5.48.2"
     "@willbooster/babel-configs": "npm:1.3.0"
@@ -2938,8 +2938,8 @@ __metadata:
     babel-plugin-polyfill-corejs3: "npm:0.6.0"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     conventional-changelog-conventionalcommits: "npm:5.0.0"
-    core-js: "npm:3.27.1"
-    core-js-pure: "npm:3.27.1"
+    core-js: "npm:3.27.2"
+    core-js-pure: "npm:3.27.2"
     dotenv: "npm:16.0.3"
     eslint: "npm:8.32.0"
     eslint-config-prettier: "npm:8.6.0"
@@ -2953,7 +2953,7 @@ __metadata:
     micromatch: "npm:4.0.5"
     pinst: "npm:3.0.0"
     prettier: "npm:2.8.3"
-    rollup: "npm:3.10.0"
+    rollup: "npm:3.10.1"
     rollup-plugin-analyzer: "npm:4.0.0"
     rollup-plugin-node-externals: "npm:5.1.0"
     rollup-plugin-string: "npm:3.0.0"
@@ -2961,7 +2961,7 @@ __metadata:
     semantic-release: "npm:20.0.2"
     sort-package-json: "npm:2.1.0"
     ts-node: "npm:10.9.1"
-    type-fest: "npm:3.5.1"
+    type-fest: "npm:3.5.3"
     typescript: "npm:4.9.4"
     yargs: "npm:17.6.2"
   bin:
@@ -3433,17 +3433,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js-pure@npm:3.27.1":
-  version: 3.27.1
-  resolution: "core-js-pure@npm:3.27.1"
-  checksum: 7edb734c3b77c6ee118b699f195aae59abd72e6ce1a0e4454ac32b2390c92c6b7f3fcee0b3be002e64d84a73d2020444e378b145b0bac8eb00d3bf97ab4261c1
+"core-js-pure@npm:3.27.2":
+  version: 3.27.2
+  resolution: "core-js-pure@npm:3.27.2"
+  checksum: 2382f1b3d02a903758a332f952ef9648b6224ec08918d041134cd1f407717cbea2d37d60f62dfec46732fd4c95f4dd73c9e9b509b38c824775f6b0fc1c32c65f
   languageName: node
   linkType: hard
 
-"core-js@npm:3.27.1":
-  version: 3.27.1
-  resolution: "core-js@npm:3.27.1"
-  checksum: eacca0971dcb9402e91f4933772acd56bdb4aaf32cc77c60445e17909b1275190ea4b9ef1cc8eb09569f5bd64ef447ec5be1fdbdf5be6222ba0a1307a2ad6e35
+"core-js@npm:3.27.2":
+  version: 3.27.2
+  resolution: "core-js@npm:3.27.2"
+  checksum: a65178818013cb4f90d96b8ff899fea5cd5bb884f993888ad5da34b89ff199bd6732bca6acc1a0ef21d36f2955e0389bd58a2141ce5234900d42d5c636b1cd92
   languageName: node
   linkType: hard
 
@@ -7614,9 +7614,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup@npm:3.10.0":
-  version: 3.10.0
-  resolution: "rollup@npm:3.10.0"
+"rollup@npm:3.10.1":
+  version: 3.10.1
+  resolution: "rollup@npm:3.10.1"
   dependencies:
     fsevents: "npm:~2.3.2"
   dependenciesMeta:
@@ -7624,7 +7624,7 @@ __metadata:
       optional: true
   bin:
     rollup: dist/bin/rollup
-  checksum: bfd500d01cf8f11db5815b5642f4249268ba2fe8aa0be0e51ae91331f7487ddb99137a0d5133fe3718208de8d1da7d2689499358ac11d01eecbf01caeb9054fd
+  checksum: 48b2831955524383173d3d889e8c2fe253735b16e1876001ce033ac59dcd60eb14d190d9255db9a13e8c0b091b0b4fd9d94d8506d0fa3083452a0eaba39502ab
   languageName: node
   linkType: hard
 
@@ -8466,10 +8466,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"type-fest@npm:3.5.1":
-  version: 3.5.1
-  resolution: "type-fest@npm:3.5.1"
-  checksum: 92b9f4c37c4d6ae4916be0f39dee9c439b647e88384f1bfdba8f229eddf5b3ca0256750ebf6b7419dc3412a636e21c209d32be228da77a3aedd82a92304e41f0
+"type-fest@npm:3.5.3":
+  version: 3.5.3
+  resolution: "type-fest@npm:3.5.3"
+  checksum: 381a673bef27fdc172edc2dacb95978e6de71e4a286e6fd91f0c656a1f7be58e75f86f41b5654f26ef5b1e14d26403de41a5811740b8541f38aac9713e2f7115
   languageName: node
   linkType: hard
 
