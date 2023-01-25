@@ -38,7 +38,7 @@ export const lib: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
 
 export async function build(
   argv: InferredOptionTypes<typeof builder>,
-  target: 'node' | 'functions' | 'lib',
+  target: Target,
   relativePackageDirPath?: unknown
 ): Promise<void> {
   const cwd = process.cwd();
@@ -103,7 +103,7 @@ export async function build(
     const [_bundle] = await Promise.all([
       rollup({
         input: argv.input ? path.join(cwd, argv.input) : path.join(packageDirPath, path.join('src', 'index.ts')),
-        plugins: createPlugins(argv, packageJson, namespace, cwd),
+        plugins: createPlugins(argv, target, packageJson, namespace, cwd),
       }),
       fs.promises.rm(path.join(packageDirPath, 'dist'), { recursive: true, force: true }),
     ]);
