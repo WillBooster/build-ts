@@ -14,7 +14,7 @@ import ts from 'rollup-plugin-ts';
 import type { PackageJson } from 'type-fest';
 import type { InferredOptionTypes } from 'yargs';
 
-import { Target } from '../../types.js';
+import { TargetCategory } from '../../types.js';
 import { getBuildTsRootPath } from '../../utils.js';
 
 import type { builder } from './builder.js';
@@ -22,7 +22,7 @@ import { loadEnvironmentVariables } from './env.js';
 
 export function createPlugins(
   argv: InferredOptionTypes<typeof builder>,
-  target: Target,
+  target: TargetCategory,
   packageJson: PackageJson,
   namespace: string | undefined,
   cwd: string
@@ -32,7 +32,10 @@ export function createPlugins(
     externalDeps.push('prisma-client');
   }
   const extensions = ['.cjs', '.mjs', '.js', '.jsx', '.json', '.cts', '.mts', '.ts', '.tsx'];
-  const babelConfigPath = path.join(getBuildTsRootPath(), 'babel.config.mjs');
+  const babelConfigPath = path.join(
+    getBuildTsRootPath(),
+    target == 'react' ? 'babel.react.config.mjs' : 'babel.config.mjs'
+  );
   const plugins: Plugin[] = [
     replace({
       delimiters: ['', ''],
@@ -43,13 +46,15 @@ export function createPlugins(
     externals({
       deps: true,
       devDeps: false,
+      peerDeps: true,
+      optDeps: true,
       include: externalDeps,
       exclude: namespace && new RegExp(`${namespace}\\/.+`),
     }),
     resolve({ extensions }),
     commonjs(),
   ];
-  if (target === 'node' || target === 'lib') {
+  if (target === 'node' || target === 'functions') {
     plugins.push(
       babel({
         configFile: babelConfigPath,
