@@ -4,6 +4,7 @@ import path from 'node:path';
 import { OutputOptions, rollup, RollupBuild } from 'rollup';
 import type { CommandModule, InferredOptionTypes } from 'yargs';
 
+import { Target } from '../../types.js';
 import { getNamespaceAndName, readPackageJson } from '../../utils.js';
 
 import { builder } from './builder.js';
