@@ -49,7 +49,7 @@ export function createPlugins(
     resolve({ extensions }),
     commonjs(),
   ];
-  if (target === 'node' || target == 'lib') {
+  if (target === 'node' || target === 'lib') {
     plugins.push(
       babel({
         configFile: babelConfigPath,

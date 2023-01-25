@@ -29,7 +29,7 @@ export const functions: CommandModule<unknown, InferredOptionTypes<typeof builde
 };
 
 export const lib: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
-  command: 'node [package]',
+  command: 'lib [package]',
   describe: 'Build a library',
   builder,
   async handler(argv) {
@@ -44,6 +44,9 @@ export async function build(
 ): Promise<void> {
   const cwd = process.cwd();
 
+  if (argv.verbose) {
+    console.info('Target:', target);
+  }
   if (target !== 'node' && target !== 'lib' && target !== 'functions') {
     console.error('target option must be "app", "lib" or "functions"');
     process.exit(1);
@@ -91,6 +94,9 @@ export async function build(
         sourcemap: argv.sourcemap,
       },
     ];
+  }
+  if (argv.verbose) {
+    console.info('OutputOptions:', outputOptionsList);
   }
   if (outputOptionsList.length === 0) {
     console.error('Failed to detect output files.');
