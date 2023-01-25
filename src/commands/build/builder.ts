@@ -1,10 +1,4 @@
 export const builder = {
-  target: {
-    description: 'A target format: app, lib or functions',
-    type: 'string',
-    require: true,
-    alias: 't',
-  },
   input: {
     description: 'A file path of main source code. Default value is "src/index.ts" from package directory.',
     type: 'string',

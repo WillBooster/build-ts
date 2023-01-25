@@ -12,7 +12,7 @@
     "babel.*"
   ],
   "scripts": {
-    "build": "yarn start build -t app",
+    "build": "yarn start node",
     "cleanup": "yarn format && yarn lint-fix",
     "format": "sort-package-json && yarn prettify",
     "postinstall": "husky install",
