@@ -4,7 +4,7 @@ import path from 'node:path';
 import { OutputOptions, rollup, RollupBuild } from 'rollup';
 import type { CommandModule, InferredOptionTypes } from 'yargs';
 
-import { allTargetCategories, TargetCategory } from '../../types.js';
+import { allTargetCategories, TargetCategory, TargetDetail } from '../../types.js';
 import { getNamespaceAndName, readPackageJson } from '../../utils.js';
 
 import { builder } from './builder.js';
@@ -39,7 +39,7 @@ export const lib: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
 
 export async function build(
   argv: InferredOptionTypes<typeof builder>,
-  target: TargetCategory,
+  targetCategory: TargetCategory,
   relativePackageDirPath?: unknown
 ): Promise<void> {
   const cwd = process.cwd();
@@ -52,16 +52,10 @@ export async function build(
   }
 
   const input = verifyInput(argv, cwd, packageDirPath);
-  if (target === 'lib' && input.endsWith('.tsx')) {
-    target = 'react';
-  }
+  const targetDetail = detectTargetDetail(targetCategory, input);
 
   if (argv.verbose) {
-    console.info('Target:', target);
-  }
-  if (!allTargetCategories.includes(target)) {
-    console.error('target option must be one of: ' + allTargetCategories.join(', '));
-    process.exit(1);
+    console.info('Target (Category):', `${targetDetail} (${targetCategory})`);
   }
 
   const [namespace] = getNamespaceAndName(packageJson);
@@ -73,10 +67,11 @@ export async function build(
   if (argv.verbose) {
     process.env.BUILD_TS_VERBOSE = '1';
   }
-  process.env.BUILD_TS_TARGET = target;
+  process.env.BUILD_TS_TARGET_CATEGORY = targetCategory;
+  process.env.BUILD_TS_TARGET_DETAIL = targetDetail;
 
   let outputOptionsList: OutputOptions[];
-  if (target === 'app' || target === 'functions') {
+  if (targetDetail === 'app-node' || targetDetail === 'functions') {
     packageJson.main = isEsm ? 'index.mjs' : 'index.cjs';
     outputOptionsList = [
       {
@@ -115,15 +110,15 @@ export async function build(
     process.chdir(packageDirPath);
     const [_bundle] = await Promise.all([
       rollup({
-        input: argv.input ? path.join(cwd, argv.input) : path.join(packageDirPath, path.join('src', 'index.ts')),
-        plugins: createPlugins(argv, target, packageJson, namespace, cwd),
+        input,
+        plugins: createPlugins(argv, targetDetail, packageJson, namespace, cwd),
       }),
       fs.promises.rm(path.join(packageDirPath, 'dist'), { recursive: true, force: true }),
     ]);
     bundle = _bundle;
 
     await Promise.all(outputOptionsList.map((opts) => _bundle.write(opts)));
-    if (target === 'functions') {
+    if (targetDetail === 'functions') {
       packageJson.name += '-dist';
       delete packageJson.devDependencies;
       await fs.promises.writeFile(path.join(packageDirPath, 'dist', 'package.json'), JSON.stringify(packageJson));
@@ -147,4 +142,25 @@ function verifyInput(argv: InferredOptionTypes<typeof builder>, cwd: string, pac
 
   console.error('Failed to detect input file.');
   process.exit(1);
+}
+
+function detectTargetDetail(targetCategory: string, input: string): TargetDetail {
+  switch (targetCategory) {
+    case 'app': {
+      return 'app-node';
+    }
+    case 'functions': {
+      return 'functions';
+    }
+    case 'lib': {
+      if (input.endsWith('.tsx')) {
+        return 'lib-react';
+      }
+      return 'lib';
+    }
+    default: {
+      console.error('target option must be one of: ' + allTargetCategories.join(', '));
+      process.exit(1);
+    }
+  }
 }
