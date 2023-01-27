@@ -16,6 +16,7 @@ describe(
       expect(packageJson).to.includes('lodash.chunk');
       expect(packageJson).to.not.includes('lodash.compact');
       expect(packageJson).to.includes('lodash.concat');
+      expect(packageJson).to.includes('"main":"index.cjs"');
     });
 
     it('lib', async () => {
