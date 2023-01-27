@@ -14,7 +14,7 @@ import ts from 'rollup-plugin-ts';
 import type { PackageJson } from 'type-fest';
 import type { InferredOptionTypes } from 'yargs';
 
-import { Target } from '../../types.js';
+import { TargetDetail } from '../../types.js';
 import { getBuildTsRootPath } from '../../utils.js';
 
 import type { builder } from './builder.js';
@@ -22,7 +22,7 @@ import { loadEnvironmentVariables } from './env.js';
 
 export function createPlugins(
   argv: InferredOptionTypes<typeof builder>,
-  target: Target,
+  targetDetail: TargetDetail,
   packageJson: PackageJson,
   namespace: string | undefined,
   cwd: string
@@ -43,13 +43,15 @@ export function createPlugins(
     externals({
       deps: true,
       devDeps: false,
+      peerDeps: true,
+      optDeps: true,
       include: externalDeps,
       exclude: namespace && new RegExp(`${namespace}\\/.+`),
     }),
     resolve({ extensions }),
     commonjs(),
   ];
-  if (target === 'node' || target === 'lib') {
+  if (targetDetail === 'app-node' || targetDetail === 'functions') {
     plugins.push(
       babel({
         configFile: babelConfigPath,

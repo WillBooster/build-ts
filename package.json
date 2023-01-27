@@ -12,7 +12,7 @@
     "babel.*"
   ],
   "scripts": {
-    "build": "yarn start node",
+    "build": "yarn start app",
     "cleanup": "yarn format && yarn lint-fix",
     "format": "sort-package-json && yarn prettify",
     "postinstall": "husky install",
@@ -23,6 +23,7 @@
     "prettify": "prettier --cache --color --write \"**/{.*/,}*.{cjs,css,cts,htm,html,js,json,json5,jsx,md,mjs,mts,scss,ts,tsx,vue,yaml,yml}\" \"!**/test-fixtures/**\"",
     "start": "node --no-warnings --loader ts-node/esm src/index.ts",
     "start-prod": "yarn build && yarn build-ts",
+    "test": "vitest",
     "typecheck": "tsc --noEmit --Pretty"
   },
   "prettier": "@willbooster/prettier-config",
@@ -32,6 +33,7 @@
     "@babel/plugin-proposal-numeric-separator": "7.18.6",
     "@babel/plugin-transform-runtime": "7.19.6",
     "@babel/preset-env": "7.20.2",
+    "@babel/preset-react": "7.18.6",
     "@babel/preset-typescript": "7.18.6",
     "@rollup/plugin-babel": "6.0.3",
     "@rollup/plugin-commonjs": "24.0.1",
@@ -66,6 +68,7 @@
     "@willbooster/eslint-config-ts": "10.0.8",
     "@willbooster/prettier-config": "9.1.1",
     "@willbooster/renovate-config": "9.5.0",
+    "@willbooster/shared-lib": "1.8.1",
     "conventional-changelog-conventionalcommits": "5.0.0",
     "eslint": "8.32.0",
     "eslint-config-prettier": "8.6.0",
@@ -82,7 +85,8 @@
     "semantic-release": "20.1.0",
     "sort-package-json": "2.2.0",
     "type-fest": "3.5.3",
-    "typescript": "4.9.4"
+    "typescript": "4.9.4",
+    "vitest": "0.28.3"
   },
   "packageManager": "yarn@4.0.0-rc.36",
   "engines": {

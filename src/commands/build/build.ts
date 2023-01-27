@@ -4,18 +4,18 @@ import path from 'node:path';
 import { OutputOptions, rollup, RollupBuild } from 'rollup';
 import type { CommandModule, InferredOptionTypes } from 'yargs';
 
-import { Target } from '../../types.js';
+import { allTargetCategories, TargetCategory, TargetDetail } from '../../types.js';
 import { getNamespaceAndName, readPackageJson } from '../../utils.js';
 
 import { builder } from './builder.js';
 import { createPlugins } from './plugin.js';
 
-export const node: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
-  command: 'node [package]',
-  describe: 'Build a Node.js app',
+export const app: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
+  command: 'app [package]',
+  describe: 'Build an app',
   builder,
   async handler(argv) {
-    return build(argv, 'node', argv.package);
+    return build(argv, 'app', argv.package);
   },
 };
 
@@ -30,7 +30,7 @@ export const functions: CommandModule<unknown, InferredOptionTypes<typeof builde
 
 export const lib: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
   command: 'lib [package]',
-  describe: 'Build a library',
+  describe: 'Build a Node.js / React library',
   builder,
   async handler(argv) {
     return build(argv, 'lib', argv.package);
@@ -39,25 +39,25 @@ export const lib: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
 
 export async function build(
   argv: InferredOptionTypes<typeof builder>,
-  target: Target,
+  targetCategory: TargetCategory,
   relativePackageDirPath?: unknown
 ): Promise<void> {
   const cwd = process.cwd();
 
-  if (argv.verbose) {
-    console.info('Target:', target);
-  }
-  if (target !== 'node' && target !== 'lib' && target !== 'functions') {
-    console.error('target option must be "app", "lib" or "functions"');
-    process.exit(1);
-  }
-
   const packageDirPath = path.resolve(relativePackageDirPath?.toString() ?? '.');
   const packageJson = await readPackageJson(packageDirPath);
   if (!packageJson) {
-    console.error('Failed to parse package.json');
+    console.error('Failed to parse package.json.');
     process.exit(1);
   }
+
+  const input = verifyInput(argv, cwd, packageDirPath);
+  const targetDetail = detectTargetDetail(targetCategory, input);
+
+  if (argv.verbose) {
+    console.info('Target (Category):', `${targetDetail} (${targetCategory})`);
+  }
+
   const [namespace] = getNamespaceAndName(packageJson);
   const isEsm = packageJson.type === 'module';
 
@@ -67,10 +67,11 @@ export async function build(
   if (argv.verbose) {
     process.env.BUILD_TS_VERBOSE = '1';
   }
-  process.env.BUILD_TS_TARGET = target;
+  process.env.BUILD_TS_TARGET_CATEGORY = targetCategory;
+  process.env.BUILD_TS_TARGET_DETAIL = targetDetail;
 
   let outputOptionsList: OutputOptions[];
-  if (target === 'node' || target === 'functions') {
+  if (targetDetail === 'app-node' || targetDetail === 'functions') {
     packageJson.main = isEsm ? 'index.mjs' : 'index.cjs';
     outputOptionsList = [
       {
@@ -109,23 +110,57 @@ export async function build(
     process.chdir(packageDirPath);
     const [_bundle] = await Promise.all([
       rollup({
-        input: argv.input ? path.join(cwd, argv.input) : path.join(packageDirPath, path.join('src', 'index.ts')),
-        plugins: createPlugins(argv, target, packageJson, namespace, cwd),
+        input,
+        plugins: createPlugins(argv, targetDetail, packageJson, namespace, cwd),
       }),
       fs.promises.rm(path.join(packageDirPath, 'dist'), { recursive: true, force: true }),
     ]);
     bundle = _bundle;
 
     await Promise.all(outputOptionsList.map((opts) => _bundle.write(opts)));
-    if (target === 'functions') {
+    if (targetDetail === 'functions') {
       packageJson.name += '-dist';
       delete packageJson.devDependencies;
       await fs.promises.writeFile(path.join(packageDirPath, 'dist', 'package.json'), JSON.stringify(packageJson));
     }
   } catch (error) {
     buildFailed = true;
-    console.error('Filed to index due to:', error);
+    console.error('Failed to build due to:', error);
   }
   await bundle?.close();
   if (buildFailed) process.exit(1);
+}
+
+function verifyInput(argv: InferredOptionTypes<typeof builder>, cwd: string, packageDirPath: string): string {
+  if (argv.input) return path.join(cwd, argv.input);
+
+  let input = path.join(packageDirPath, path.join('src', 'index.ts'));
+  if (fs.existsSync(input)) return input;
+
+  input = path.join(packageDirPath, path.join('src', 'index.tsx'));
+  if (fs.existsSync(input)) return input;
+
+  console.error('Failed to detect input file.');
+  process.exit(1);
+}
+
+function detectTargetDetail(targetCategory: string, input: string): TargetDetail {
+  switch (targetCategory) {
+    case 'app': {
+      return 'app-node';
+    }
+    case 'functions': {
+      return 'functions';
+    }
+    case 'lib': {
+      if (input.endsWith('.tsx')) {
+        return 'lib-react';
+      }
+      return 'lib';
+    }
+    default: {
+      console.error('target option must be one of: ' + allTargetCategories.join(', '));
+      process.exit(1);
+    }
+  }
 }

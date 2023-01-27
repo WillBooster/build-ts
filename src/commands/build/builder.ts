@@ -1,6 +1,6 @@
 export const builder = {
   input: {
-    description: 'A file path of main source code. Default value is "src/index.ts" from package directory.',
+    description: 'A file path of main source code. Default value is "src/index.{ts,tsx}" from package directory.',
     type: 'string',
     alias: 'i',
   },
