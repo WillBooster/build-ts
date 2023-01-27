@@ -6,12 +6,12 @@ import { describe, expect, it } from 'vitest';
 describe(
   'build',
   () => {
-    it('app-node', async () => {
-      await buildAndRun('app-node', 'app');
+    it.concurrent('app-node', async () => {
+      await buildAndRunApp('app-node', 'app');
     });
 
-    it('functions', async () => {
-      await buildAndRun('functions', 'functions');
+    it.concurrent('functions', async () => {
+      await buildAndRunApp('functions', 'functions');
       const packageJson = await fs.promises.readFile(`test-fixtures/functions/dist/package.json`, 'utf8');
       expect(packageJson).to.includes('lodash.chunk');
       expect(packageJson).to.not.includes('lodash.compact');
@@ -19,31 +19,22 @@ describe(
       expect(packageJson).to.includes('"main":"index.cjs"');
     });
 
-    it('lib', async () => {
-      await build('lib', 'lib');
-
-      const dirName = 'lib';
-      const [cjsCode, esmCode] = await Promise.all([
-        fs.promises.readFile(`test-fixtures/${dirName}/dist/cjs/index.cjs`, 'utf8'),
-        fs.promises.readFile(`test-fixtures/${dirName}/dist/esm/index.mjs`, 'utf8'),
-      ]);
-      expect(cjsCode).to.includes('lodash/chunk');
-      expect(esmCode).to.includes('lodash/chunk');
-      const execRet = await spawnAsync('node', ['dist/cjs/index.cjs'], { cwd: `test-fixtures/${dirName}` });
+    it.concurrent('lib', async () => {
+      await buildLib('lib');
+      const execRet = await spawnAsync('node', ['dist/cjs/index.cjs'], { cwd: `test-fixtures/lib` });
       expect(execRet.status).toBe(0);
+    });
+
+    it.concurrent('lib-react', async () => {
+      await buildLib('lib-react');
     });
   },
   { timeout: 60_000 }
 );
 
-async function build(dirName: string, subCommand: string): Promise<void> {
-  await spawnAsync('yarn', [], { cwd: `test-fixtures/${dirName}`, stdio: 'ignore' });
-  const buildRet = await spawnAsync('yarn', ['start', subCommand, `test-fixtures/${dirName}`], { stdio: 'ignore' });
-  expect(buildRet.status).toBe(0);
-}
+async function buildAndRunApp(dirName: string, subCommand: string): Promise<void> {
+  await buildWithCommand(dirName, subCommand);
 
-async function buildAndRun(dirName: string, subCommand: string): Promise<void> {
-  await build(dirName, subCommand);
   const [code] = await Promise.all([
     fs.promises.readFile(`test-fixtures/${dirName}/dist/index.cjs`, 'utf8'),
     fs.promises.rm(`test-fixtures/${dirName}/node_modules/lodash.compact`, { recursive: true, force: true }),
@@ -53,4 +44,21 @@ async function buildAndRun(dirName: string, subCommand: string): Promise<void> {
   expect(code).to.includes('lodash/concat');
   const execRet = await spawnAsync('node', ['dist/index.cjs'], { cwd: `test-fixtures/${dirName}` });
   expect(execRet.status).toBe(0);
+}
+
+async function buildLib(dirName: string): Promise<void> {
+  await buildWithCommand(dirName, 'lib');
+
+  const [cjsCode, esmCode] = await Promise.all([
+    fs.promises.readFile(`test-fixtures/${dirName}/dist/cjs/index.cjs`, 'utf8'),
+    fs.promises.readFile(`test-fixtures/${dirName}/dist/esm/index.mjs`, 'utf8'),
+  ]);
+  expect(cjsCode).to.includes('lodash/chunk');
+  expect(esmCode).to.includes('lodash/chunk');
+}
+
+async function buildWithCommand(dirName: string, subCommand: string): Promise<void> {
+  await spawnAsync('yarn', [], { cwd: `test-fixtures/${dirName}`, stdio: 'ignore' });
+  const buildRet = await spawnAsync('yarn', ['start', subCommand, `test-fixtures/${dirName}`], { stdio: 'ignore' });
+  expect(buildRet.status).toBe(0);
 }

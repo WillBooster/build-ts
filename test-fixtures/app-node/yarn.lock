@@ -5,18 +5,10 @@ __metadata:
   version: 7
   cacheKey: 9
 
-"@types/lodash@npm:4.14.191":
-  version: 4.14.191
-  resolution: "@types/lodash@npm:4.14.191"
-  checksum: e8762fec34eec79828b6b1e08243e25703bfad1b53a7032c0293b69f51d222c0a36ae08d3588ab8147c6a3f478096e02186a860b909cdbe29c7c745cefea2442
-  languageName: node
-  linkType: hard
-
 "app-node@workspace:.":
   version: 0.0.0-use.local
   resolution: "app-node@workspace:."
   dependencies:
-    "@types/lodash": "npm:4.14.191"
     lodash.chunk: "npm:4.2.0"
     lodash.compact: "npm:3.0.1"
     lodash.concat: "npm:4.5.0"
