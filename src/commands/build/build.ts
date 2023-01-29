@@ -7,24 +7,24 @@ import type { CommandModule, InferredOptionTypes } from 'yargs';
 import { allTargetCategories, TargetCategory, TargetDetail } from '../../types.js';
 import { getNamespaceAndName, readPackageJson } from '../../utils.js';
 
-import { builder } from './builder.js';
+import { appBuilder, builder } from './builder.js';
 import { createPlugins } from './plugin.js';
 
-export const app: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
+export const app: CommandModule<unknown, InferredOptionTypes<typeof appBuilder>> = {
   command: 'app [package]',
   describe: 'Build an app',
-  builder,
+  builder: appBuilder,
   async handler(argv) {
-    return build(argv, 'app', argv.package);
+    return build(argv, 'app', argv.package, argv.moduleType);
   },
 };
 
-export const functions: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
+export const functions: CommandModule<unknown, InferredOptionTypes<typeof appBuilder>> = {
   command: 'functions [package]',
   describe: 'Build a GCP/Firebase functions app',
-  builder,
+  builder: appBuilder,
   async handler(argv) {
-    return build(argv, 'functions', argv.package);
+    return build(argv, 'functions', argv.package, argv.moduleType);
   },
 };
 
@@ -40,7 +40,8 @@ export const lib: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
 export async function build(
   argv: InferredOptionTypes<typeof builder>,
   targetCategory: TargetCategory,
-  relativePackageDirPath?: unknown
+  relativePackageDirPath?: unknown,
+  moduleType?: string
 ): Promise<void> {
   const cwd = process.cwd();
 
@@ -59,7 +60,7 @@ export async function build(
   }
 
   const [namespace] = getNamespaceAndName(packageJson);
-  const isEsm = packageJson.type === 'module';
+  const isEsm = moduleType === 'esm' || packageJson.type === 'module';
 
   if (argv['core-js']) {
     process.env.BUILD_TS_COREJS = '1';
