@@ -38,3 +38,12 @@ export const builder = {
     type: 'array',
   },
 } as const;
+
+export const appBuilder = {
+  ...builder,
+  moduleType: {
+    description: 'esm or cjs. Automatically detected by default.',
+    type: 'string',
+    alias: 'm',
+  },
+} as const;
