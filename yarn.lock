@@ -3239,7 +3239,7 @@ __metadata:
     core-js: "npm:3.27.2"
     core-js-pure: "npm:3.27.2"
     dotenv: "npm:16.0.3"
-    eslint: "npm:8.32.0"
+    eslint: "npm:8.33.0"
     eslint-config-prettier: "npm:8.6.0"
     eslint-import-resolver-typescript: "npm:3.5.3"
     eslint-plugin-import: "npm:2.27.5"
@@ -4497,9 +4497,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint@npm:8.32.0":
-  version: 8.32.0
-  resolution: "eslint@npm:8.32.0"
+"eslint@npm:8.33.0":
+  version: 8.33.0
+  resolution: "eslint@npm:8.33.0"
   dependencies:
     "@eslint/eslintrc": "npm:^1.4.1"
     "@humanwhocodes/config-array": "npm:^0.11.8"
@@ -4542,7 +4542,7 @@ __metadata:
     text-table: "npm:^0.2.0"
   bin:
     eslint: bin/eslint.js
-  checksum: cc00214baef7655ccf19f65017910e6f24786958a19f481fbbc9595060aad7437646ffde1d123d13aef60a0ff61ab09573bff0319679d632e87dd1d0f9878c3e
+  checksum: 616877cf98325f619070e6c85b1bb4734fe99202871f5f43cbb9c56b13d7cacf8caa499c61c0a112541067be3b6143cd0497d1319950a4a1d355adeff8504596
   languageName: node
   linkType: hard
 
@@ -9136,11 +9136,11 @@ __metadata:
 
 "typescript@patch:typescript@npm%3A4.9.4#optional!builtin<compat/typescript>":
   version: 4.9.4
-  resolution: "typescript@patch:typescript@npm%3A4.9.4#optional!builtin<compat/typescript>::version=4.9.4&hash=ad5954"
+  resolution: "typescript@patch:typescript@npm%3A4.9.4#optional!builtin<compat/typescript>::version=4.9.4&hash=23ec76"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: e7321aeb1e2c0e3c19599808707208e2b730de8d17a5624f0a7297b9a1ffa39974edd4a819108b3b635bc00171476ddfa339e04d928a03ce8d8c6944cb8ec008
+  checksum: 8944d2310e83395ea5b50a4f3d12fbd8f834a9fd8b0b9a2316f24e78890b04d0015a434d8d825a84971caf3c4bd0d52c79f38d3dce80e05a1892dc9f7fa611f8
   languageName: node
   linkType: hard
 
