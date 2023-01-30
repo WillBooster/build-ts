@@ -5,6 +5,7 @@ import { app, functions, lib } from './commands/build/build.js';
 import { run } from './commands/run.js';
 
 await yargs(hideBin(process.argv))
+  .scriptName('build-ts')
   .command(app)
   .command(functions)
   .command(lib)
