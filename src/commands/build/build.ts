@@ -1,7 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { OutputOptions, rollup, RollupBuild } from 'rollup';
+import chalk from 'chalk';
+import dateTime from 'date-time';
+import ms from 'pretty-ms';
+import { OutputOptions, rollup, watch, RollupBuild, RollupOptions } from 'rollup';
+import onExit from 'signal-exit';
 import { PackageJson } from 'type-fest';
 import type { CommandModule, InferredOptionTypes } from 'yargs';
 
@@ -10,6 +14,7 @@ import { getNamespaceAndName, readPackageJson } from '../../utils.js';
 
 import { appBuilder, builder, functionsBuilder } from './builder.js';
 import { createPlugins } from './plugin.js';
+import { handleError, stdout, stderr } from './rollupLogger.js';
 
 export const app: CommandModule<unknown, InferredOptionTypes<typeof appBuilder>> = {
   command: 'app [package]',
@@ -29,7 +34,7 @@ export const functions: CommandModule<unknown, InferredOptionTypes<typeof functi
       const packageDirPath = path.resolve(argv.package?.toString() ?? '.');
       const packageJson = await readPackageJson(packageDirPath);
       if (!packageJson) {
-        console.error('Failed to parse package.json.');
+        stderr('Failed to parse package.json.');
         process.exit(1);
       }
       await generatePackageJsonForFunctions(packageDirPath, packageJson);
@@ -54,20 +59,22 @@ export async function build(
   relativePackageDirPath?: unknown,
   moduleType?: string
 ): Promise<void> {
+  // `silent` is stronger than `verbose`.
+  const verbose = !argv.silent && argv.verbose;
   const cwd = process.cwd();
 
   const packageDirPath = path.resolve(relativePackageDirPath?.toString() ?? '.');
   const packageJson = await readPackageJson(packageDirPath);
   if (!packageJson) {
-    console.error('Failed to parse package.json.');
+    stderr('Failed to parse package.json.');
     process.exit(1);
   }
 
   const input = verifyInput(argv, cwd, packageDirPath);
   const targetDetail = detectTargetDetail(targetCategory, input);
 
-  if (argv.verbose) {
-    console.info('Target (Category):', `${targetDetail} (${targetCategory})`);
+  if (verbose) {
+    stdout('Target (Category):', `${targetDetail} (${targetCategory})`);
   }
 
   const [namespace] = getNamespaceAndName(packageJson);
@@ -76,7 +83,7 @@ export async function build(
   if (argv['core-js']) {
     process.env.BUILD_TS_COREJS = '1';
   }
-  if (argv.verbose) {
+  if (verbose) {
     process.env.BUILD_TS_VERBOSE = '1';
   }
   process.env.BUILD_TS_TARGET_CATEGORY = targetCategory;
@@ -108,38 +115,130 @@ export async function build(
       },
     ];
   }
-  if (argv.verbose) {
-    console.info('OutputOptions:', outputOptionsList);
+  if (verbose) {
+    stdout('OutputOptions:', outputOptionsList);
   }
   if (outputOptionsList.length === 0) {
-    console.error('Failed to detect output files.');
+    stderr('Failed to detect output files.');
     process.exit(1);
   }
 
-  let bundle: RollupBuild | undefined;
-  let buildFailed = false;
-  try {
-    process.chdir(packageDirPath);
-    const [_bundle] = await Promise.all([
-      rollup({
-        input,
-        plugins: createPlugins(argv, targetDetail, packageJson, namespace, cwd),
-        watch: argv.watch ? { clearScreen: false } : undefined,
-      }),
-      fs.promises.rm(path.join(packageDirPath, 'dist'), { recursive: true, force: true }),
-    ]);
-    bundle = _bundle;
-
-    await Promise.all(outputOptionsList.map((opts) => _bundle.write(opts)));
-    if (targetDetail === 'functions') {
-      await generatePackageJsonForFunctions(packageDirPath, packageJson);
-    }
-  } catch (error) {
-    buildFailed = true;
-    console.error('Failed to build due to:', error);
+  process.chdir(packageDirPath);
+  if (targetDetail === 'functions') {
+    await generatePackageJsonForFunctions(packageDirPath, packageJson);
   }
-  await bundle?.close();
-  if (buildFailed) process.exit(1);
+
+  const options: RollupOptions = {
+    input,
+    plugins: createPlugins(argv, targetDetail, packageJson, namespace, cwd),
+    watch: argv.watch ? { clearScreen: false } : undefined,
+  };
+
+  const mapToRelatives = (paths: string | Readonly<string[]>): string[] =>
+    (Array.isArray(paths) ? paths : [paths]).map((p) => path.relative(packageDirPath, p));
+  if (argv.watch) {
+    const watcher = watch({ ...options, output: outputOptionsList });
+
+    const close = async (code: number | null): Promise<void> => {
+      process.removeListener('uncaughtException', close);
+      process.stdin.removeListener('end', close);
+      if (watcher) await watcher.close();
+      if (code) process.exit(code);
+    };
+    onExit(close);
+    process.on('uncaughtException', close);
+    if (!process.stdin.isTTY) {
+      process.stdin.on('end', close);
+      process.stdin.resume();
+    }
+
+    watcher.on('event', (event) => {
+      switch (event.code) {
+        case 'ERROR': {
+          handleError(event.error, true);
+          break;
+        }
+        case 'BUNDLE_START': {
+          if (argv.silent) break;
+
+          const eventInput = event.input;
+          const inputFiles: string[] = [];
+          if (typeof eventInput === 'string') {
+            inputFiles.push(eventInput);
+          } else {
+            inputFiles.push(
+              ...(Array.isArray(eventInput) ? eventInput : Object.values(eventInput as Record<string, string>))
+            );
+          }
+          stdout(
+            chalk.cyan(
+              `Bundles ${chalk.bold(mapToRelatives(inputFiles).join(', '))} → ${chalk.bold(
+                mapToRelatives(event.output).join(', ')
+              )}\non ${packageDirPath} ...`
+            )
+          );
+          break;
+        }
+        case 'BUNDLE_END': {
+          if (argv.silent) break;
+
+          stdout(
+            chalk.green(
+              `Created ${chalk.bold(mapToRelatives(event.output).join(', '))} in ${chalk.bold(ms(event.duration))}`
+            )
+          );
+          break;
+        }
+        case 'END': {
+          if (argv.silent) break;
+
+          stdout(`\n[${dateTime()}] waiting for changes...`);
+          break;
+        }
+      }
+
+      if ('result' in event && event.result) {
+        event.result.close();
+      }
+    });
+  } else {
+    if (!argv.silent) {
+      stdout(
+        chalk.cyan(
+          `Bundles ${chalk.bold(mapToRelatives(input).join(', '))} → ${chalk.bold(
+            mapToRelatives(outputOptionsList.map((opts) => opts.file || opts.dir || '')).join(', ')
+          )}\non ${packageDirPath} ...`
+        )
+      );
+    }
+
+    let bundle: RollupBuild | undefined;
+    let buildFailed = false;
+    try {
+      const startTime = Date.now();
+      const [_bundle] = await Promise.all([
+        rollup(options),
+        fs.promises.rm(path.join(packageDirPath, 'dist'), { recursive: true, force: true }),
+      ]);
+      bundle = _bundle;
+      await Promise.all(outputOptionsList.map((opts) => _bundle.write(opts)));
+
+      if (!argv.silent) {
+        stdout(
+          chalk.green(
+            `Created ${mapToRelatives(outputOptionsList.map((opts) => opts.file || opts.dir || '')).join(
+              ', '
+            )} in ${chalk.bold(ms(Date.now() - startTime))}`
+          )
+        );
+      }
+    } catch (error) {
+      buildFailed = true;
+      stderr('Failed to build due to:', error);
+    }
+    await bundle?.close();
+    if (buildFailed) process.exit(1);
+  }
 }
 
 function verifyInput(argv: InferredOptionTypes<typeof builder>, cwd: string, packageDirPath: string): string {
@@ -151,7 +250,7 @@ function verifyInput(argv: InferredOptionTypes<typeof builder>, cwd: string, pac
   input = path.join(packageDirPath, path.join('src', 'index.tsx'));
   if (fs.existsSync(input)) return input;
 
-  console.error('Failed to detect input file.');
+  stderr('Failed to detect input file.');
   process.exit(1);
 }
 
@@ -170,7 +269,7 @@ function detectTargetDetail(targetCategory: string, input: string): TargetDetail
       return 'lib';
     }
     default: {
-      console.error('target option must be one of: ' + allTargetCategories.join(', '));
+      stderr('target option must be one of: ' + allTargetCategories.join(', '));
       process.exit(1);
     }
   }
@@ -179,5 +278,6 @@ function detectTargetDetail(targetCategory: string, input: string): TargetDetail
 async function generatePackageJsonForFunctions(packageDirPath: string, packageJson: PackageJson): Promise<void> {
   packageJson.name += '-dist';
   delete packageJson.devDependencies;
+  await fs.promises.mkdir(path.join(packageDirPath, 'dist'), { recursive: true });
   await fs.promises.writeFile(path.join(packageDirPath, 'dist', 'package.json'), JSON.stringify(packageJson));
 }

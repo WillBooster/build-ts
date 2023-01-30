@@ -42,6 +42,11 @@ export const builder = {
     type: 'boolean',
     alias: 'w',
   },
+  silent: {
+    description: 'Whether watch mode is enabled or not',
+    type: 'boolean',
+    alias: 's',
+  },
 } as const;
 
 export const appBuilder = {

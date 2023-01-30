@@ -2503,6 +2503,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/signal-exit@npm:^3":
+  version: 3.0.1
+  resolution: "@types/signal-exit@npm:3.0.1"
+  checksum: b38768eae140724c1c563603f67f1de8dda76224d7b59a7956d8d7fc757d7ab141131694c2b200d7aafda720de3c740e5a2eda08ec804ad1fb10e8d6ce166458
+  languageName: node
+  linkType: hard
+
 "@types/ua-parser-js@npm:^0.7.36":
   version: 0.7.36
   resolution: "@types/ua-parser-js@npm:0.7.36"
@@ -3225,6 +3232,7 @@ __metadata:
     "@types/babel__preset-env": "npm:7.9.2"
     "@types/eslint": "npm:8.4.10"
     "@types/node": "npm:18.11.18"
+    "@types/signal-exit": "npm:^3"
     "@types/yargs": "npm:17.0.20"
     "@typescript-eslint/eslint-plugin": "npm:5.49.0"
     "@typescript-eslint/parser": "npm:5.49.0"
@@ -3235,9 +3243,11 @@ __metadata:
     "@willbooster/shared-lib": "npm:1.8.1"
     babel-plugin-polyfill-corejs3: "npm:0.6.0"
     babel-plugin-transform-remove-console: "npm:6.9.4"
+    chalk: "npm:5.2.0"
     conventional-changelog-conventionalcommits: "npm:5.0.0"
     core-js: "npm:3.27.2"
     core-js-pure: "npm:3.27.2"
+    date-time: "npm:4.0.0"
     dotenv: "npm:16.0.3"
     eslint: "npm:8.33.0"
     eslint-config-prettier: "npm:8.6.0"
@@ -3251,12 +3261,14 @@ __metadata:
     micromatch: "npm:4.0.5"
     pinst: "npm:3.0.0"
     prettier: "npm:2.8.3"
+    pretty-ms: "npm:8.0.0"
     rollup: "npm:3.11.0"
     rollup-plugin-analyzer: "npm:4.0.0"
     rollup-plugin-node-externals: "npm:5.1.0"
     rollup-plugin-string: "npm:3.0.0"
     rollup-plugin-ts: "npm:3.2.0"
     semantic-release: "npm:20.1.0"
+    signal-exit: "npm:3.0.7"
     sort-package-json: "npm:2.2.0"
     ts-node: "npm:10.9.1"
     type-fest: "npm:3.5.3"
@@ -3386,6 +3398,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chalk@npm:5.2.0, chalk@npm:^5.0.0":
+  version: 5.2.0
+  resolution: "chalk@npm:5.2.0"
+  checksum: c3c31253b9cb445ca917aab30767282a1c1951fb8d60e1e8389a3d6434eee296dae28a2b02871c89a866ed7e560438aaea4c5d290242e5fb50b5eda2b4ea4061
+  languageName: node
+  linkType: hard
+
 "chalk@npm:^2.0.0, chalk@npm:^2.3.2":
   version: 2.4.2
   resolution: "chalk@npm:2.4.2"
@@ -3404,13 +3423,6 @@ __metadata:
     ansi-styles: "npm:^4.1.0"
     supports-color: "npm:^7.1.0"
   checksum: cb96ab47eb1b55525e72caac9eed1513bff28e686df7eee6b04379c80922df21c8283d9938af16a645826c94c9e19fb52ad63cbead6b5073d08ae5f8fa2661a2
-  languageName: node
-  linkType: hard
-
-"chalk@npm:^5.0.0":
-  version: 5.2.0
-  resolution: "chalk@npm:5.2.0"
-  checksum: c3c31253b9cb445ca917aab30767282a1c1951fb8d60e1e8389a3d6434eee296dae28a2b02871c89a866ed7e560438aaea4c5d290242e5fb50b5eda2b4ea4061
   languageName: node
   linkType: hard
 
@@ -3834,6 +3846,15 @@ __metadata:
   bin:
     cssesc: bin/cssesc
   checksum: 5e8fcfb6a0fa7f9c05fd6d5a6a6580586310c7dd85c3938e1f199736fd392a9317998e639fde58f63ea786ff1bae5078d6342321c1deddab595fc5bf1764e66e
+  languageName: node
+  linkType: hard
+
+"date-time@npm:4.0.0":
+  version: 4.0.0
+  resolution: "date-time@npm:4.0.0"
+  dependencies:
+    time-zone: "npm:^2.0.0"
+  checksum: 11edfafb9d6a88cf926c55f1e1458e764c31d82f2b12d3c5d28213d137e6c50f142856b8db49fcfdc7d656aec47aec21dcda3f169e0b9825c250bea3b571e28f
   languageName: node
   linkType: hard
 
@@ -7406,6 +7427,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"parse-ms@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "parse-ms@npm:3.0.0"
+  checksum: 897479c5075013613687435328af0a14a2b8ce60a35c722201da07ac1aea9e1dd17462571b0e3239d29f89b1ed0c377209eca61e6aba548bd9f8e1174cd3c090
+  languageName: node
+  linkType: hard
+
 "path-exists@npm:^3.0.0":
   version: 3.0.0
   resolution: "path-exists@npm:3.0.0"
@@ -7588,6 +7616,15 @@ __metadata:
     ansi-styles: "npm:^5.0.0"
     react-is: "npm:^17.0.1"
   checksum: 757aecacd25b827c5985ae3fe24fac52910b9f56898319f020f4278b788016a25b12bcbd40fe44c466ee68791f11670e2152969b87b292c410f8e7280ca99aef
+  languageName: node
+  linkType: hard
+
+"pretty-ms@npm:8.0.0":
+  version: 8.0.0
+  resolution: "pretty-ms@npm:8.0.0"
+  dependencies:
+    parse-ms: "npm:^3.0.0"
+  checksum: 35b39c20ee7ca8128f6796741b6ac3fd76fc7e2510d99bebf754b9885a60dc28fcf869205cab81c6e3089606534e0b586340846d830ddad0b076b08714277b9e
   languageName: node
   linkType: hard
 
@@ -8353,7 +8390,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"signal-exit@npm:^3.0.2, signal-exit@npm:^3.0.3, signal-exit@npm:^3.0.7":
+"signal-exit@npm:3.0.7, signal-exit@npm:^3.0.2, signal-exit@npm:^3.0.3, signal-exit@npm:^3.0.7":
   version: 3.0.7
   resolution: "signal-exit@npm:3.0.7"
   checksum: 5cf7525c55a72d8d104d914acf2e470f74b2c156197277ad7b331bc5de3d8790170fed3c82ff98c7c31adaa8ff941bfd5ba44f55171cbe8ed0e939fa82a8322a
@@ -8877,6 +8914,13 @@ __metadata:
   version: 2.3.8
   resolution: "through@npm:2.3.8"
   checksum: c9d6883ace26b3c967283827cafdd4ceee6164fa4d3754865f5032dcb564e0cbdea9dc6f43806afa51e1f2863d8e3beca141cbf7b8dcff989982aef69bb851c0
+  languageName: node
+  linkType: hard
+
+"time-zone@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "time-zone@npm:2.0.0"
+  checksum: 7fd5905e65def9fd6774a8b0be637ac8823285628bfaaa759852305c84c929a398da0e30a70cf41d301e30cf87946065dbf742332c6f816ffdbbad15891ee588
   languageName: node
   linkType: hard
 
