@@ -37,6 +37,11 @@ export const builder = {
     description: '.env files to be inlined.',
     type: 'array',
   },
+  watch: {
+    description: 'Whether watch mode is enabled or not',
+    type: 'boolean',
+    alias: 'w',
+  },
 } as const;
 
 export const appBuilder = {
@@ -45,5 +50,13 @@ export const appBuilder = {
     description: 'esm or cjs. Automatically detected by default.',
     type: 'string',
     alias: 'm',
+  },
+} as const;
+
+export const functionsBuilder = {
+  ...appBuilder,
+  onlyPackageJson: {
+    description: 'Whether to generate only package.json.',
+    type: 'boolean',
   },
 } as const;

@@ -2,12 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { OutputOptions, rollup, RollupBuild } from 'rollup';
+import { PackageJson } from 'type-fest';
 import type { CommandModule, InferredOptionTypes } from 'yargs';
 
 import { allTargetCategories, TargetCategory, TargetDetail } from '../../types.js';
 import { getNamespaceAndName, readPackageJson } from '../../utils.js';
 
-import { appBuilder, builder } from './builder.js';
+import { appBuilder, builder, functionsBuilder } from './builder.js';
 import { createPlugins } from './plugin.js';
 
 export const app: CommandModule<unknown, InferredOptionTypes<typeof appBuilder>> = {
@@ -19,12 +20,22 @@ export const app: CommandModule<unknown, InferredOptionTypes<typeof appBuilder>>
   },
 };
 
-export const functions: CommandModule<unknown, InferredOptionTypes<typeof appBuilder>> = {
+export const functions: CommandModule<unknown, InferredOptionTypes<typeof functionsBuilder>> = {
   command: 'functions [package]',
   describe: 'Build a GCP/Firebase functions app',
-  builder: appBuilder,
+  builder: functionsBuilder,
   async handler(argv) {
-    return build(argv, 'functions', argv.package, argv.moduleType);
+    if (argv.onlyPackageJson) {
+      const packageDirPath = path.resolve(argv.package?.toString() ?? '.');
+      const packageJson = await readPackageJson(packageDirPath);
+      if (!packageJson) {
+        console.error('Failed to parse package.json.');
+        process.exit(1);
+      }
+      await generatePackageJsonForFunctions(packageDirPath, packageJson);
+    } else {
+      return build(argv, 'functions', argv.package, argv.moduleType);
+    }
   },
 };
 
@@ -113,6 +124,7 @@ export async function build(
       rollup({
         input,
         plugins: createPlugins(argv, targetDetail, packageJson, namespace, cwd),
+        watch: argv.watch ? { clearScreen: false } : undefined,
       }),
       fs.promises.rm(path.join(packageDirPath, 'dist'), { recursive: true, force: true }),
     ]);
@@ -120,9 +132,7 @@ export async function build(
 
     await Promise.all(outputOptionsList.map((opts) => _bundle.write(opts)));
     if (targetDetail === 'functions') {
-      packageJson.name += '-dist';
-      delete packageJson.devDependencies;
-      await fs.promises.writeFile(path.join(packageDirPath, 'dist', 'package.json'), JSON.stringify(packageJson));
+      await generatePackageJsonForFunctions(packageDirPath, packageJson);
     }
   } catch (error) {
     buildFailed = true;
@@ -164,4 +174,10 @@ function detectTargetDetail(targetCategory: string, input: string): TargetDetail
       process.exit(1);
     }
   }
+}
+
+async function generatePackageJsonForFunctions(packageDirPath: string, packageJson: PackageJson): Promise<void> {
+  packageJson.name += '-dist';
+  delete packageJson.devDependencies;
+  await fs.promises.writeFile(path.join(packageDirPath, 'dist', 'package.json'), JSON.stringify(packageJson));
 }
