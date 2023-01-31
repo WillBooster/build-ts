@@ -5,8 +5,57 @@
 
 An opinionated tool for building a Node.js app and library written in TypeScript.
 
+## Features
+
+- Builder / Bundler (`rollup` wrapper)
+  - [x] `build-ts app`
+    - [x] Bundle TypeScript code as Node.js application
+  - [x] `build-ts functions`
+    - [x] Bundle TypeScript code as GCP/Firebase Functions
+    - [x] Generate optimized `package.json` for Functions
+  - [x] `build-ts lib`
+    - [x] Bundle TypeScript code as Node.js / Pure JavaScript / React Library
+  - [x] Remove `console.log` automatically
+- Executor (`ts-node` wrapper)
+  - [x] `build-ts run <TypeScript file>`
+    - [x] Run TypeScript code as Node.js script
+
 ## Node.js Application
+
+`npx build-ts app [project path]`, e.g.,
+
+```sh
+npx build-ts app test-fixtures/app-node
+# or
+cd test-fixtures/app-node && npx build-ts app
+```
 
 ## Firebase Functions
 
-## Node.js Library
+`npx build-ts functions [project path]`, e.g.,
+
+```sh
+npx build-ts app test-fixtures/functions
+# or
+cd test-fixtures/functions && npx build-ts app
+```
+
+## Node.js / Browser Library
+
+`npx build-ts lib [project path]`, e.g.,
+
+```sh
+npx build-ts lib test-fixtures/lib
+# or
+cd test-fixtures/lib && npx build-ts lib
+```
+
+## React Library
+
+`npx build-ts lib [project path]`, e.g.,
+
+```sh
+npx build-ts lib test-fixtures/lib-react
+# or
+cd test-fixtures/lib-react && npx build-ts lib
+```
