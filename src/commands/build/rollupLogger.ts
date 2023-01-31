@@ -3,14 +3,6 @@ import process from 'node:process';
 import chalk from 'chalk';
 import { RollupError } from 'rollup';
 
-export function stdout(...parameters: readonly unknown[]): void {
-  process.stdout.write(`${parameters.join('')}\n`);
-}
-
-export function stderr(...parameters: readonly unknown[]): void {
-  process.stderr.write(`${parameters.join('')}\n`);
-}
-
 export function handleError(error: RollupError, recover = false): void {
   const name = error.name || (error.cause as Error)?.name;
   const nameSection = name ? `${name}: ` : '';
@@ -38,7 +30,7 @@ export function handleError(error: RollupError, recover = false): void {
   }
 
   outputLines.push('', '');
-  stderr(outputLines.join('\n'));
+  console.error(outputLines.join('\n'));
 
   if (!recover) process.exit(1);
 }

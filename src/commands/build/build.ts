@@ -4,19 +4,19 @@ import path from 'node:path';
 import chalk from 'chalk';
 import dateTime from 'date-time';
 import ms from 'pretty-ms';
-import { OutputOptions, rollup, watch, RollupBuild, RollupOptions } from 'rollup';
+import { OutputOptions, rollup, RollupBuild, RollupOptions, watch } from 'rollup';
 import onExit from 'signal-exit';
 import { PackageJson } from 'type-fest';
-import type { CommandModule, InferredOptionTypes } from 'yargs';
+import type { CommandModule } from 'yargs';
 
-import { allTargetCategories, TargetCategory, TargetDetail } from '../../types.js';
+import { allTargetCategories, ArgumentsType, TargetCategory, TargetDetail } from '../../types.js';
 import { getNamespaceAndName, readPackageJson } from '../../utils.js';
 
 import { appBuilder, builder, functionsBuilder } from './builder.js';
 import { createPlugins } from './plugin.js';
-import { handleError, stdout, stderr } from './rollupLogger.js';
+import { handleError } from './rollupLogger.js';
 
-export const app: CommandModule<unknown, InferredOptionTypes<typeof appBuilder>> = {
+export const app: CommandModule<unknown, ArgumentsType<typeof appBuilder>> = {
   command: 'app [package]',
   describe: 'Build an app',
   builder: appBuilder,
@@ -25,7 +25,7 @@ export const app: CommandModule<unknown, InferredOptionTypes<typeof appBuilder>>
   },
 };
 
-export const functions: CommandModule<unknown, InferredOptionTypes<typeof functionsBuilder>> = {
+export const functions: CommandModule<unknown, ArgumentsType<typeof functionsBuilder>> = {
   command: 'functions [package]',
   describe: 'Build a GCP/Firebase functions app',
   builder: functionsBuilder,
@@ -34,7 +34,7 @@ export const functions: CommandModule<unknown, InferredOptionTypes<typeof functi
       const packageDirPath = path.resolve(argv.package?.toString() ?? '.');
       const packageJson = await readPackageJson(packageDirPath);
       if (!packageJson) {
-        stderr('Failed to parse package.json.');
+        console.error('Failed to parse package.json.');
         process.exit(1);
       }
       await generatePackageJsonForFunctions(packageDirPath, packageJson);
@@ -44,7 +44,7 @@ export const functions: CommandModule<unknown, InferredOptionTypes<typeof functi
   },
 };
 
-export const lib: CommandModule<unknown, InferredOptionTypes<typeof builder>> = {
+export const lib: CommandModule<unknown, ArgumentsType<typeof builder>> = {
   command: 'lib [package]',
   describe: 'Build a Node.js / React library',
   builder,
@@ -54,7 +54,7 @@ export const lib: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
 };
 
 export async function build(
-  argv: InferredOptionTypes<typeof builder>,
+  argv: ArgumentsType<typeof builder>,
   targetCategory: TargetCategory,
   relativePackageDirPath?: unknown,
   moduleType?: string
@@ -66,7 +66,7 @@ export async function build(
   const packageDirPath = path.resolve(relativePackageDirPath?.toString() ?? '.');
   const packageJson = await readPackageJson(packageDirPath);
   if (!packageJson) {
-    stderr('Failed to parse package.json.');
+    console.error('Failed to parse package.json.');
     process.exit(1);
   }
 
@@ -74,7 +74,7 @@ export async function build(
   const targetDetail = detectTargetDetail(targetCategory, input);
 
   if (verbose) {
-    stdout('Target (Category):', `${targetDetail} (${targetCategory})`);
+    console.info('Target (Category):', `${targetDetail} (${targetCategory})`);
   }
 
   const [namespace] = getNamespaceAndName(packageJson);
@@ -116,14 +116,15 @@ export async function build(
     ];
   }
   if (verbose) {
-    stdout('OutputOptions:', outputOptionsList);
+    console.info('OutputOptions:', outputOptionsList);
   }
   if (outputOptionsList.length === 0) {
-    stderr('Failed to detect output files.');
+    console.error('Failed to detect output files.');
     process.exit(1);
   }
 
   process.chdir(packageDirPath);
+  await fs.promises.rm(path.join(packageDirPath, 'dist'), { recursive: true, force: true });
   if (targetDetail === 'functions') {
     await generatePackageJsonForFunctions(packageDirPath, packageJson);
   }
@@ -170,7 +171,7 @@ export async function build(
               ...(Array.isArray(eventInput) ? eventInput : Object.values(eventInput as Record<string, string>))
             );
           }
-          stdout(
+          console.info(
             chalk.cyan(
               `Bundles ${chalk.bold(mapToRelatives(inputFiles).join(', '))} → ${chalk.bold(
                 mapToRelatives(event.output).join(', ')
@@ -182,7 +183,7 @@ export async function build(
         case 'BUNDLE_END': {
           if (argv.silent) break;
 
-          stdout(
+          console.info(
             chalk.green(
               `Created ${chalk.bold(mapToRelatives(event.output).join(', '))} in ${chalk.bold(ms(event.duration))}`
             )
@@ -192,7 +193,7 @@ export async function build(
         case 'END': {
           if (argv.silent) break;
 
-          stdout(`\n[${dateTime()}] waiting for changes...`);
+          console.info(`\n[${dateTime()}] waiting for changes...`);
           break;
         }
       }
@@ -203,7 +204,7 @@ export async function build(
     });
   } else {
     if (!argv.silent) {
-      stdout(
+      console.info(
         chalk.cyan(
           `Bundles ${chalk.bold(mapToRelatives(input).join(', '))} → ${chalk.bold(
             mapToRelatives(outputOptionsList.map((opts) => opts.file || opts.dir || '')).join(', ')
@@ -216,15 +217,12 @@ export async function build(
     let buildFailed = false;
     try {
       const startTime = Date.now();
-      const [_bundle] = await Promise.all([
-        rollup(options),
-        fs.promises.rm(path.join(packageDirPath, 'dist'), { recursive: true, force: true }),
-      ]);
+      const _bundle = await rollup(options);
       bundle = _bundle;
       await Promise.all(outputOptionsList.map((opts) => _bundle.write(opts)));
 
       if (!argv.silent) {
-        stdout(
+        console.info(
           chalk.green(
             `Created ${mapToRelatives(outputOptionsList.map((opts) => opts.file || opts.dir || '')).join(
               ', '
@@ -234,14 +232,14 @@ export async function build(
       }
     } catch (error) {
       buildFailed = true;
-      stderr('Failed to build due to:', error);
+      console.error('Failed to build due to:', error);
     }
     await bundle?.close();
     if (buildFailed) process.exit(1);
   }
 }
 
-function verifyInput(argv: InferredOptionTypes<typeof builder>, cwd: string, packageDirPath: string): string {
+function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDirPath: string): string {
   if (argv.input) return path.join(cwd, argv.input);
 
   let input = path.join(packageDirPath, path.join('src', 'index.ts'));
@@ -250,7 +248,7 @@ function verifyInput(argv: InferredOptionTypes<typeof builder>, cwd: string, pac
   input = path.join(packageDirPath, path.join('src', 'index.tsx'));
   if (fs.existsSync(input)) return input;
 
-  stderr('Failed to detect input file.');
+  console.error('Failed to detect input file.');
   process.exit(1);
 }
 
@@ -269,7 +267,7 @@ function detectTargetDetail(targetCategory: string, input: string): TargetDetail
       return 'lib';
     }
     default: {
-      stderr('target option must be one of: ' + allTargetCategories.join(', '));
+      console.error('target option must be one of: ' + allTargetCategories.join(', '));
       process.exit(1);
     }
   }

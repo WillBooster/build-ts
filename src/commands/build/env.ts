@@ -1,14 +1,12 @@
 import path from 'node:path';
 
 import dotenv from 'dotenv';
-import type { InferredOptionTypes } from 'yargs';
+
+import { ArgumentsType } from '../../types.js';
 
 import type { builder } from './builder.js';
 
-export function loadEnvironmentVariables(
-  argv: InferredOptionTypes<typeof builder>,
-  cwd: string
-): Record<string, string> {
+export function loadEnvironmentVariables(argv: ArgumentsType<typeof builder>, cwd: string): Record<string, string> {
   const envVars: Record<string, string> = {};
   for (const name of (argv.env ?? []).map((e) => e.toString())) {
     if (process.env[name] === undefined) continue;

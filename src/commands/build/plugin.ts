@@ -12,16 +12,15 @@ import { externals } from 'rollup-plugin-node-externals';
 import { string } from 'rollup-plugin-string';
 import ts from 'rollup-plugin-ts';
 import type { PackageJson } from 'type-fest';
-import type { InferredOptionTypes } from 'yargs';
 
-import { TargetDetail } from '../../types.js';
+import { ArgumentsType, TargetDetail } from '../../types.js';
 import { getBuildTsRootPath } from '../../utils.js';
 
 import type { builder } from './builder.js';
 import { loadEnvironmentVariables } from './env.js';
 
 export function createPlugins(
-  argv: InferredOptionTypes<typeof builder>,
+  argv: ArgumentsType<typeof builder>,
   targetDetail: TargetDetail,
   packageJson: PackageJson,
   namespace: string | undefined,
