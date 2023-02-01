@@ -100,15 +100,22 @@ export async function build(
       },
     ];
   } else {
+    // The following import statement causes the following error:
+    // Statement:
+    //   import { usePrevious } from 'react-use';
+    // Error:
+    //   Named export 'usePrevious' not found. The requested module 'react-use' is a CommonJS module,
+    //   which may not support all module.exports as named exports.
+    // Also, we still need split files for tree-shaking even though we import cjs module.
     outputOptionsList = [
       {
-        file: path.join(packageDirPath, 'dist', 'cjs', 'index.cjs'),
+        dir: path.join(packageDirPath, 'dist', 'cjs'),
         format: 'commonjs',
+        preserveModules: true,
         sourcemap: argv.sourcemap,
       },
       {
         dir: path.join(packageDirPath, 'dist', 'esm'),
-        entryFileNames: '[name].mjs',
         format: 'module',
         preserveModules: true,
         sourcemap: argv.sourcemap,
