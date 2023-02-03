@@ -37,11 +37,12 @@ export const run: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
     }
     args.push(file);
     const [, ...additionalArguments] = argv._;
-    child_process.spawnSync('node', [...args, ...additionalArguments.map((arg) => arg.toString())], {
+    const ret = child_process.spawnSync('node', [...args, ...additionalArguments.map((arg) => arg.toString())], {
       shell: true,
       stdio: 'inherit',
       env: { ...process.env, TS_NODE_TRANSPILE_ONLY: '1' },
     });
+    process.exit(ret.status ?? 1);
   },
 };
 
