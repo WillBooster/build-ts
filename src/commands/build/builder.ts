@@ -65,3 +65,17 @@ export const functionsBuilder = {
     type: 'boolean',
   },
 } as const;
+
+export const libBuilder = {
+  ...builder,
+  // .js files in a package with `"type": "module"` are treated as esm.
+  // However, we want to treat them as cjs in the case where a cjs project imports an esm package.
+  // To deal with the case, we use .cjs and .mjs extensions instead of .js extension.
+  jsExtension: {
+    description: 'Whether to use .js extension instead of .cjs and .mjs',
+    type: 'boolean',
+    alias: 'j',
+  },
+} as const;
+
+export type AnyBuilderType = typeof appBuilder | typeof functionsBuilder | typeof libBuilder;

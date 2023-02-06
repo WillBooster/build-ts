@@ -12,7 +12,7 @@ import type { CommandModule } from 'yargs';
 import { allTargetCategories, ArgumentsType, TargetCategory, TargetDetail } from '../../types.js';
 import { getNamespaceAndName, readPackageJson } from '../../utils.js';
 
-import { appBuilder, builder, functionsBuilder } from './builder.js';
+import { AnyBuilderType, appBuilder, builder, functionsBuilder, libBuilder } from './builder.js';
 import { createPlugins } from './plugin.js';
 import { handleError } from './rollupLogger.js';
 
@@ -21,7 +21,7 @@ export const app: CommandModule<unknown, ArgumentsType<typeof appBuilder>> = {
   describe: 'Build an app',
   builder: appBuilder,
   async handler(argv) {
-    return build(argv, 'app', argv.package, argv.moduleType);
+    return build(argv, 'app');
   },
 };
 
@@ -39,31 +39,26 @@ export const functions: CommandModule<unknown, ArgumentsType<typeof functionsBui
       }
       await generatePackageJsonForFunctions(packageDirPath, packageJson);
     } else {
-      return build(argv, 'functions', argv.package, argv.moduleType);
+      return build(argv, 'functions');
     }
   },
 };
 
-export const lib: CommandModule<unknown, ArgumentsType<typeof builder>> = {
+export const lib: CommandModule<unknown, ArgumentsType<typeof libBuilder>> = {
   command: 'lib [package]',
   describe: 'Build a Node.js / React library',
-  builder,
+  builder: libBuilder,
   async handler(argv) {
-    return build(argv, 'lib', argv.package);
+    return build(argv, 'lib');
   },
 };
 
-export async function build(
-  argv: ArgumentsType<typeof builder>,
-  targetCategory: TargetCategory,
-  relativePackageDirPath?: unknown,
-  moduleType?: string
-): Promise<void> {
+export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory: TargetCategory): Promise<void> {
   // `silent` is stronger than `verbose`.
   const verbose = !argv.silent && argv.verbose;
   const cwd = process.cwd();
 
-  const packageDirPath = path.resolve(relativePackageDirPath?.toString() ?? '.');
+  const packageDirPath = path.resolve(argv.package?.toString() ?? '.');
   const packageJson = await readPackageJson(packageDirPath);
   if (!packageJson) {
     console.error('Failed to parse package.json.');
@@ -78,7 +73,7 @@ export async function build(
   }
 
   const [namespace] = getNamespaceAndName(packageJson);
-  const isEsm = moduleType === 'esm' || packageJson.type === 'module';
+  const isEsm = argv.moduleType === 'esm' || packageJson.type === 'module';
 
   if (argv['core-js']) {
     process.env.BUILD_TS_COREJS = '1';
@@ -100,22 +95,25 @@ export async function build(
       },
     ];
   } else {
-    // The following import statement causes the following error:
+    // The following import statement in an esm module causes the following error:
     // Statement:
     //   import { usePrevious } from 'react-use';
     // Error:
     //   Named export 'usePrevious' not found. The requested module 'react-use' is a CommonJS module,
     //   which may not support all module.exports as named exports.
-    // Also, we still need split files for tree-shaking even though we import cjs module.
+    // We need a cjs module to avoid the error.
+    // Also, splitting a library is useful in both cjs and esm modules.
     outputOptionsList = [
       {
         dir: path.join(packageDirPath, 'dist', 'cjs'),
+        entryFileNames: argv.jsExtension ? '[name].js' : '[name].cjs',
         format: 'commonjs',
         preserveModules: true,
         sourcemap: argv.sourcemap,
       },
       {
         dir: path.join(packageDirPath, 'dist', 'esm'),
+        entryFileNames: argv.jsExtension ? '[name].js' : '[name].mjs',
         format: 'module',
         preserveModules: true,
         sourcemap: argv.sourcemap,
