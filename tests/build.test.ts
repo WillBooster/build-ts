@@ -20,13 +20,28 @@ describe(
     });
 
     it.concurrent('lib', async () => {
-      await buildLib('lib');
-      const execRet = await spawnAsync('node', ['dist/cjs/index.js'], { cwd: `test-fixtures/lib` });
+      const dirName = 'lib';
+      await buildWithCommand(dirName, 'lib');
+      const [cjsCode, esmCode] = await Promise.all([
+        fs.promises.readFile(`test-fixtures/${dirName}/dist/cjs/index.cjs`, 'utf8'),
+        fs.promises.readFile(`test-fixtures/${dirName}/dist/esm/index.mjs`, 'utf8'),
+      ]);
+      expect(cjsCode).to.includes('lodash/chunk');
+      expect(esmCode).to.includes('lodash/chunk');
+
+      const execRet = await spawnAsync('node', ['dist/cjs/index.cjs'], { cwd: `test-fixtures/lib` });
       expect(execRet.status).toBe(0);
     });
 
     it.concurrent('lib-react', async () => {
-      await buildLib('lib-react');
+      const dirName = 'lib-react';
+      await buildWithCommand(dirName, 'lib', '-j');
+      const [cjsCode, esmCode] = await Promise.all([
+        fs.promises.readFile(`test-fixtures/${dirName}/dist/cjs/index.js`, 'utf8'),
+        fs.promises.readFile(`test-fixtures/${dirName}/dist/esm/index.js`, 'utf8'),
+      ]);
+      expect(cjsCode).to.includes('lodash/chunk');
+      expect(esmCode).to.includes('lodash/chunk');
     });
   },
   { timeout: 60_000 }
@@ -46,19 +61,10 @@ async function buildAndRunApp(dirName: string, subCommand: string): Promise<void
   expect(execRet.status).toBe(0);
 }
 
-async function buildLib(dirName: string): Promise<void> {
-  await buildWithCommand(dirName, 'lib');
-
-  const [cjsCode, esmCode] = await Promise.all([
-    fs.promises.readFile(`test-fixtures/${dirName}/dist/cjs/index.js`, 'utf8'),
-    fs.promises.readFile(`test-fixtures/${dirName}/dist/esm/index.js`, 'utf8'),
-  ]);
-  expect(cjsCode).to.includes('lodash/chunk');
-  expect(esmCode).to.includes('lodash/chunk');
-}
-
-async function buildWithCommand(dirName: string, subCommand: string): Promise<void> {
+async function buildWithCommand(dirName: string, subCommand: string, ...options: string[]): Promise<void> {
   await spawnAsync('yarn', [], { cwd: `test-fixtures/${dirName}`, stdio: 'ignore' });
-  const buildRet = await spawnAsync('yarn', ['start', subCommand, `test-fixtures/${dirName}`], { stdio: 'ignore' });
+  const buildRet = await spawnAsync('yarn', ['start', subCommand, `test-fixtures/${dirName}`, ...options], {
+    stdio: 'ignore',
+  });
   expect(buildRet.status).toBe(0);
 }
