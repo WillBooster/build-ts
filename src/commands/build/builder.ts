@@ -52,7 +52,7 @@ export const builder = {
 export const appBuilder = {
   ...builder,
   moduleType: {
-    description: 'esm or cjs. Automatically detected by default.',
+    description: 'esm, cjs, or either (default).',
     type: 'string',
     alias: 'm',
   },
@@ -68,12 +68,17 @@ export const functionsBuilder = {
 
 export const libBuilder = {
   ...builder,
+  moduleType: {
+    description: 'esm, cjs, either, or both (default).',
+    type: 'string',
+    alias: 'm',
+  },
   // .js files in a package with `"type": "module"` are treated as esm.
   // However, we want to treat them as cjs in the case where a cjs project imports an esm package.
   // To deal with the case, we use .cjs and .mjs extensions instead of .js extension.
   jsExtension: {
-    description: 'Whether to use .js extension instead of .cjs and .mjs',
-    type: 'boolean',
+    description: 'Whether to use .js in cjs and/or esm: either (default), both, or none.',
+    type: 'string',
     alias: 'j',
   },
 } as const;

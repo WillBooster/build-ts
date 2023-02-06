@@ -73,7 +73,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   }
 
   const [namespace] = getNamespaceAndName(packageJson);
-  const isEsm = argv.moduleType === 'esm' || packageJson.type === 'module';
+  const isEsm = packageJson.type === 'module';
 
   if (argv['core-js']) {
     process.env.BUILD_TS_COREJS = '1';
@@ -86,11 +86,13 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
   let outputOptionsList: OutputOptions[];
   if (targetDetail === 'app-node' || targetDetail === 'functions') {
-    packageJson.main = isEsm ? 'index.mjs' : 'index.cjs';
+    const moduleType = argv.moduleType || 'either';
+    const isEsmOutput = moduleType === 'esm' || (moduleType === 'either' && isEsm);
+    packageJson.main = isEsmOutput ? 'index.mjs' : 'index.cjs';
     outputOptionsList = [
       {
         file: path.join(packageDirPath, 'dist', packageJson.main),
-        format: isEsm ? 'module' : 'commonjs',
+        format: isEsmOutput ? 'module' : 'commonjs',
         sourcemap: argv.sourcemap,
       },
     ];
@@ -101,24 +103,29 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     // Error:
     //   Named export 'usePrevious' not found. The requested module 'react-use' is a CommonJS module,
     //   which may not support all module.exports as named exports.
-    // We need a cjs module to avoid the error.
-    // Also, splitting a library is useful in both cjs and esm modules.
-    outputOptionsList = [
-      {
+    // We need cjs modules for web apps to avoid the error.
+    // Also, splitting a library is useful in both modules, so preserveModules should be true.
+    outputOptionsList = [];
+    const moduleType = argv.moduleType || 'both';
+    const jsExt = argv.jsExtension || 'either';
+    if (moduleType === 'cjs' || moduleType === 'both' || (moduleType === 'either' && !isEsm)) {
+      outputOptionsList.push({
         dir: path.join(packageDirPath, 'dist', 'cjs'),
-        entryFileNames: argv.jsExtension ? '[name].js' : '[name].cjs',
+        entryFileNames: jsExt === 'both' || (jsExt === 'either' && !isEsm) ? '[name].js' : '[name].cjs',
         format: 'commonjs',
         preserveModules: true,
         sourcemap: argv.sourcemap,
-      },
-      {
+      });
+    }
+    if (moduleType === 'esm' || moduleType === 'both' || (moduleType === 'either' && isEsm)) {
+      outputOptionsList.push({
         dir: path.join(packageDirPath, 'dist', 'esm'),
-        entryFileNames: argv.jsExtension ? '[name].js' : '[name].mjs',
+        entryFileNames: jsExt === 'both' || (jsExt === 'either' && isEsm) ? '[name].js' : '[name].mjs',
         format: 'module',
         preserveModules: true,
         sourcemap: argv.sourcemap,
-      },
-    ];
+      });
+    }
   }
   if (verbose) {
     console.info('OutputOptions:', outputOptionsList);
