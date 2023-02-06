@@ -19,9 +19,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"app-node@workspace:.":
+"lib-node@workspace:.":
   version: 0.0.0-use.local
-  resolution: "app-node@workspace:."
+  resolution: "lib-node@workspace:."
   dependencies:
     "@types/lodash": "npm:4.14.191"
     "@types/node": "npm:18.11.18"

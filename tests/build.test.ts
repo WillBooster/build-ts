@@ -21,7 +21,7 @@ describe(
 
     it.concurrent('lib', async () => {
       await buildLib('lib');
-      const execRet = await spawnAsync('node', ['dist/cjs/index.cjs'], { cwd: `test-fixtures/lib` });
+      const execRet = await spawnAsync('node', ['dist/cjs/index.js'], { cwd: `test-fixtures/lib` });
       expect(execRet.status).toBe(0);
     });
 
@@ -50,8 +50,8 @@ async function buildLib(dirName: string): Promise<void> {
   await buildWithCommand(dirName, 'lib');
 
   const [cjsCode, esmCode] = await Promise.all([
-    fs.promises.readFile(`test-fixtures/${dirName}/dist/cjs/index.cjs`, 'utf8'),
-    fs.promises.readFile(`test-fixtures/${dirName}/dist/esm/index.mjs`, 'utf8'),
+    fs.promises.readFile(`test-fixtures/${dirName}/dist/cjs/index.js`, 'utf8'),
+    fs.promises.readFile(`test-fixtures/${dirName}/dist/esm/index.js`, 'utf8'),
   ]);
   expect(cjsCode).to.includes('lodash/chunk');
   expect(esmCode).to.includes('lodash/chunk');
