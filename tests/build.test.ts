@@ -35,7 +35,7 @@ describe(
 
     it.concurrent('lib-react', async () => {
       const dirName = 'lib-react';
-      await buildWithCommand(dirName, 'lib', '-j');
+      await buildWithCommand(dirName, 'lib', '--jsExtension');
       const [cjsCode, esmCode] = await Promise.all([
         fs.promises.readFile(`test-fixtures/${dirName}/dist/cjs/index.js`, 'utf8'),
         fs.promises.readFile(`test-fixtures/${dirName}/dist/esm/index.js`, 'utf8'),
