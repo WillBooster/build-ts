@@ -1,5 +1,5 @@
 {
-  "name": "app-node",
+  "name": "lib-react",
   "packageManager": "yarn@4.0.0-rc.36",
   "dependencies": {
     "lodash.chunk": "4.2.0"

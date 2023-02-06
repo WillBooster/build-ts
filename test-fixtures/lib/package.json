@@ -1,5 +1,5 @@
 {
-  "name": "app-node",
+  "name": "lib-node",
   "packageManager": "yarn@4.0.0-rc.36",
   "devDependencies": {
     "@types/lodash": "4.14.191",
