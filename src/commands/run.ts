@@ -26,7 +26,7 @@ export const run: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
     const file = argv.file?.toString() || '';
     const module = await detectModuleType(file, argv.module);
 
-    const args = ['--no-warnings'];
+    const args = ['--no-warnings', '--experimental-json-modules'];
     if (argv.watch) {
       args.push('--watch');
     }
