@@ -3285,7 +3285,7 @@ __metadata:
     vitest: "npm:0.28.5"
     yargs: "npm:17.6.2"
   bin:
-    build-ts: bin/index.mjs
+    build-ts: bin/index.js
   languageName: unknown
   linkType: soft
 

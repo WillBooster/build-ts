@@ -5,7 +5,7 @@
   "license": "UNLICENSED",
   "author": "WillBooster Inc.",
   "type": "module",
-  "bin": "bin/index.mjs",
+  "bin": "bin/index.js",
   "files": [
     "bin/",
     "dist/",
