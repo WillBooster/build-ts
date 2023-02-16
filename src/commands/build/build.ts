@@ -73,7 +73,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   }
 
   const [namespace] = getNamespaceAndName(packageJson);
-  const isEsm = packageJson.type === 'module';
+  const isEsmPackage = packageJson.type === 'module';
 
   if (argv['core-js']) {
     process.env.BUILD_TS_COREJS = '1';
@@ -87,8 +87,8 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   let outputOptionsList: OutputOptions[];
   if (targetDetail === 'app-node' || targetDetail === 'functions') {
     const moduleType = argv.moduleType || 'either';
-    const isEsmOutput = moduleType === 'esm' || (moduleType === 'either' && isEsm);
-    packageJson.main = isEsmOutput ? 'index.mjs' : 'index.cjs';
+    const isEsmOutput = moduleType === 'esm' || (moduleType === 'either' && isEsmPackage);
+    packageJson.main = isEsmPackage === isEsmOutput ? 'index.js' : isEsmOutput ? 'index.mjs' : 'index.cjs';
     outputOptionsList = [
       {
         file: path.join(packageDirPath, 'dist', packageJson.main),
@@ -108,19 +108,19 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     outputOptionsList = [];
     const moduleType = argv.moduleType || 'both';
     const jsExt = argv.jsExtension || 'either';
-    if (moduleType === 'cjs' || moduleType === 'both' || (moduleType === 'either' && !isEsm)) {
+    if (moduleType === 'cjs' || moduleType === 'both' || (moduleType === 'either' && !isEsmPackage)) {
       outputOptionsList.push({
         dir: path.join(packageDirPath, 'dist', 'cjs'),
-        entryFileNames: jsExt === 'both' || (jsExt === 'either' && !isEsm) ? '[name].js' : '[name].cjs',
+        entryFileNames: jsExt === 'both' || (jsExt === 'either' && !isEsmPackage) ? '[name].js' : '[name].cjs',
         format: 'commonjs',
         preserveModules: true,
         sourcemap: argv.sourcemap,
       });
     }
-    if (moduleType === 'esm' || moduleType === 'both' || (moduleType === 'either' && isEsm)) {
+    if (moduleType === 'esm' || moduleType === 'both' || (moduleType === 'either' && isEsmPackage)) {
       outputOptionsList.push({
         dir: path.join(packageDirPath, 'dist', 'esm'),
-        entryFileNames: jsExt === 'both' || (jsExt === 'either' && isEsm) ? '[name].js' : '[name].mjs',
+        entryFileNames: jsExt === 'both' || (jsExt === 'either' && isEsmPackage) ? '[name].js' : '[name].mjs',
         format: 'module',
         preserveModules: true,
         sourcemap: argv.sourcemap,
