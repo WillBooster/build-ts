@@ -13,7 +13,11 @@ const config = {
     ],
     '@babel/typescript',
   ],
-  plugins: ['@babel/proposal-class-properties', '@babel/proposal-numeric-separator'],
+  plugins: [
+    '@babel/proposal-class-properties',
+    '@babel/proposal-numeric-separator',
+    '@babel/plugin-syntax-import-assertions',
+  ],
   env: {
     production: {
       plugins: [
