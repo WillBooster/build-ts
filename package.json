@@ -75,7 +75,7 @@
     "@willbooster/eslint-config-ts": "10.0.8",
     "@willbooster/prettier-config": "9.1.1",
     "@willbooster/renovate-config": "9.5.0",
-    "@willbooster/shared-lib": "2.2.0",
+    "@willbooster/shared-lib-node": "1.3.0",
     "conventional-changelog-conventionalcommits": "5.0.0",
     "eslint": "8.34.0",
     "eslint-config-prettier": "8.6.0",

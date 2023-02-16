@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-import { spawnAsync } from '@willbooster/shared-lib';
+import { spawnAsync } from '@willbooster/shared-lib-node';
 import { describe, expect, it } from 'vitest';
 
 describe(
