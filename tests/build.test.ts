@@ -16,7 +16,7 @@ describe(
       expect(packageJson).to.includes('lodash.chunk');
       expect(packageJson).to.not.includes('lodash.compact');
       expect(packageJson).to.includes('lodash.concat');
-      expect(packageJson).to.includes('"main":"index.cjs"');
+      expect(packageJson).to.includes('"main":"index.js"');
     });
 
     it.concurrent('lib', async () => {
@@ -51,13 +51,13 @@ async function buildAndRunApp(dirName: string, subCommand: string): Promise<void
   await buildWithCommand(dirName, subCommand);
 
   const [code] = await Promise.all([
-    fs.promises.readFile(`test-fixtures/${dirName}/dist/index.cjs`, 'utf8'),
+    fs.promises.readFile(`test-fixtures/${dirName}/dist/index.js`, 'utf8'),
     fs.promises.rm(`test-fixtures/${dirName}/node_modules/lodash.compact`, { recursive: true, force: true }),
   ]);
   expect(code).to.includes('lodash/chunk');
   expect(code).to.not.includes('lodash/compact');
   expect(code).to.includes('lodash/concat');
-  const execRet = await spawnAsync('node', ['dist/index.cjs'], { cwd: `test-fixtures/${dirName}` });
+  const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: `test-fixtures/${dirName}` });
   expect(execRet.status).toBe(0);
 }
 
