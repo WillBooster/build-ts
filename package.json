@@ -78,7 +78,7 @@
     "@willbooster/shared-lib-node": "1.5.0",
     "conventional-changelog-conventionalcommits": "5.0.0",
     "eslint": "8.35.0",
-    "eslint-config-prettier": "8.6.0",
+    "eslint-config-prettier": "8.7.0",
     "eslint-import-resolver-typescript": "3.5.3",
     "eslint-plugin-import": "2.27.5",
     "eslint-plugin-sort-class-members": "1.16.0",
@@ -94,7 +94,7 @@
     "type-fest": "3.6.1",
     "vitest": "0.29.1"
   },
-  "packageManager": "yarn@4.0.0-rc.39",
+  "packageManager": "yarn@4.0.0-rc.40",
   "engines": {
     "node": ">=16.19.0"
   }
