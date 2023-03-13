@@ -39,7 +39,7 @@ export const run: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
     const [, ...additionalArguments] = argv._;
     const ret = child_process.spawnSync('node', [...args, ...additionalArguments.map((arg) => arg.toString())], {
       stdio: 'inherit',
-      env: { ...process.env, NODE_NO_WARNINGS: '1', TS_NODE_TRANSPILE_ONLY: '1' },
+      env: { ...process.env, NODE_OPTIONS: '--no-warnings', TS_NODE_TRANSPILE_ONLY: '1' },
     });
     process.exit(ret.status ?? 1);
   },
