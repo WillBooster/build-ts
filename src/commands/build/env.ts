@@ -13,8 +13,8 @@ export function loadEnvironmentVariables(argv: ArgumentsType<typeof builder>, cw
 
     envVars[`process.env.${name}`] = JSON.stringify(process.env[name]);
   }
-  for (const dotenvPath of argv.dotenv ?? []) {
-    const parsed = dotenv.config({ path: path.join(cwd, dotenvPath.toString()) }).parsed || {};
+  for (const dotenvPath of (argv.dotenv ?? []).map((e) => e.toString())) {
+    const parsed = dotenv.config({ path: path.join(cwd, dotenvPath) }).parsed || {};
     for (const [key, value] of Object.entries(parsed)) {
       if (value === undefined) continue;
 
