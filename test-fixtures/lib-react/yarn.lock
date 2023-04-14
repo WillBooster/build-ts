@@ -5,10 +5,10 @@ __metadata:
   version: 7
   cacheKey: 9
 
-"@types/lodash@npm:4.14.192":
-  version: 4.14.192
-  resolution: "@types/lodash@npm:4.14.192"
-  checksum: b04e16a4ba1d3a9be73c806214d6ad3ac630afd7bd1222bb5e4ac1d90bbfef1a2e0d6aac3c8733b23bcdfa6f3ebee5817e66df465ada132c2eedc55d31bc45c3
+"@types/lodash@npm:4.14.194":
+  version: 4.14.194
+  resolution: "@types/lodash@npm:4.14.194"
+  checksum: 64473e6735e51c3f8be18ef907a086f5a9c967117270c573d2b8fdc012b067c4de016a7b030abd6170aa5370f5ecbada19e646c82d9feb7403a080d53cfc86f3
   languageName: node
   linkType: hard
 
@@ -19,14 +19,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:18.0.33":
-  version: 18.0.33
-  resolution: "@types/react@npm:18.0.33"
+"@types/react@npm:18.0.35":
+  version: 18.0.35
+  resolution: "@types/react@npm:18.0.35"
   dependencies:
     "@types/prop-types": "npm:*"
     "@types/scheduler": "npm:*"
     csstype: "npm:^3.0.2"
-  checksum: e549b6a44ec7af44b77049ae54a3f08fe9a735806f56e92f49ce79db068defa06e98ee00c6f3ab0882c9d6bd80529f0e425315a5ff6b2acc03453639df899231
+  checksum: 894a5b9060e734b43c78307564bc433eff2ccbb9cd20180a0813eb8aaafa31f74312b3e207f682b8dfb8399b05b0b9fe348d32348a0adc2aa5ddce4bc47e9f8c
   languageName: node
   linkType: hard
 
@@ -55,8 +55,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "lib-react@workspace:."
   dependencies:
-    "@types/lodash": "npm:4.14.192"
-    "@types/react": "npm:18.0.33"
+    "@types/lodash": "npm:4.14.194"
+    "@types/react": "npm:18.0.35"
     lodash.chunk: "npm:4.2.0"
     react: "npm:18.2.0"
   peerDependencies:
