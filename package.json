@@ -5,10 +5,15 @@
   "license": "UNLICENSED",
   "author": "WillBooster Inc.",
   "type": "module",
+  "exports": {
+    "./register": "./exports/register.cjs",
+    "./loader": "./exports/loader.mjs"
+  },
   "bin": "bin/index.js",
   "files": [
     "bin/",
     "dist/",
+    "exports/",
     "babel.*"
   ],
   "scripts": {

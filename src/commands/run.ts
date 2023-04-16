@@ -31,9 +31,9 @@ export const run: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
       args.push('--watch');
     }
     if (module === 'cjs') {
-      args.push('--require', 'ts-node/register');
+      args.push('--require', 'build-ts/register');
     } else {
-      args.push('--loader', 'ts-node/esm');
+      args.push('--loader', 'build-ts/loader');
     }
     args.push(file);
     const [, ...additionalArguments] = argv._;
