@@ -287,6 +287,9 @@ function detectTargetDetail(targetCategory: string, input: string): TargetDetail
 
 async function generatePackageJsonForFunctions(packageDirPath: string, packageJson: PackageJson): Promise<void> {
   packageJson.name += '-dist';
+  // Prevent Firebase Functions from running `build` script since we are building code before deploying.
+  delete packageJson.scripts;
+  // devDependencies are not required since we are building code before deploying.
   delete packageJson.devDependencies;
   await fs.promises.mkdir(path.join(packageDirPath, 'dist'), { recursive: true });
   await fs.promises.writeFile(path.join(packageDirPath, 'dist', 'package.json'), JSON.stringify(packageJson));
