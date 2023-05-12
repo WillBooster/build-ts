@@ -37,7 +37,7 @@ export const functions: CommandModule<unknown, ArgumentsType<typeof functionsBui
         console.error('Failed to parse package.json.');
         process.exit(1);
       }
-      await generatePackageJsonForFunctions(packageDirPath, packageJson);
+      await generatePackageJsonForFunctions(packageDirPath, packageJson, argv.moduleType);
     } else {
       return build(argv, 'functions');
     }
@@ -86,12 +86,10 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
   let outputOptionsList: OutputOptions[];
   if (targetDetail === 'app-node' || targetDetail === 'functions') {
-    const moduleType = argv.moduleType || 'either';
-    const isEsmOutput = moduleType === 'esm' || (moduleType === 'either' && isEsmPackage);
-    packageJson.main = isEsmPackage === isEsmOutput ? 'index.js' : isEsmOutput ? 'index.mjs' : 'index.cjs';
+    const [outputPath, isEsmOutput] = getOutputPathAndIsEsmOutput(isEsmPackage, argv.moduleType);
     outputOptionsList = [
       {
-        file: path.join(packageDirPath, 'dist', packageJson.main),
+        file: path.join(packageDirPath, 'dist', outputPath),
         format: isEsmOutput ? 'module' : 'commonjs',
         sourcemap: argv.sourcemap,
       },
@@ -138,7 +136,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   process.chdir(packageDirPath);
   await fs.promises.rm(path.join(packageDirPath, 'dist'), { recursive: true, force: true });
   if (targetDetail === 'functions') {
-    await generatePackageJsonForFunctions(packageDirPath, packageJson);
+    await generatePackageJsonForFunctions(packageDirPath, packageJson, argv.moduleType);
   }
 
   const options: RollupOptions = {
@@ -285,12 +283,26 @@ function detectTargetDetail(targetCategory: string, input: string): TargetDetail
   }
 }
 
-async function generatePackageJsonForFunctions(packageDirPath: string, packageJson: PackageJson): Promise<void> {
+async function generatePackageJsonForFunctions(
+  packageDirPath: string,
+  packageJson: PackageJson,
+  moduleType: string | undefined
+): Promise<void> {
   packageJson.name += '-dist';
+  const [outputPath] = getOutputPathAndIsEsmOutput(packageJson.type === 'module', moduleType);
+  packageJson.main = outputPath;
+
   // Prevent Firebase Functions from running `build` script since we are building code before deploying.
   delete packageJson.scripts;
   // devDependencies are not required since we are building code before deploying.
   delete packageJson.devDependencies;
+
   await fs.promises.mkdir(path.join(packageDirPath, 'dist'), { recursive: true });
   await fs.promises.writeFile(path.join(packageDirPath, 'dist', 'package.json'), JSON.stringify(packageJson));
+}
+
+function getOutputPathAndIsEsmOutput(isEsmPackage: boolean, moduleType: string | undefined): [string, boolean] {
+  const isEsmOutput = moduleType === 'esm' || ((!moduleType || moduleType === 'either') && isEsmPackage);
+  const outputPath = isEsmPackage === isEsmOutput ? 'index.js' : isEsmOutput ? 'index.mjs' : 'index.cjs';
+  return [outputPath, isEsmOutput];
 }
