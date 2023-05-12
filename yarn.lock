@@ -147,6 +147,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/helper-define-polyfill-provider@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "@babel/helper-define-polyfill-provider@npm:0.4.0"
+  dependencies:
+    "@babel/helper-compilation-targets": "npm:^7.17.7"
+    "@babel/helper-plugin-utils": "npm:^7.16.7"
+    debug: "npm:^4.1.1"
+    lodash.debounce: "npm:^4.0.8"
+    resolve: "npm:^1.14.2"
+    semver: "npm:^6.1.2"
+  peerDependencies:
+    "@babel/core": ^7.4.0-0
+  checksum: 24d14a814f0f09d4d76efb21f00159007f730b3f0496c58f23b7fbe6ac62a84f51b33ba1babfba8617dc4716444e4c0841972e71cc5cc4a7f11cf71e37e98f38
+  languageName: node
+  linkType: hard
+
 "@babel/helper-environment-visitor@npm:^7.18.9, @babel/helper-environment-visitor@npm:^7.21.5":
   version: 7.21.5
   resolution: "@babel/helper-environment-visitor@npm:7.21.5"
@@ -2541,10 +2557,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:18.16.5":
-  version: 18.16.5
-  resolution: "@types/node@npm:18.16.5"
-  checksum: 0c4ad24cc35669dd6ad8c4e7fcb12362235e8be3a8daf1c095ebe0ab4a2cf35f6b2c041808d3c5743eeddb8756b3aac03427868754c4ed90122c3e646af46fc7
+"@types/node@npm:18.16.8":
+  version: 18.16.8
+  resolution: "@types/node@npm:18.16.8"
+  checksum: d53d0a89c2574f08f6ee2fb075404e3fb0a4d94c920dfc7bf45a98c54f5ee5806496782fe70ff3a9eccf8560ac108c2d974fa0bfab2b08dac0042f7463ae3ac4
   languageName: node
   linkType: hard
 
@@ -3197,15 +3213,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-plugin-polyfill-corejs3@npm:0.7.1":
-  version: 0.7.1
-  resolution: "babel-plugin-polyfill-corejs3@npm:0.7.1"
+"babel-plugin-polyfill-corejs3@npm:0.8.1":
+  version: 0.8.1
+  resolution: "babel-plugin-polyfill-corejs3@npm:0.8.1"
   dependencies:
-    "@babel/helper-define-polyfill-provider": "npm:^0.3.3"
-    core-js-compat: "npm:^3.29.0"
+    "@babel/helper-define-polyfill-provider": "npm:^0.4.0"
+    core-js-compat: "npm:^3.30.1"
   peerDependencies:
     "@babel/core": ^7.0.0-0
-  checksum: 5dd4fcc3793dc2279e681daa541bb6cf49587210bcf16fc652cf3f4aed967367e86da801aa32f72401b61c3f0c2f3c6f47355c3e5346995ae821f1367a6d3926
+  checksum: 1611c3b44fd1d88bbb1776ce79d0cde82a6735b02e0365393b69d26e20752813ea8529964c1109de3fb81bd942c1f9e4002945cfb2048469cad078509155da64
   languageName: node
   linkType: hard
 
@@ -3409,7 +3425,7 @@ __metadata:
     "@types/babel__plugin-transform-runtime": "npm:7.9.2"
     "@types/babel__preset-env": "npm:7.9.2"
     "@types/eslint": "npm:8.37.0"
-    "@types/node": "npm:18.16.5"
+    "@types/node": "npm:18.16.8"
     "@types/signal-exit": "npm:3.0.1"
     "@types/yargs": "npm:17.0.24"
     "@typescript-eslint/eslint-plugin": "npm:5.59.5"
@@ -3419,12 +3435,12 @@ __metadata:
     "@willbooster/prettier-config": "npm:9.1.1"
     "@willbooster/renovate-config": "npm:9.5.0"
     "@willbooster/shared-lib-node": "npm:2.0.1"
-    babel-plugin-polyfill-corejs3: "npm:0.7.1"
+    babel-plugin-polyfill-corejs3: "npm:0.8.1"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     chalk: "npm:5.2.0"
     conventional-changelog-conventionalcommits: "npm:5.0.0"
-    core-js: "npm:3.30.1"
-    core-js-pure: "npm:3.30.1"
+    core-js: "npm:3.30.2"
+    core-js-pure: "npm:3.30.2"
     date-time: "npm:4.0.0"
     dotenv: "npm:16.0.3"
     eslint: "npm:8.40.0"
@@ -3440,9 +3456,9 @@ __metadata:
     pinst: "npm:3.0.0"
     prettier: "npm:2.8.8"
     pretty-ms: "npm:8.0.0"
-    rollup: "npm:3.21.5"
+    rollup: "npm:3.21.6"
     rollup-plugin-analyzer: "npm:4.0.0"
-    rollup-plugin-node-externals: "npm:5.1.2"
+    rollup-plugin-node-externals: "npm:5.1.3"
     rollup-plugin-string: "npm:3.0.0"
     rollup-plugin-ts: "npm:3.2.0"
     semantic-release: "npm:21.0.2"
@@ -3985,7 +4001,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js-compat@npm:^3.25.1, core-js-compat@npm:^3.29.0":
+"core-js-compat@npm:^3.25.1, core-js-compat@npm:^3.30.1":
   version: 3.30.2
   resolution: "core-js-compat@npm:3.30.2"
   dependencies:
@@ -3994,17 +4010,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js-pure@npm:3.30.1":
-  version: 3.30.1
-  resolution: "core-js-pure@npm:3.30.1"
-  checksum: 68abaa3ebaedd1b35690731690024a358e56133eaa7d3762c8752d4ef1327043677d899ecd5d99fda520f3fb124e0a227c5abbe47233b7fa68d30c1b12dbda10
+"core-js-pure@npm:3.30.2":
+  version: 3.30.2
+  resolution: "core-js-pure@npm:3.30.2"
+  checksum: 1f74a03c94b2737b0aaccf473a0194e9fa4a59d72802c3f8e3e11d63dfc1aeb3b2d2a8be79446065ec9aedaf4ca1895f05277b2cae19c1286f1640b49dd21650
   languageName: node
   linkType: hard
 
-"core-js@npm:3.30.1":
-  version: 3.30.1
-  resolution: "core-js@npm:3.30.1"
-  checksum: 8e00648b9a5d2c13c8850db3c444783886bad0f4cbd29a2b8237c0394bd7728708ebad00bc71aca62ef1ba5e2d5c3ef0b5d52b999d4593d5ad5c4ffa80816354
+"core-js@npm:3.30.2":
+  version: 3.30.2
+  resolution: "core-js@npm:3.30.2"
+  checksum: 6810fb533ee1591eb54496a8bd015b6f500ee9878a5ca54304e0f51bafa28bd9af38394cb94d5bb864d84144440d5d67c23ed7432f43142edd1b2e4bfa964e89
   languageName: node
   linkType: hard
 
@@ -8498,12 +8514,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup-plugin-node-externals@npm:5.1.2":
-  version: 5.1.2
-  resolution: "rollup-plugin-node-externals@npm:5.1.2"
+"rollup-plugin-node-externals@npm:5.1.3":
+  version: 5.1.3
+  resolution: "rollup-plugin-node-externals@npm:5.1.3"
   peerDependencies:
     rollup: ^2.60.0 || ^3.0.0
-  checksum: d6253a4b3233f84c3bc4ed172aa3c5b4ccb27cd7230deddc344a97617267c5a94a1dac9ec43e144153ffcb2af3df49b24c79ab6a306b007034847bd2832127c8
+  checksum: c2b93111a2c7b7a7cc50702c7a6fe40c8061a06e35f21bf96cd0d3106018573371142073ab3a0819eac972d2968d6a07378bdce3f3899ede73b881425039025b
   languageName: node
   linkType: hard
 
@@ -8568,7 +8584,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup@npm:3.21.5, rollup@npm:^3.21.0":
+"rollup@npm:3.21.6":
+  version: 3.21.6
+  resolution: "rollup@npm:3.21.6"
+  dependencies:
+    fsevents: "npm:~2.3.2"
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  bin:
+    rollup: dist/bin/rollup
+  checksum: 21bcdbf30bd77fc5a14595dfc0b3d8e05c1108a3b07979560c210e9f3b8137237d7deadc5bcd52e350feef423fe917c0b1631ae7874cf9166945c2141424de1c
+  languageName: node
+  linkType: hard
+
+"rollup@npm:^3.21.0":
   version: 3.21.5
   resolution: "rollup@npm:3.21.5"
   dependencies:
