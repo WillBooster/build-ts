@@ -61,7 +61,7 @@
     "rollup-plugin-node-externals": "6.0.0",
     "rollup-plugin-string": "3.0.0",
     "rollup-plugin-ts": "3.2.0",
-    "signal-exit": "3.0.7",
+    "signal-exit": "4.0.2",
     "ts-node": "10.9.1",
     "typescript": "5.0.4",
     "yargs": "17.7.2"

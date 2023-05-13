@@ -5,7 +5,7 @@ import chalk from 'chalk';
 import dateTime from 'date-time';
 import ms from 'pretty-ms';
 import { OutputOptions, rollup, RollupBuild, RollupOptions, watch } from 'rollup';
-import onExit from 'signal-exit';
+import { onExit } from 'signal-exit';
 import { PackageJson } from 'type-fest';
 import type { CommandModule } from 'yargs';
 
@@ -150,7 +150,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   if (argv.watch) {
     const watcher = watch({ ...options, output: outputOptionsList });
 
-    const close = async (code: number | null): Promise<void> => {
+    const close = async (code: number | null | undefined): Promise<void> => {
       process.removeListener('uncaughtException', close);
       process.stdin.removeListener('end', close);
       if (watcher) await watcher.close();
