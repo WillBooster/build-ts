@@ -3458,7 +3458,7 @@ __metadata:
     pretty-ms: "npm:8.0.0"
     rollup: "npm:3.21.6"
     rollup-plugin-analyzer: "npm:4.0.0"
-    rollup-plugin-node-externals: "npm:5.1.3"
+    rollup-plugin-node-externals: "npm:6.0.0"
     rollup-plugin-string: "npm:3.0.0"
     rollup-plugin-ts: "npm:3.2.0"
     semantic-release: "npm:21.0.2"
@@ -8514,12 +8514,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup-plugin-node-externals@npm:5.1.3":
-  version: 5.1.3
-  resolution: "rollup-plugin-node-externals@npm:5.1.3"
+"rollup-plugin-node-externals@npm:6.0.0":
+  version: 6.0.0
+  resolution: "rollup-plugin-node-externals@npm:6.0.0"
   peerDependencies:
-    rollup: ^2.60.0 || ^3.0.0
-  checksum: c2b93111a2c7b7a7cc50702c7a6fe40c8061a06e35f21bf96cd0d3106018573371142073ab3a0819eac972d2968d6a07378bdce3f3899ede73b881425039025b
+    rollup: ^3.0.0
+  checksum: 67efe94873ed9cc8b17200b18dae7068506772d7539590843a28597107060af135ebfae9fe6cbbf9d0158ecda00f124157252ae7700eec27271112dfcef16982
   languageName: node
   linkType: hard
 
