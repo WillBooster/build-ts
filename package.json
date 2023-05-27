@@ -97,7 +97,7 @@
     "semantic-release": "21.0.2",
     "sort-package-json": "2.4.1",
     "type-fest": "3.11.0",
-    "vitest": "0.31.1"
+    "vitest": "0.31.0"
   },
   "packageManager": "yarn@4.0.0-rc.44",
   "engines": {
