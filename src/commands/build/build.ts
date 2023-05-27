@@ -145,79 +145,16 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     watch: argv.watch ? { clearScreen: false } : undefined,
   };
 
-  const mapToRelatives = (paths: string | Readonly<string[]>): string[] =>
+  const pathToRelativePath = (paths: string | Readonly<string[]>): string[] =>
     (Array.isArray(paths) ? paths : [paths]).map((p) => path.relative(packageDirPath, p));
   if (argv.watch) {
-    const watcher = watch({ ...options, output: outputOptionsList });
-
-    const close = async (code: number | null | undefined): Promise<void> => {
-      process.removeListener('uncaughtException', close);
-      process.stdin.removeListener('end', close);
-      if (watcher) await watcher.close();
-      if (code) process.exit(code);
-    };
-    onExit(close);
-    process.on('uncaughtException', close);
-    if (!process.stdin.isTTY) {
-      process.stdin.on('end', close);
-      process.stdin.resume();
-    }
-
-    watcher.on('event', (event) => {
-      switch (event.code) {
-        case 'ERROR': {
-          handleError(event.error, true);
-          break;
-        }
-        case 'BUNDLE_START': {
-          if (argv.silent) break;
-
-          const eventInput = event.input;
-          const inputFiles: string[] = [];
-          if (typeof eventInput === 'string') {
-            inputFiles.push(eventInput);
-          } else {
-            inputFiles.push(
-              ...(Array.isArray(eventInput) ? eventInput : Object.values(eventInput as Record<string, string>))
-            );
-          }
-          console.info(
-            chalk.cyan(
-              `Bundles ${chalk.bold(mapToRelatives(inputFiles).join(', '))} → ${chalk.bold(
-                mapToRelatives(event.output).join(', ')
-              )}\non ${packageDirPath} ...`
-            )
-          );
-          break;
-        }
-        case 'BUNDLE_END': {
-          if (argv.silent) break;
-
-          console.info(
-            chalk.green(
-              `Created ${chalk.bold(mapToRelatives(event.output).join(', '))} in ${chalk.bold(ms(event.duration))}`
-            )
-          );
-          break;
-        }
-        case 'END': {
-          if (argv.silent) break;
-
-          console.info(`\n[${dateTime()}] waiting for changes...`);
-          break;
-        }
-      }
-
-      if ('result' in event && event.result) {
-        event.result.close();
-      }
-    });
+    watchRollup(argv, packageDirPath, options, outputOptionsList, pathToRelativePath);
   } else {
     if (!argv.silent) {
       console.info(
         chalk.cyan(
-          `Bundles ${chalk.bold(mapToRelatives(input).join(', '))} → ${chalk.bold(
-            mapToRelatives(outputOptionsList.map((opts) => opts.file || opts.dir || '')).join(', ')
+          `Bundles ${chalk.bold(pathToRelativePath(input).join(', '))} → ${chalk.bold(
+            pathToRelativePath(outputOptionsList.map((opts) => opts.file || opts.dir || '')).join(', ')
           )}\non ${packageDirPath} ...`
         )
       );
@@ -234,7 +171,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
       if (!argv.silent) {
         console.info(
           chalk.green(
-            `Created ${mapToRelatives(outputOptionsList.map((opts) => opts.file || opts.dir || '')).join(
+            `Created ${pathToRelativePath(outputOptionsList.map((opts) => opts.file || opts.dir || '')).join(
               ', '
             )} in ${chalk.bold(ms(Date.now() - startTime))}`
           )
@@ -247,6 +184,79 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     await bundle?.close();
     if (buildFailed) process.exit(1);
   }
+}
+
+function watchRollup(
+  argv: ArgumentsType<AnyBuilderType>,
+  packageDirPath: string,
+  options: RollupOptions,
+  outputOptionsList: OutputOptions[],
+  pathToRelativePath: (paths: string | Readonly<string[]>) => string[]
+): void {
+  const watcher = watch({ ...options, output: outputOptionsList });
+
+  const close = async (code: number | null | undefined): Promise<void> => {
+    process.removeListener('uncaughtException', close);
+    process.stdin.removeListener('end', close);
+    if (watcher) await watcher.close();
+    if (code) process.exit(code);
+  };
+  onExit(close);
+  process.on('uncaughtException', close);
+  if (!process.stdin.isTTY) {
+    process.stdin.on('end', close);
+    process.stdin.resume();
+  }
+
+  watcher.on('event', (event) => {
+    switch (event.code) {
+      case 'ERROR': {
+        handleError(event.error, true);
+        break;
+      }
+      case 'BUNDLE_START': {
+        if (argv.silent) break;
+
+        const eventInput = event.input;
+        const inputFiles: string[] = [];
+        if (typeof eventInput === 'string') {
+          inputFiles.push(eventInput);
+        } else {
+          inputFiles.push(
+            ...(Array.isArray(eventInput) ? eventInput : Object.values(eventInput as Record<string, string>))
+          );
+        }
+        console.info(
+          chalk.cyan(
+            `Bundles ${chalk.bold(pathToRelativePath(inputFiles).join(', '))} → ${chalk.bold(
+              pathToRelativePath(event.output).join(', ')
+            )}\non ${packageDirPath} ...`
+          )
+        );
+        break;
+      }
+      case 'BUNDLE_END': {
+        if (argv.silent) break;
+
+        console.info(
+          chalk.green(
+            `Created ${chalk.bold(pathToRelativePath(event.output).join(', '))} in ${chalk.bold(ms(event.duration))}`
+          )
+        );
+        break;
+      }
+      case 'END': {
+        if (argv.silent) break;
+
+        console.info(`\n[${dateTime()}] waiting for changes...`);
+        break;
+      }
+    }
+
+    if ('result' in event && event.result) {
+      event.result.close();
+    }
+  });
 }
 
 function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDirPath: string): string {
