@@ -8,6 +8,7 @@ import replace from '@rollup/plugin-replace';
 import terser from '@rollup/plugin-terser';
 import { Plugin } from 'rollup';
 import analyze from 'rollup-plugin-analyzer';
+import { keepImport } from 'rollup-plugin-keep-import';
 import { externals } from 'rollup-plugin-node-externals';
 import { string } from 'rollup-plugin-string';
 import ts from 'rollup-plugin-ts';
@@ -49,6 +50,7 @@ export function createPlugins(
     }),
     resolve({ extensions }),
     commonjs(),
+    keepImport({ moduleNames: argv.keepImport?.map((item) => item.toString()) ?? [] }),
   ];
   if (targetDetail === 'app-node' || targetDetail === 'functions') {
     plugins.push(

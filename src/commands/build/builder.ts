@@ -47,6 +47,10 @@ export const builder = {
     type: 'boolean',
     alias: 's',
   },
+  keepImport: {
+    description: 'Identifiers to be kept as import statements.',
+    type: 'array',
+  },
 } as const;
 
 export const appBuilder = {
