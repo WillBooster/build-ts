@@ -3691,6 +3691,7 @@ __metadata:
     pretty-ms: "npm:8.0.0"
     rollup: "npm:3.23.0"
     rollup-plugin-analyzer: "npm:4.0.0"
+    rollup-plugin-keep-import: "npm:1.0.1"
     rollup-plugin-node-externals: "npm:6.0.1"
     rollup-plugin-string: "npm:3.0.0"
     rollup-plugin-ts: "npm:3.2.0"
@@ -8751,6 +8752,13 @@ __metadata:
   version: 4.0.0
   resolution: "rollup-plugin-analyzer@npm:4.0.0"
   checksum: 9f03a27369fed81f4d845f0f5da73a0dce9d3ac4ce806f89aa55c212170af72797963a1b8ec0c8c77b8d79ba56a62a225523bfe5335258dfd830ea81fd855b98
+  languageName: node
+  linkType: hard
+
+"rollup-plugin-keep-import@npm:1.0.1":
+  version: 1.0.1
+  resolution: "rollup-plugin-keep-import@npm:1.0.1"
+  checksum: 8d89cd366c47352180f986180744128a224ea1c433359341bc63c0e3e27f8e65b555ee76a87aa507a3b40a70f1e81e55e6b852621ef43e2a08105a543fbcdd0d
   languageName: node
   linkType: hard
 
