@@ -8946,9 +8946,9 @@ __metadata:
   linkType: hard
 
 "smob@npm:^1.0.0":
-  version: 1.2.0
-  resolution: "smob@npm:1.2.0"
-  checksum: b46f06d32e0cd172af483651d30713547ed8dd630a07fc2a5955c7a88a7290fe1d6be632ff27ad2fbdc7e5e667c85b6270132c3d0743739ccc5e722fc9eb125f
+  version: 1.3.0
+  resolution: "smob@npm:1.3.0"
+  checksum: 03e9b519b6a1a9c3eda61145a9620a1e7c97f9a5941fed8a6c81e4c32af9c2d4eb7601ad9ba21faaebc6ab1e764911a2629e9d31637c3345661e05e781505d8f
   languageName: node
   linkType: hard
 
