@@ -59,3 +59,19 @@ npx build-ts lib test-fixtures/lib-react
 # or
 cd test-fixtures/lib-react && npx build-ts lib
 ```
+
+## Run TypeScript code with arguments
+
+```sh
+echo "console.log(process.argv)" > test.ts
+npx build-ts run test.ts -- --foo bar
+```
+
+The output is like this:
+
+```
+[ '/path/to/node',
+  '/path/to/build-ts/dist/bin/run.js',
+  '--foo',
+  'bar' ]
+```
