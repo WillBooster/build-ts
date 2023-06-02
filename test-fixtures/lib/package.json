@@ -1,6 +1,6 @@
 {
   "name": "lib-node",
-  "packageManager": "yarn@4.0.0-rc.44",
+  "packageManager": "yarn@4.0.0-rc.45",
   "devDependencies": {
     "@types/lodash": "4.14.195",
     "@types/node": "18.16.16",
