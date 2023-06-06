@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import dotenv from 'dotenv';
 
-import { ArgumentsType } from '../../types.js';
+import type { ArgumentsType } from '../../types.js';
 
 import type { builder } from './builder.js';
 

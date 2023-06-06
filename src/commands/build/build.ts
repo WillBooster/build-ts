@@ -4,15 +4,18 @@ import path from 'node:path';
 import chalk from 'chalk';
 import dateTime from 'date-time';
 import ms from 'pretty-ms';
-import { OutputOptions, rollup, RollupBuild, RollupOptions, watch } from 'rollup';
+import type { OutputOptions, RollupBuild, RollupOptions} from 'rollup';
+import { rollup, watch } from 'rollup';
 import { onExit } from 'signal-exit';
-import { PackageJson } from 'type-fest';
+import type { PackageJson } from 'type-fest';
 import type { CommandModule } from 'yargs';
 
-import { allTargetCategories, ArgumentsType, TargetCategory, TargetDetail } from '../../types.js';
+import type { ArgumentsType, TargetCategory, TargetDetail } from '../../types.js';
+import { allTargetCategories } from '../../types.js';
 import { getNamespaceAndName, readPackageJson } from '../../utils.js';
 
-import { AnyBuilderType, appBuilder, builder, functionsBuilder, libBuilder } from './builder.js';
+import type { AnyBuilderType, builder} from './builder.js';
+import { appBuilder, functionsBuilder, libBuilder } from './builder.js';
 import { createPlugins } from './plugin.js';
 import { handleError } from './rollupLogger.js';
 

@@ -1,7 +1,7 @@
 import process from 'node:process';
 
 import chalk from 'chalk';
-import { RollupError } from 'rollup';
+import type { RollupError } from 'rollup';
 
 export function handleError(error: RollupError, recover = false): void {
   const name = error.name || (error.cause as Error)?.name;

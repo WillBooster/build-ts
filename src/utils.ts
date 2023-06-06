@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
 
-import { PackageJson } from 'type-fest';
+import type { PackageJson } from 'type-fest';
 
 export async function readPackageJson(dirPath: string): Promise<PackageJson | undefined> {
   try {

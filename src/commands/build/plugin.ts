@@ -6,7 +6,7 @@ import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 import terser from '@rollup/plugin-terser';
-import { Plugin } from 'rollup';
+import type { Plugin } from 'rollup';
 import analyze from 'rollup-plugin-analyzer';
 import { keepImport } from 'rollup-plugin-keep-import';
 import { externals } from 'rollup-plugin-node-externals';
@@ -14,7 +14,7 @@ import { string } from 'rollup-plugin-string';
 import ts from 'rollup-plugin-ts';
 import type { PackageJson } from 'type-fest';
 
-import { ArgumentsType, TargetDetail } from '../../types.js';
+import type { ArgumentsType, TargetDetail } from '../../types.js';
 import { getBuildTsRootPath } from '../../utils.js';
 
 import type { builder } from './builder.js';
