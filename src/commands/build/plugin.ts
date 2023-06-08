@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 
 import { babel } from '@rollup/plugin-babel';
@@ -28,9 +29,29 @@ export function createPlugins(
   cwd: string
 ): Plugin[] {
   const externalDeps = [...(argv.external ?? [])].map((item) => item.toString());
-  if (packageJson?.dependencies?.['@prisma/client']) {
+  if (packageJson.dependencies?.['@prisma/client']) {
     externalDeps.push('prisma-client');
   }
+  // Add external dependencies from sibling packages
+  if (fs.existsSync(path.join('..', '..', 'package.json'))) {
+    const packageDirs = fs.readdirSync(path.join('..'), { withFileTypes: true });
+    for (const packageDir of packageDirs) {
+      if (!packageDir.isDirectory()) continue;
+
+      const packageJsonPath = path.join('..', packageDir.name, 'package.json');
+      if (!fs.existsSync(packageJsonPath)) continue;
+
+      const otherPackageJson: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+      if (packageJson.dependencies?.[otherPackageJson.name ?? '']) {
+        externalDeps.push(
+          ...Object.keys(otherPackageJson.dependencies ?? {}),
+          ...Object.keys(otherPackageJson.peerDependencies ?? {}),
+          ...Object.keys(otherPackageJson.optionalDependencies ?? {})
+        );
+      }
+    }
+  }
+
   const extensions = ['.cjs', '.mjs', '.js', '.jsx', '.json', '.cts', '.mts', '.ts', '.tsx'];
   const babelConfigPath = path.join(getBuildTsRootPath(), 'babel.config.mjs');
   const plugins: Plugin[] = [
