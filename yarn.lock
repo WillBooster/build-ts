@@ -3524,7 +3524,7 @@ __metadata:
     rollup: "npm:3.23.0"
     rollup-plugin-analyzer: "npm:4.0.0"
     rollup-plugin-keep-import: "npm:1.0.1"
-    rollup-plugin-node-externals: "npm:6.1.0"
+    rollup-plugin-node-externals: "npm:6.1.1"
     rollup-plugin-string: "npm:3.0.0"
     rollup-plugin-ts: "npm:3.2.0"
     semantic-release: "npm:21.0.3"
@@ -8613,12 +8613,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup-plugin-node-externals@npm:6.1.0":
-  version: 6.1.0
-  resolution: "rollup-plugin-node-externals@npm:6.1.0"
+"rollup-plugin-node-externals@npm:6.1.1":
+  version: 6.1.1
+  resolution: "rollup-plugin-node-externals@npm:6.1.1"
   peerDependencies:
     rollup: ^3.0.0
-  checksum: bf227aabf581f6a8290a43cc4a07b14e931da5a1d3422c4c9e68b10b1b70d354f900b84b693f44e596e500878364cf3bcfd8b9ff0b814601224bf513d893b9ce
+  checksum: 92edcceef1e8b7aaf55460bddfa5af00dc480a7d4c428557324ece99ca13beb2b1917ba42ce837cc5ad079931729a9360b7825c20563303cc844b1377bb1d50d
   languageName: node
   linkType: hard
 

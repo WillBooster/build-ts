@@ -10,7 +10,7 @@ import terser from '@rollup/plugin-terser';
 import type { Plugin } from 'rollup';
 import analyze from 'rollup-plugin-analyzer';
 import { keepImport } from 'rollup-plugin-keep-import';
-import { externals } from 'rollup-plugin-node-externals';
+import { nodeExternals } from 'rollup-plugin-node-externals';
 import { string } from 'rollup-plugin-string';
 import ts from 'rollup-plugin-ts';
 import type { PackageJson } from 'type-fest';
@@ -61,13 +61,13 @@ export function createPlugins(
       values: loadEnvironmentVariables(argv, cwd),
     }),
     json(),
-    externals({
+    nodeExternals({
       deps: true,
       devDeps: false,
       peerDeps: true,
       optDeps: true,
-      include: externalDeps,
-      exclude: namespace && new RegExp(`${namespace}\\/.+`),
+      include: externalDeps.map((name) => new RegExp(`${name}(?:\\/.+)?`)),
+      exclude: namespace && new RegExp(`${namespace}(?:\\/.+)?`),
     }),
     resolve({ extensions }),
     commonjs(),
