@@ -2652,6 +2652,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@semantic-release/error@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "@semantic-release/error@npm:4.0.0"
+  checksum: 868de4f5562c354016ca382f94962066288e0822cbac6f650ecf62ec2188df916be07d0a8f86dad298b27d75cf9d1bd596e657f47d96a8e9a109a086d6ea71b8
+  languageName: node
+  linkType: hard
+
 "@semantic-release/github@npm:^9.0.0":
   version: 9.0.2
   resolution: "@semantic-release/github@npm:9.0.2"
@@ -3791,7 +3798,7 @@ __metadata:
     rollup-plugin-node-externals: "npm:6.1.1"
     rollup-plugin-string: "npm:3.0.0"
     rollup-plugin-ts: "npm:3.2.0"
-    semantic-release: "npm:21.0.3"
+    semantic-release: "npm:21.0.4"
     signal-exit: "npm:4.0.2"
     sort-package-json: "npm:2.4.1"
     ts-node: "npm:10.9.1"
@@ -9043,12 +9050,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semantic-release@npm:21.0.3":
-  version: 21.0.3
-  resolution: "semantic-release@npm:21.0.3"
+"semantic-release@npm:21.0.4":
+  version: 21.0.4
+  resolution: "semantic-release@npm:21.0.4"
   dependencies:
     "@semantic-release/commit-analyzer": "npm:^10.0.0"
-    "@semantic-release/error": "npm:^3.0.0"
+    "@semantic-release/error": "npm:^4.0.0"
     "@semantic-release/github": "npm:^9.0.0"
     "@semantic-release/npm": "npm:^10.0.2"
     "@semantic-release/release-notes-generator": "npm:^11.0.0"
@@ -9077,7 +9084,7 @@ __metadata:
     yargs: "npm:^17.5.1"
   bin:
     semantic-release: bin/semantic-release.js
-  checksum: 10554cc88ec4693969071890c879e15264ec2c4ddfdb9f58eb20ed76381a9f87810b88c0db8d31aae491bef511262149c7d4139feb22913be3eaee117bed1aa1
+  checksum: f841a197cfd3bbc3f34b9c7c770d451b5a445f985cfae39b55d9b3c60b50765dfa4b3fc38621cc47ecb218a61672c5fd1487949425f766408dec4a6598f66c18
   languageName: node
   linkType: hard
 
