@@ -95,7 +95,7 @@
     "micromatch": "4.0.5",
     "pinst": "3.0.0",
     "prettier": "2.8.8",
-    "semantic-release": "21.0.3",
+    "semantic-release": "21.0.4",
     "sort-package-json": "2.4.1",
     "type-fest": "3.11.1",
     "vitest": "0.32.0"
