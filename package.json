@@ -54,11 +54,11 @@
     "core-js": "3.31.0",
     "core-js-pure": "3.31.0",
     "date-time": "4.0.0",
-    "dotenv": "16.1.4",
+    "dotenv": "16.3.1",
     "pretty-ms": "8.0.0",
     "rollup": "3.25.1",
     "rollup-plugin-analyzer": "4.0.0",
-    "rollup-plugin-keep-import": "1.0.1",
+    "rollup-plugin-keep-import": "1.0.2",
     "rollup-plugin-node-externals": "6.1.1",
     "rollup-plugin-string": "3.0.0",
     "rollup-plugin-ts": "3.2.0",
@@ -81,8 +81,8 @@
     "@willbooster/eslint-config-ts": "10.2.0",
     "@willbooster/prettier-config": "9.1.1",
     "@willbooster/renovate-config": "9.5.0",
-    "@willbooster/shared-lib-node": "2.0.2",
-    "conventional-changelog-conventionalcommits": "6.0.0",
+    "@willbooster/shared-lib-node": "2.0.3",
+    "conventional-changelog-conventionalcommits": "6.1.0",
     "eslint": "8.43.0",
     "eslint-config-prettier": "8.8.0",
     "eslint-import-resolver-typescript": "3.5.5",
@@ -98,7 +98,7 @@
     "semantic-release": "21.0.5",
     "sort-package-json": "2.4.1",
     "type-fest": "3.12.0",
-    "vitest": "0.32.0"
+    "vitest": "0.32.2"
   },
   "packageManager": "yarn@4.0.0-rc.45",
   "engines": {
