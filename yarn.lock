@@ -2254,9 +2254,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/plugin-commonjs@npm:25.0.1":
-  version: 25.0.1
-  resolution: "@rollup/plugin-commonjs@npm:25.0.1"
+"@rollup/plugin-commonjs@npm:25.0.2":
+  version: 25.0.2
+  resolution: "@rollup/plugin-commonjs@npm:25.0.2"
   dependencies:
     "@rollup/pluginutils": "npm:^5.0.1"
     commondir: "npm:^1.0.1"
@@ -2269,7 +2269,7 @@ __metadata:
   peerDependenciesMeta:
     rollup:
       optional: true
-  checksum: 15da09c950b0ffd4f59843b16ee9c7afd4658183dddf2099bf00380686d5ef1fabf4df3b98f024f93e653cb4310b721f5b82768f703d22785bd964a533ccd6dc
+  checksum: e235d48408a55004d82f376598bc09fa2f2225e7973e8d908fa1d74adeea5b2dc7c680f8ba09f533159b48d8c2c7c50d669c9b12bcf8be47a0c01abf4c0a5891
   languageName: node
   linkType: hard
 
@@ -2920,10 +2920,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/shared-lib-node@npm:2.0.3":
-  version: 2.0.3
-  resolution: "@willbooster/shared-lib-node@npm:2.0.3"
-  checksum: 8d35c3112b672d7cedee88391873e586ef0a3063a6bbc0dfb06bf217b4cec98ee38ee85b8aebb2fa60d3a478283d302e1db63018fb0afc9327171d66abe696ce
+"@willbooster/shared-lib-node@npm:2.1.0":
+  version: 2.1.0
+  resolution: "@willbooster/shared-lib-node@npm:2.1.0"
+  checksum: 42446fab00ce9a861c30effdc56cf0a714e04cf09fe19601d03ea939e49f4b7a9c3eb444895bf3b1b22fac28d10201c47251b0137b0bd3a814248770b940c42f
   languageName: node
   linkType: hard
 
@@ -3473,7 +3473,7 @@ __metadata:
     "@babel/preset-react": "npm:7.22.5"
     "@babel/preset-typescript": "npm:7.22.5"
     "@rollup/plugin-babel": "npm:6.0.3"
-    "@rollup/plugin-commonjs": "npm:25.0.1"
+    "@rollup/plugin-commonjs": "npm:25.0.2"
     "@rollup/plugin-json": "npm:6.0.0"
     "@rollup/plugin-node-resolve": "npm:15.1.0"
     "@rollup/plugin-replace": "npm:5.0.2"
@@ -3492,7 +3492,7 @@ __metadata:
     "@willbooster/eslint-config-ts": "npm:10.2.0"
     "@willbooster/prettier-config": "npm:9.1.1"
     "@willbooster/renovate-config": "npm:9.5.0"
-    "@willbooster/shared-lib-node": "npm:2.0.3"
+    "@willbooster/shared-lib-node": "npm:2.1.0"
     babel-plugin-polyfill-corejs3: "npm:0.8.1"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     chalk: "npm:5.2.0"
