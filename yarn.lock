@@ -2629,17 +2629,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*":
+"@types/node@npm:*, @types/node@npm:20.3.3":
   version: 20.3.3
   resolution: "@types/node@npm:20.3.3"
   checksum: d172311e9e2d42e060eacb78ecdfd4e1596dbd1e54939bacf42003c84559bdcb5d7dbe539dc5262db4c8f408e21f3abd65435fec9bc0ff8968a3b32dafde0bbf
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:20.3.2":
-  version: 20.3.2
-  resolution: "@types/node@npm:20.3.2"
-  checksum: d857cbe388d11fefd6c598144db42a32e1c15c09624b9e0669ec65e9d72e080093db3ec6b536037e6575574e33413479d4b3762140c2544ff30eb0c2111b5596
   languageName: node
   linkType: hard
 
@@ -3496,7 +3489,7 @@ __metadata:
     "@types/babel__plugin-transform-runtime": "npm:7.9.2"
     "@types/babel__preset-env": "npm:7.9.2"
     "@types/eslint": "npm:8.40.2"
-    "@types/node": "npm:20.3.2"
+    "@types/node": "npm:20.3.3"
     "@types/signal-exit": "npm:3.0.1"
     "@types/yargs": "npm:17.0.24"
     "@typescript-eslint/eslint-plugin": "npm:5.60.1"
