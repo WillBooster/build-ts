@@ -1,6 +1,6 @@
 {
   "name": "functions",
-  "packageManager": "yarn@4.0.0-rc.47",
+  "packageManager": "yarn@4.0.0-rc.48",
   "dependencies": {
     "lodash.chunk": "4.2.0"
   },
