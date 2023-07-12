@@ -15,11 +15,11 @@ import { string } from 'rollup-plugin-string';
 import ts from 'rollup-plugin-ts';
 import type { PackageJson } from 'type-fest';
 
+import { createEnvironmentVariablesDefinition } from '../../env.js';
 import type { ArgumentsType, TargetDetail } from '../../types.js';
 import { getBuildTsRootPath } from '../../utils.js';
 
 import type { builder } from './builder.js';
-import { loadEnvironmentVariables } from './env.js';
 
 export function createPlugins(
   argv: ArgumentsType<typeof builder>,
@@ -58,7 +58,7 @@ export function createPlugins(
     replace({
       delimiters: ['', ''],
       preventAssignment: true,
-      values: loadEnvironmentVariables(argv, cwd),
+      values: createEnvironmentVariablesDefinition(argv, cwd),
     }),
     json(),
     nodeExternals({

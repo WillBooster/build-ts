@@ -1,4 +1,7 @@
+import { preprocessBuilder } from '../../preprocessBuilder.js';
+
 export const builder = {
+  ...preprocessBuilder,
   input: {
     description: 'A file path of main source code. Default value is "src/index.{ts,tsx}" from package directory.',
     type: 'string',
@@ -28,14 +31,10 @@ export const builder = {
     type: 'boolean',
     alias: 'v',
   },
-  env: {
+  'env-var': {
     description: 'Environment variables to be inlined.',
     type: 'array',
-    alias: 'e',
-  },
-  dotenv: {
-    description: '.env files to be inlined.',
-    type: 'array',
+    alias: 'ev',
   },
   watch: {
     description: 'Whether watch mode is enabled or not',
