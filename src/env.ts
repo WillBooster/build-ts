@@ -8,6 +8,9 @@ import type { ArgumentsType } from './types.js';
 
 let envVars: Record<string, string> | undefined;
 
+/**
+ * This function loads environment variables from `.env` files.
+ * */
 export function loadEnvironmentVariables(
   argv: ArgumentsType<typeof preprocessBuilder>,
   cwd: string
@@ -34,6 +37,9 @@ export function loadEnvironmentVariables(
   return envVars;
 }
 
+/**
+ * This function creates a definition of environment variables that will be injected into the build.
+ * */
 export function createEnvironmentVariablesDefinition(
   argv: ArgumentsType<typeof builder>,
   cwd: string
