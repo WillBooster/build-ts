@@ -153,6 +153,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/helper-define-polyfill-provider@npm:^0.4.2":
+  version: 0.4.2
+  resolution: "@babel/helper-define-polyfill-provider@npm:0.4.2"
+  dependencies:
+    "@babel/helper-compilation-targets": "npm:^7.22.6"
+    "@babel/helper-plugin-utils": "npm:^7.22.5"
+    debug: "npm:^4.1.1"
+    lodash.debounce: "npm:^4.0.8"
+    resolve: "npm:^1.14.2"
+  peerDependencies:
+    "@babel/core": ^7.4.0 || ^8.0.0-0 <8.0.0
+  checksum: 2f4905e3dba478f53d41925a66711dfbdb63d759a59adfc4951eca3e132ac3a0bbcb39237f756fe243c2e8ee6e849afbe357e5520f55df210dcf26838357b9a1
+  languageName: node
+  linkType: hard
+
 "@babel/helper-environment-visitor@npm:^7.22.5":
   version: 7.22.5
   resolution: "@babel/helper-environment-visitor@npm:7.22.5"
@@ -2246,9 +2261,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/plugin-commonjs@npm:25.0.2":
-  version: 25.0.2
-  resolution: "@rollup/plugin-commonjs@npm:25.0.2"
+"@rollup/plugin-commonjs@npm:25.0.3":
+  version: 25.0.3
+  resolution: "@rollup/plugin-commonjs@npm:25.0.3"
   dependencies:
     "@rollup/pluginutils": "npm:^5.0.1"
     commondir: "npm:^1.0.1"
@@ -2261,7 +2276,7 @@ __metadata:
   peerDependenciesMeta:
     rollup:
       optional: true
-  checksum: 2c4cfb41eaaab46dee67ff9025ebb9061de531f3c3e2233ab8864ba76b38a8cd6d93ac8ffe5b05e5a0d5580421735c29974c5edfb6898ca9e97cbd5b5ba2e5ee
+  checksum: a5e5bdb0363d02a5501d7ac94e4cc245d836a1f6da84e733de932a74e6fe08f3ab1949e422b18b1235dfec7c9e9e975c49dd8d083f544add428e6fa3bff6d0a4
   languageName: node
   linkType: hard
 
@@ -3291,7 +3306,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-plugin-polyfill-corejs3@npm:0.8.2, babel-plugin-polyfill-corejs3@npm:^0.8.2":
+"babel-plugin-polyfill-corejs3@npm:0.8.3":
+  version: 0.8.3
+  resolution: "babel-plugin-polyfill-corejs3@npm:0.8.3"
+  dependencies:
+    "@babel/helper-define-polyfill-provider": "npm:^0.4.2"
+    core-js-compat: "npm:^3.31.0"
+  peerDependencies:
+    "@babel/core": ^7.4.0 || ^8.0.0-0 <8.0.0
+  checksum: b5cbfad6d3695a1ea65ef62e34de7f9c6f717cd5cc6d64bde726528168ba1d0a81e09a385d9283a489aab9739fbe206f2192fd9f0f60a37a0577de6526553a8d
+  languageName: node
+  linkType: hard
+
+"babel-plugin-polyfill-corejs3@npm:^0.8.2":
   version: 0.8.2
   resolution: "babel-plugin-polyfill-corejs3@npm:0.8.2"
   dependencies:
@@ -3474,7 +3501,7 @@ __metadata:
     "@babel/preset-react": "npm:7.22.5"
     "@babel/preset-typescript": "npm:7.22.5"
     "@rollup/plugin-babel": "npm:6.0.3"
-    "@rollup/plugin-commonjs": "npm:25.0.2"
+    "@rollup/plugin-commonjs": "npm:25.0.3"
     "@rollup/plugin-json": "npm:6.0.0"
     "@rollup/plugin-node-resolve": "npm:15.1.0"
     "@rollup/plugin-replace": "npm:5.0.2"
@@ -3493,9 +3520,9 @@ __metadata:
     "@willbooster/eslint-config-ts": "npm:10.4.0"
     "@willbooster/prettier-config": "npm:9.1.1"
     "@willbooster/shared-lib-node": "npm:2.3.0"
-    babel-plugin-polyfill-corejs3: "npm:0.8.2"
+    babel-plugin-polyfill-corejs3: "npm:0.8.3"
     babel-plugin-transform-remove-console: "npm:6.9.4"
-    chalk: "npm:5.2.0"
+    chalk: "npm:5.3.0"
     conventional-changelog-conventionalcommits: "npm:6.1.0"
     core-js: "npm:3.31.1"
     core-js-pure: "npm:3.31.1"
@@ -3514,7 +3541,7 @@ __metadata:
     pinst: "npm:3.0.0"
     prettier: "npm:3.0.0"
     pretty-ms: "npm:8.0.0"
-    rollup: "npm:3.26.2"
+    rollup: "npm:3.26.3"
     rollup-plugin-analyzer: "npm:4.0.0"
     rollup-plugin-keep-import: "npm:1.0.2"
     rollup-plugin-node-externals: "npm:6.1.1"
@@ -3524,7 +3551,7 @@ __metadata:
     signal-exit: "npm:4.0.2"
     sort-package-json: "npm:2.5.1"
     ts-node: "npm:10.9.1"
-    type-fest: "npm:3.13.0"
+    type-fest: "npm:3.13.1"
     typescript: "npm:5.1.6"
     vitest: "npm:0.33.0"
     yargs: "npm:17.7.2"
@@ -3661,6 +3688,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chalk@npm:5.3.0, chalk@npm:^5.2.0":
+  version: 5.3.0
+  resolution: "chalk@npm:5.3.0"
+  checksum: 8297d436b2c0f95801103ff2ef67268d362021b8210daf8ddbe349695333eb3610a71122172ff3b0272f1ef2cf7cc2c41fdaa4715f52e49ffe04c56340feed09
+  languageName: node
+  linkType: hard
+
 "chalk@npm:^2.0.0, chalk@npm:^2.3.2":
   version: 2.4.2
   resolution: "chalk@npm:2.4.2"
@@ -3679,13 +3713,6 @@ __metadata:
     ansi-styles: "npm:^4.1.0"
     supports-color: "npm:^7.1.0"
   checksum: 4a3fef5cc34975c898ffe77141450f679721df9dde00f6c304353fa9c8b571929123b26a0e4617bde5018977eb655b31970c297b91b63ee83bb82aeb04666880
-  languageName: node
-  linkType: hard
-
-"chalk@npm:^5.2.0":
-  version: 5.3.0
-  resolution: "chalk@npm:5.3.0"
-  checksum: 8297d436b2c0f95801103ff2ef67268d362021b8210daf8ddbe349695333eb3610a71122172ff3b0272f1ef2cf7cc2c41fdaa4715f52e49ffe04c56340feed09
   languageName: node
   linkType: hard
 
@@ -8530,7 +8557,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup@npm:3.26.2, rollup@npm:^3.25.2":
+"rollup@npm:3.26.3":
+  version: 3.26.3
+  resolution: "rollup@npm:3.26.3"
+  dependencies:
+    fsevents: "npm:~2.3.2"
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  bin:
+    rollup: dist/bin/rollup
+  checksum: 41d02540dcb125150d2dc4a136e35776290eef489ed0735814afcdcfd3e0a8944cd30875daa872360e4fe8bf75bb4adf41090913a32e636722f43a5d2caf241e
+  languageName: node
+  linkType: hard
+
+"rollup@npm:^3.25.2":
   version: 3.26.2
   resolution: "rollup@npm:3.26.2"
   dependencies:
@@ -9496,10 +9537,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"type-fest@npm:3.13.0":
-  version: 3.13.0
-  resolution: "type-fest@npm:3.13.0"
-  checksum: 8d3f7ab432685a661b22484d64b4b1083a85c3db3eb01fee25cf4aa558b07bf2d6a42bbd072a4941da43072688f982ebb8b10b9f4444b3cb260d960f4ccf5c5c
+"type-fest@npm:3.13.1, type-fest@npm:^3.0.0, type-fest@npm:^3.12.0, type-fest@npm:^3.8.0":
+  version: 3.13.1
+  resolution: "type-fest@npm:3.13.1"
+  checksum: 547d22186f73a8c04590b70dcf63baff390078c75ea8acd366bbd510fd0646e348bd1970e47ecf795b7cff0b41d26e9c475c1fedd6ef5c45c82075fbf916b629
   languageName: node
   linkType: hard
 
@@ -9549,13 +9590,6 @@ __metadata:
   version: 2.19.0
   resolution: "type-fest@npm:2.19.0"
   checksum: a5a7ecf2e654251613218c215c7493574594951c08e52ab9881c9df6a6da0aeca7528c213c622bc374b4e0cb5c443aa3ab758da4e3c959783ce884c3194e12cb
-  languageName: node
-  linkType: hard
-
-"type-fest@npm:^3.0.0, type-fest@npm:^3.12.0, type-fest@npm:^3.8.0":
-  version: 3.13.1
-  resolution: "type-fest@npm:3.13.1"
-  checksum: 547d22186f73a8c04590b70dcf63baff390078c75ea8acd366bbd510fd0646e348bd1970e47ecf795b7cff0b41d26e9c475c1fedd6ef5c45c82075fbf916b629
   languageName: node
   linkType: hard
 
