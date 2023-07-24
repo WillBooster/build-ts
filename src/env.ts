@@ -1,6 +1,4 @@
-import path from 'node:path';
-
-import { config } from 'dotenv';
+import { loadEnvironmentVariables } from '@willbooster/shared-lib-node';
 
 import type { builder } from './commands/build/builder.js';
 import type { preprocessBuilder } from './preprocessBuilder.js';
@@ -11,28 +9,12 @@ let envVars: Record<string, string> | undefined;
 /**
  * This function loads environment variables from `.env` files.
  * */
-export function loadEnvironmentVariables(
+export function loadEnvironmentVariablesWithCache(
   argv: ArgumentsType<typeof preprocessBuilder>,
   cwd: string
 ): Record<string, string> {
-  if (envVars) return envVars;
-
-  let envPaths = (argv.env ?? []).map((envPath) => envPath.toString());
-  const cascade = argv.cascadeNodeEnv ? process.env.NODE_ENV : argv.cascadeEnv;
-  if (typeof cascade === 'string') {
-    if (envPaths.length === 0) envPaths.push('.env');
-    envPaths = envPaths.flatMap((envPath) =>
-      cascade
-        ? [`${envPath}.${cascade}.local`, `${envPath}.local`, `${envPath}.${cascade}`, envPath]
-        : [`${envPath}.local`, envPath]
-    );
-  }
-  if (argv.verbose) {
-    console.info('Loading env files:', envPaths);
-  }
-  envVars = {};
-  for (const envPath of envPaths) {
-    envVars = { ...config({ path: path.join(cwd, envPath) }).parsed, ...envVars };
+  if (!envVars) {
+    envVars = loadEnvironmentVariables(argv, cwd);
   }
   return envVars;
 }
@@ -47,7 +29,7 @@ export function createEnvironmentVariablesDefinition(
   const envVarsDef: Record<string, string> = {};
   const names = new Set(
     ...(argv.envVar ?? []).map((e) => e.toString()),
-    ...Object.keys(loadEnvironmentVariables(argv, cwd))
+    ...Object.keys(loadEnvironmentVariablesWithCache(argv, cwd))
   );
   for (const name of names) {
     if (process.env[name] === undefined) continue;
