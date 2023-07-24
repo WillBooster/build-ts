@@ -18,7 +18,7 @@ export function loadEnvironmentVariables(
   if (envVars) return envVars;
 
   let envPaths = (argv.env ?? []).map((envPath) => envPath.toString());
-  const cascade = argv.nodeEnv ? process.env.NODE_ENV : argv.cascade;
+  const cascade = argv.cascadeNodeEnv ? process.env.NODE_ENV : argv.cascadeEnv;
   if (typeof cascade === 'string') {
     if (envPaths.length === 0) envPaths.push('.env');
     envPaths = envPaths.flatMap((envPath) =>
