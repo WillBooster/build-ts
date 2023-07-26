@@ -10,6 +10,7 @@ import { onExit } from 'signal-exit';
 import type { PackageJson } from 'type-fest';
 import type { CommandModule } from 'yargs';
 
+import { loadEnvironmentVariablesWithCache } from '../../env.js';
 import type { ArgumentsType, TargetCategory, TargetDetail } from '../../types.js';
 import { allTargetCategories } from '../../types.js';
 import { getNamespaceAndName, readPackageJson } from '../../utils.js';
@@ -67,6 +68,8 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     console.error('Failed to parse package.json.');
     process.exit(1);
   }
+
+  loadEnvironmentVariablesWithCache(argv, packageDirPath);
 
   const input = verifyInput(argv, cwd, packageDirPath);
   const targetDetail = detectTargetDetail(targetCategory, input);
@@ -144,7 +147,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
   const options: RollupOptions = {
     input,
-    plugins: createPlugins(argv, targetDetail, packageJson, namespace, cwd),
+    plugins: createPlugins(argv, targetDetail, packageJson, namespace, packageDirPath),
     watch: argv.watch ? { clearScreen: false } : undefined,
   };
 

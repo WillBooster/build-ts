@@ -26,7 +26,7 @@ export function createPlugins(
   targetDetail: TargetDetail,
   packageJson: PackageJson,
   namespace: string | undefined,
-  cwd: string
+  packageDirPath: string
 ): Plugin[] {
   const externalDeps = [...(argv.external ?? [])].map((item) => item.toString());
   if (packageJson.dependencies?.['@prisma/client']) {
@@ -58,7 +58,7 @@ export function createPlugins(
     replace({
       delimiters: ['', ''],
       preventAssignment: true,
-      values: createEnvironmentVariablesDefinition(argv, cwd),
+      values: createEnvironmentVariablesDefinition(argv, packageDirPath),
     }),
     json(),
     nodeExternals({

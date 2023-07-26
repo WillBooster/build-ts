@@ -3,9 +3,12 @@ import path from 'node:path';
 
 import type { CommandModule, InferredOptionTypes } from 'yargs';
 
+import { loadEnvironmentVariablesWithCache } from '../env.js';
+import { preprocessBuilder } from '../preprocessBuilder.js';
 import { readPackageJson } from '../utils.js';
 
 const builder = {
+  ...preprocessBuilder,
   module: {
     description: 'A module type: cjs or esm',
     type: 'string',
@@ -23,6 +26,8 @@ export const run: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
   describe: 'Run script',
   builder,
   async handler(argv) {
+    loadEnvironmentVariablesWithCache(argv, process.cwd());
+
     const file = argv.file?.toString() || '';
     const module = await detectModuleType(file, argv.module);
 
