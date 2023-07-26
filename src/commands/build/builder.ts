@@ -26,11 +26,6 @@ export const builder = {
     description: 'Additional external dependencies.',
     type: 'array',
   },
-  verbose: {
-    description: 'Whether or not verbose mode is enabled.',
-    type: 'boolean',
-    alias: 'v',
-  },
   'env-var': {
     description: 'Environment variables to be inlined.',
     type: 'array',
@@ -40,11 +35,6 @@ export const builder = {
     description: 'Whether watch mode is enabled or not',
     type: 'boolean',
     alias: 'w',
-  },
-  silent: {
-    description: 'Whether watch mode is enabled or not',
-    type: 'boolean',
-    alias: 's',
   },
   keepImport: {
     description: 'Identifiers to be kept as import statements.',
