@@ -3,8 +3,9 @@ import { preprocessBuilder } from '../../preprocessBuilder.js';
 export const builder = {
   ...preprocessBuilder,
   input: {
-    description: 'A file path of main source code. Default value is "src/index.{ts,tsx}" from package directory.',
-    type: 'string',
+    description:
+      'Paths of source code files to be built. The first file is main. If no option is given, "src/index.{ts,tsx}" from package directory is targeted.',
+    type: 'array',
     alias: 'i',
   },
   'core-js': {
