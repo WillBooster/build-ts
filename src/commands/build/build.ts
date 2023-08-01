@@ -71,8 +71,8 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
   loadEnvironmentVariablesWithCache(argv, packageDirPath);
 
-  const input = verifyInput(argv, cwd, packageDirPath);
-  const targetDetail = detectTargetDetail(targetCategory, input);
+  const inputs = verifyInput(argv, cwd, packageDirPath);
+  const targetDetail = detectTargetDetail(targetCategory, inputs[0]);
 
   if (verbose) {
     console.info('Target (Category):', `${targetDetail} (${targetCategory})`);
@@ -90,47 +90,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   process.env.BUILD_TS_TARGET_CATEGORY = targetCategory;
   process.env.BUILD_TS_TARGET_DETAIL = targetDetail;
 
-  let outputOptionsList: OutputOptions[];
-  if (targetDetail === 'app-node' || targetDetail === 'functions') {
-    const [outputPath, isEsmOutput] = getOutputPathAndIsEsmOutput(isEsmPackage, argv.moduleType);
-    outputOptionsList = [
-      {
-        file: path.join(packageDirPath, 'dist', outputPath),
-        format: isEsmOutput ? 'module' : 'commonjs',
-        sourcemap: argv.sourcemap,
-      },
-    ];
-  } else {
-    // The following import statement in an esm module causes the following error:
-    // Statement:
-    //   import { usePrevious } from 'react-use';
-    // Error:
-    //   Named export 'usePrevious' not found. The requested module 'react-use' is a CommonJS module,
-    //   which may not support all module.exports as named exports.
-    // We need cjs modules for web apps to avoid the error.
-    // Also, splitting a library is useful in both modules, so preserveModules should be true.
-    outputOptionsList = [];
-    const moduleType = argv.moduleType || 'both';
-    const jsExt = argv.jsExtension || 'either';
-    if (moduleType === 'cjs' || moduleType === 'both' || (moduleType === 'either' && !isEsmPackage)) {
-      outputOptionsList.push({
-        dir: path.join(packageDirPath, 'dist', 'cjs'),
-        entryFileNames: jsExt === 'both' || (jsExt === 'either' && !isEsmPackage) ? '[name].js' : '[name].cjs',
-        format: 'commonjs',
-        preserveModules: true,
-        sourcemap: argv.sourcemap,
-      });
-    }
-    if (moduleType === 'esm' || moduleType === 'both' || (moduleType === 'either' && isEsmPackage)) {
-      outputOptionsList.push({
-        dir: path.join(packageDirPath, 'dist', 'esm'),
-        entryFileNames: jsExt === 'both' || (jsExt === 'either' && isEsmPackage) ? '[name].js' : '[name].mjs',
-        format: 'module',
-        preserveModules: true,
-        sourcemap: argv.sourcemap,
-      });
-    }
-  }
+  const outputOptionsList = getOutputOptionsList(argv, packageDirPath, targetDetail, isEsmPackage);
   if (verbose) {
     console.info('OutputOptions:', outputOptionsList);
   }
@@ -146,7 +106,12 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   }
 
   const options: RollupOptions = {
-    input,
+    input:
+      targetDetail === 'functions'
+        ? Object.fromEntries(
+            inputs.map((input, index) => [index === 0 ? 'index' : path.basename(input, path.extname(input)), input])
+          )
+        : inputs,
     plugins: createPlugins(argv, targetDetail, packageJson, namespace, packageDirPath),
     watch: argv.watch ? { clearScreen: false } : undefined,
   };
@@ -159,7 +124,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     if (!argv.silent) {
       console.info(
         chalk.cyan(
-          `Bundles ${chalk.bold(pathToRelativePath(input).join(', '))} → ${chalk.bold(
+          `Bundles ${chalk.bold(pathToRelativePath(inputs).join(', '))} → ${chalk.bold(
             pathToRelativePath(outputOptionsList.map((opts) => opts.file || opts.dir || '')).join(', ')
           )}\non ${packageDirPath} ...`
         )
@@ -265,14 +230,15 @@ function watchRollup(
   });
 }
 
-function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDirPath: string): string {
-  if (argv.input) return path.join(cwd, argv.input);
+function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDirPath: string): string[] {
+  if (argv.input && argv.input.length > 0) return argv.input.map((p) => path.join(cwd, p.toString()));
 
-  let input = path.join(packageDirPath, path.join('src', 'index.ts'));
-  if (fs.existsSync(input)) return input;
+  const srcDirPath = path.join(packageDirPath, 'src');
+  let input = path.join(srcDirPath, 'index.ts');
+  if (fs.existsSync(input)) return [input];
 
-  input = path.join(packageDirPath, path.join('src', 'index.tsx'));
-  if (fs.existsSync(input)) return input;
+  input = path.join(srcDirPath, 'index.tsx');
+  if (fs.existsSync(input)) return [input];
 
   console.error('Failed to detect input file.');
   process.exit(1);
@@ -305,8 +271,9 @@ async function generatePackageJsonForFunctions(
   moduleType: string | undefined
 ): Promise<void> {
   packageJson.name += '-dist';
-  const [outputPath] = getOutputPathAndIsEsmOutput(packageJson.type === 'module', moduleType);
-  packageJson.main = outputPath;
+  const esmPackage = packageJson.type === 'module';
+  const esmOutput = isEsmOutput(esmPackage, moduleType);
+  packageJson.main = esmPackage === esmOutput ? 'index.js' : esmOutput ? 'index.mjs' : 'index.cjs';
 
   // Prevent Firebase Functions from running `build` script since we are building code before deploying.
   delete packageJson.scripts;
@@ -317,8 +284,54 @@ async function generatePackageJsonForFunctions(
   await fs.promises.writeFile(path.join(packageDirPath, 'dist', 'package.json'), JSON.stringify(packageJson));
 }
 
-function getOutputPathAndIsEsmOutput(isEsmPackage: boolean, moduleType: string | undefined): [string, boolean] {
-  const isEsmOutput = moduleType === 'esm' || ((!moduleType || moduleType === 'either') && isEsmPackage);
-  const outputPath = isEsmPackage === isEsmOutput ? 'index.js' : isEsmOutput ? 'index.mjs' : 'index.cjs';
-  return [outputPath, isEsmOutput];
+function getOutputOptionsList(
+  argv: ArgumentsType<AnyBuilderType>,
+  packageDirPath: string,
+  targetDetail: string,
+  isEsmPackage: boolean
+): OutputOptions[] {
+  if (targetDetail === 'app-node' || targetDetail === 'functions') {
+    return [
+      {
+        dir: path.join(packageDirPath, 'dist'),
+        format: isEsmOutput(isEsmPackage, argv.moduleType) ? 'module' : 'commonjs',
+        sourcemap: argv.sourcemap,
+      },
+    ];
+  }
+
+  // The following import statement in an esm module causes the following error:
+  // Statement:
+  //   import { usePrevious } from 'react-use';
+  // Error:
+  //   Named export 'usePrevious' not found. The requested module 'react-use' is a CommonJS module,
+  //   which may not support all module.exports as named exports.
+  // We need cjs modules for web apps to avoid the error.
+  // Also, splitting a library is useful in both modules, so preserveModules should be true.
+  const outputOptionsList: OutputOptions[] = [];
+  const moduleType = argv.moduleType || 'both';
+  const jsExt = argv.jsExtension || 'either';
+  if (moduleType === 'cjs' || moduleType === 'both' || (moduleType === 'either' && !isEsmPackage)) {
+    outputOptionsList.push({
+      dir: path.join(packageDirPath, 'dist', 'cjs'),
+      entryFileNames: jsExt === 'both' || (jsExt === 'either' && !isEsmPackage) ? '[name].js' : '[name].cjs',
+      format: 'commonjs',
+      preserveModules: true,
+      sourcemap: argv.sourcemap,
+    });
+  }
+  if (moduleType === 'esm' || moduleType === 'both' || (moduleType === 'either' && isEsmPackage)) {
+    outputOptionsList.push({
+      dir: path.join(packageDirPath, 'dist', 'esm'),
+      entryFileNames: jsExt === 'both' || (jsExt === 'either' && isEsmPackage) ? '[name].js' : '[name].mjs',
+      format: 'module',
+      preserveModules: true,
+      sourcemap: argv.sourcemap,
+    });
+  }
+  return outputOptionsList;
+}
+
+function isEsmOutput(isEsmPackage: boolean, moduleType: string | undefined): boolean {
+  return moduleType === 'esm' || ((!moduleType || moduleType === 'either') && isEsmPackage);
 }
