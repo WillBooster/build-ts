@@ -6,6 +6,7 @@ import dateTime from 'date-time';
 import ms from 'pretty-ms';
 import type { OutputOptions, RollupBuild, RollupOptions } from 'rollup';
 import { rollup, watch } from 'rollup';
+import type { Handler } from 'signal-exit';
 import { onExit } from 'signal-exit';
 import type { PackageJson } from 'type-fest';
 import type { CommandModule } from 'yargs';
@@ -172,7 +173,7 @@ function watchRollup(
     if (watcher) await watcher.close();
     if (code) process.exit(code);
   };
-  onExit(close);
+  onExit(close as unknown as Handler);
   process.on('uncaughtException', close);
   if (!process.stdin.isTTY) {
     process.stdin.on('end', close);
