@@ -1,7 +1,7 @@
 import { loadEnvironmentVariables } from '@willbooster/shared-lib-node';
 
 import type { builder } from './commands/build/builder.js';
-import type { preprocessBuilder } from './preprocessBuilder.js';
+import type { sharedOptionsBuilder } from './sharedOptionsBuilder.js';
 import type { ArgumentsType } from './types.js';
 
 let envVars: Record<string, string> | undefined;
@@ -10,7 +10,7 @@ let envVars: Record<string, string> | undefined;
  * This function loads environment variables from `.env` files.
  * */
 export function loadEnvironmentVariablesWithCache(
-  argv: ArgumentsType<typeof preprocessBuilder>,
+  argv: ArgumentsType<typeof sharedOptionsBuilder>,
   cwd: string
 ): Record<string, string> {
   if (!envVars) {

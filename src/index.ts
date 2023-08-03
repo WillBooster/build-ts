@@ -4,13 +4,13 @@ import { hideBin } from 'yargs/helpers';
 
 import { app, functions, lib } from './commands/build/build.js';
 import { run } from './commands/run.js';
-import { preprocessBuilder } from './preprocessBuilder.js';
+import { sharedOptionsBuilder } from './sharedOptionsBuilder.js';
 
 removeNpmAndYarnEnvironmentVariables(process.env);
 
 await yargs(hideBin(process.argv))
   .scriptName('build-ts')
-  .options(preprocessBuilder)
+  .options(sharedOptionsBuilder)
   .command(app)
   .command(functions)
   .command(lib)

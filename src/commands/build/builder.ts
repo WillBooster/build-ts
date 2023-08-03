@@ -1,7 +1,7 @@
-import { preprocessBuilder } from '../../preprocessBuilder.js';
+import { sharedOptionsBuilder } from '../../sharedOptionsBuilder.js';
 
 export const builder = {
-  ...preprocessBuilder,
+  ...sharedOptionsBuilder,
   input: {
     description:
       'Paths of source code files to be built. The first file is main. If no option is given, "src/index.{ts,tsx}" from package directory is targeted.',

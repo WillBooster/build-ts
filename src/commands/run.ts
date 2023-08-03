@@ -4,11 +4,11 @@ import path from 'node:path';
 import type { CommandModule, InferredOptionTypes } from 'yargs';
 
 import { loadEnvironmentVariablesWithCache } from '../env.js';
-import { preprocessBuilder } from '../preprocessBuilder.js';
+import { sharedOptionsBuilder } from '../sharedOptionsBuilder.js';
 import { readPackageJson } from '../utils.js';
 
 const builder = {
-  ...preprocessBuilder,
+  ...sharedOptionsBuilder,
   module: {
     description: 'A module type: cjs or esm',
     type: 'string',
