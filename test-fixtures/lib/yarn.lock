@@ -5,17 +5,17 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
-"@types/lodash@npm:4.14.195":
-  version: 4.14.195
-  resolution: "@types/lodash@npm:4.14.195"
-  checksum: 6d733276df592614a0943a0053056140398b3c263cdf2557d4301b3a47b07ff561926cb9339a4725acbc7d8766f91ded218df11e0a4288cee369eafb5141d94d
+"@types/lodash@npm:4.14.196":
+  version: 4.14.196
+  resolution: "@types/lodash@npm:4.14.196"
+  checksum: a482cc4070f45f278b3fcedfb66b109b2a32fcae5854c6d500333cef73f25fbd7f1d48cd4a709dae2ed31ff2cf0df70080d0f7185b0faebcb738eb1ef997ebd1
   languageName: node
   linkType: hard
 
-"@types/node@npm:18.16.19":
-  version: 18.16.19
-  resolution: "@types/node@npm:18.16.19"
-  checksum: 322aaf3c04dcbbae619c7e8d40ed70e4ae41894e88776267d87bf3719a71b9a21ecde903d9f67cec3a663cf608d2822056ab739b48dada75433db38fadac2514
+"@types/node@npm:18.17.1":
+  version: 18.17.1
+  resolution: "@types/node@npm:18.17.1"
+  checksum: 15b9d2d5de2e8607ea0c83286de437086467223c060b6165a2c8cb7b82caf46a4d8851489220adaa93dd525d62f014047ac005a7445be795581539436fc5e08e
   languageName: node
   linkType: hard
 
@@ -23,8 +23,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "lib-node@workspace:."
   dependencies:
-    "@types/lodash": "npm:4.14.195"
-    "@types/node": "npm:18.16.19"
+    "@types/lodash": "npm:4.14.196"
+    "@types/node": "npm:18.17.1"
     lodash.chunk: "npm:4.2.0"
   peerDependencies:
     lodash.chunk: 4.2.0
