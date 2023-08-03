@@ -226,7 +226,7 @@ function watchRollup(
     }
 
     if ('result' in event && event.result) {
-      event.result.close();
+      void event.result.close();
     }
   });
 }
