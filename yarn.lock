@@ -2631,10 +2631,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:20.4.6":
-  version: 20.4.6
-  resolution: "@types/node@npm:20.4.6"
-  checksum: 9776fbe7fd4a6f0cb62714363156a6efa4f54d1892777ff657d56e84a0fa1db365e8623d14eed9d38681075b510b94f9a223a447d0e89457cfcfc1b4e7ed49c0
+"@types/node@npm:20.4.7":
+  version: 20.4.7
+  resolution: "@types/node@npm:20.4.7"
+  checksum: 95c0179ca0c1e3c96f3613276f98c7f620ee035f5d871e3045bc39e76fb77f4330b03b79335d8d254e88c8deb1143fcaa2fb4ad576d857c31f389282fe56a0f1
   languageName: node
   linkType: hard
 
@@ -2920,13 +2920,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/shared-lib-node@npm:2.7.0":
-  version: 2.7.0
-  resolution: "@willbooster/shared-lib-node@npm:2.7.0"
+"@willbooster/shared-lib-node@npm:2.7.2":
+  version: 2.7.2
+  resolution: "@willbooster/shared-lib-node@npm:2.7.2"
   dependencies:
     dotenv: "npm:16.3.1"
     tree-kill: "npm:1.2.2"
-  checksum: a4adc05abfd61a18fe701c7b335cdcea1608677624a69a51fa5f34354ed1b23efdaf451c534d0b345bfca6af6768715deee2409761e24f065112ec0732256493
+  checksum: f2f1c830c10d798ee3cc7378cfe95a9b903c6279d3b72943587573809d27c5d3da1fe0949eeecc47d581a6a38f8f40f9373d094609aaace78d41d0a9ceecdc54
   languageName: node
   linkType: hard
 
@@ -3506,7 +3506,7 @@ __metadata:
     "@types/babel__plugin-transform-runtime": "npm:7.9.2"
     "@types/babel__preset-env": "npm:7.9.2"
     "@types/eslint": "npm:8.44.1"
-    "@types/node": "npm:20.4.6"
+    "@types/node": "npm:20.4.7"
     "@types/signal-exit": "npm:3.0.1"
     "@types/yargs": "npm:17.0.24"
     "@typescript-eslint/eslint-plugin": "npm:6.2.1"
@@ -3514,7 +3514,7 @@ __metadata:
     "@willbooster/babel-configs": "npm:1.3.0"
     "@willbooster/eslint-config-ts": "npm:10.4.0"
     "@willbooster/prettier-config": "npm:9.1.1"
-    "@willbooster/shared-lib-node": "npm:2.7.0"
+    "@willbooster/shared-lib-node": "npm:2.7.2"
     babel-plugin-polyfill-corejs3: "npm:0.8.3"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     chalk: "npm:5.3.0"
@@ -3535,12 +3535,12 @@ __metadata:
     pinst: "npm:3.0.0"
     prettier: "npm:3.0.1"
     pretty-ms: "npm:8.0.0"
-    rollup: "npm:3.27.1"
+    rollup: "npm:3.27.2"
     rollup-plugin-analyzer: "npm:4.0.0"
     rollup-plugin-keep-import: "npm:1.0.2"
     rollup-plugin-node-externals: "npm:6.1.1"
     rollup-plugin-string: "npm:3.0.0"
-    rollup-plugin-ts: "npm:3.3.0"
+    rollup-plugin-ts: "npm:3.4.2"
     semantic-release: "npm:21.0.7"
     signal-exit: "npm:4.1.0"
     sort-package-json: "npm:2.5.1"
@@ -8530,9 +8530,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup-plugin-ts@npm:3.3.0":
-  version: 3.3.0
-  resolution: "rollup-plugin-ts@npm:3.3.0"
+"rollup-plugin-ts@npm:3.4.2":
+  version: 3.4.2
+  resolution: "rollup-plugin-ts@npm:3.4.2"
   dependencies:
     "@rollup/pluginutils": "npm:^5.0.2"
     "@wessberg/stringutil": "npm:^1.0.19"
@@ -8569,7 +8569,7 @@ __metadata:
       optional: true
     "@swc/helpers":
       optional: true
-  checksum: 87fb6b3b36026defd44406254f625570010af130d32129ed5d1d02d2e06f6062b5f1a2b0888ea0da3f5671b9411c8312b1ee224d44e2871f282c02960599cef4
+  checksum: 39dae068d7f70d596ac3ddc195f65279bbb767dc7f6cfc03f96ed05b1e05715760397987fa542ad0990b29553f9633d0d2c8831bd1b192c46c74aad77a632fb5
   languageName: node
   linkType: hard
 
@@ -8582,9 +8582,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup@npm:3.27.1":
-  version: 3.27.1
-  resolution: "rollup@npm:3.27.1"
+"rollup@npm:3.27.2":
+  version: 3.27.2
+  resolution: "rollup@npm:3.27.2"
   dependencies:
     fsevents: "npm:~2.3.2"
   dependenciesMeta:
@@ -8592,7 +8592,7 @@ __metadata:
       optional: true
   bin:
     rollup: dist/bin/rollup
-  checksum: a30acc5013795a652dfa97f19e887c054d5eca7dd428068603e4b41e20b8b63c4ed40246083a678ddb89fbefb8e427b7684b5a7da06863ab86fd2c83f6ef9c2e
+  checksum: feb1e76f50fb502e106954a621b2d0b3e2e92e2552f938a0cbef5f7931c9f4283d05076d47311a4582863205f377e3e2d7314a1626e3c7d9c7330527ddeb7562
   languageName: node
   linkType: hard
 
