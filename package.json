@@ -17,7 +17,7 @@
     "babel.*"
   ],
   "scripts": {
-    "build": "yarn start app",
+    "build": "wb buildIfNeeded --command 'yarn start app'",
     "cleanup": "yarn format && yarn lint-fix",
     "format": "sort-package-json && yarn prettify",
     "postinstall": "husky install",
@@ -80,6 +80,7 @@
     "@willbooster/babel-configs": "1.3.0",
     "@willbooster/eslint-config-ts": "10.4.0",
     "@willbooster/prettier-config": "9.1.1",
+    "@willbooster/wb": "4.8.0",
     "conventional-changelog-conventionalcommits": "6.1.0",
     "eslint": "8.47.0",
     "eslint-config-prettier": "9.0.0",
