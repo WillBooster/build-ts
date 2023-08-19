@@ -29,7 +29,7 @@
     "start": "node --no-warnings --loader ts-node/esm src/index.ts",
     "start-prod": "yarn build && yarn build-ts",
     "test": "vitest",
-    "typecheck": "tsc --noEmit --Pretty"
+    "typecheck": "wb typecheck"
   },
   "prettier": "@willbooster/prettier-config",
   "dependencies": {
