@@ -16,7 +16,17 @@ const config = {
   plugins: [
     '@babel/proposal-class-properties',
     '@babel/proposal-numeric-separator',
-    '@babel/plugin-syntax-import-assertions',
+    // cf. https://babeljs.io/blog/2023/05/26/7.22.0#explicit-resource-management-15633-15520
+    '@babel/plugin-proposal-explicit-resource-management',
+    // cf. https://babeljs.io/blog/2023/05/26/7.22.0#import-attributes-15536-15620
+    '@babel/plugin-syntax-import-attributes',
+    // cf. https://babeljs.io/blog/2023/05/26/7.22.0#decorators-updates-15570
+    [
+      '@babel/plugin-proposal-decorators',
+      {
+        version: '2023-05',
+      },
+    ],
   ],
   env: {
     production: {
