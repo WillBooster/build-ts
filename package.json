@@ -99,7 +99,7 @@
     "type-fest": "4.2.0",
     "vitest": "0.34.2"
   },
-  "packageManager": "yarn@4.0.0-rc.49",
+  "packageManager": "yarn@4.0.0-rc.50",
   "engines": {
     "node": ">=18"
   }
