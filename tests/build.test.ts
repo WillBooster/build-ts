@@ -7,7 +7,7 @@ describe(
   'build',
   () => {
     it.concurrent('app-node', async () => {
-      await buildAndRunApp('app-node', 'app', '--verbose');
+      await buildAndRunApp('app-node', 'app');
     });
 
     it.concurrent('functions', async () => {
