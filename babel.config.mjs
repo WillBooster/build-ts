@@ -14,8 +14,6 @@ const config = {
     '@babel/typescript',
   ],
   plugins: [
-    '@babel/proposal-class-properties',
-    '@babel/proposal-numeric-separator',
     // cf. https://babeljs.io/blog/2023/05/26/7.22.0#explicit-resource-management-15633-15520
     '@babel/plugin-proposal-explicit-resource-management',
     // cf. https://babeljs.io/blog/2023/05/26/7.22.0#import-attributes-15536-15620

@@ -7,7 +7,7 @@ describe(
   'build',
   () => {
     it.concurrent('app-node', async () => {
-      await buildAndRunApp('app-node', 'app');
+      await buildAndRunApp('app-node', 'app', '--verbose');
     });
 
     it.concurrent('functions', async () => {
@@ -47,8 +47,8 @@ describe(
   { timeout: 60_000 }
 );
 
-async function buildAndRunApp(dirName: string, subCommand: string): Promise<void> {
-  await buildWithCommand(dirName, subCommand);
+async function buildAndRunApp(dirName: string, subCommand: string, ...options: string[]): Promise<void> {
+  await buildWithCommand(dirName, subCommand, ...options);
 
   const [code] = await Promise.all([
     fs.promises.readFile(`test-fixtures/${dirName}/dist/index.js`, 'utf8'),
