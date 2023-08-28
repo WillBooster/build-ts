@@ -13,7 +13,6 @@ const config = {
     noDocumentAll: true,
     noIncompleteNsImportDetection: true,
     noNewArrows: true,
-    privateFieldsAsProperties: true,
     privateFieldsAsSymbols: true,
     setClassMethods: true,
     setComputedProperties: true,
