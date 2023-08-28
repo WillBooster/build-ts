@@ -4,7 +4,22 @@ import url from 'node:url';
 
 /** @type {import('@babel/core').TransformOptions} */
 const config = {
-  assumptions: {},
+  assumptions: {
+    constantReexports: true,
+    constantSuper: true,
+    enumerableModuleMeta: true,
+    ignoreFunctionLength: true,
+    noClassCalls: true,
+    noDocumentAll: true,
+    noIncompleteNsImportDetection: true,
+    noNewArrows: true,
+    privateFieldsAsProperties: true,
+    privateFieldsAsSymbols: true,
+    setClassMethods: true,
+    setComputedProperties: true,
+    setPublicClassFields: true,
+    superIsCallableConstructor: true,
+  },
   presets: [
     [
       '@babel/preset-env',
@@ -15,13 +30,11 @@ const config = {
     '@babel/typescript',
   ],
   plugins: [
-    '@babel/proposal-class-properties',
-    '@babel/proposal-numeric-separator',
-    // cf. https://babel.dev/blog/2023/05/26/7.22.0#explicit-resource-management-15633-15520
+    // cf. https://babeljs.io/blog/2023/05/26/7.22.0#explicit-resource-management-15633-15520
     '@babel/plugin-proposal-explicit-resource-management',
-    // cf. https://babel.dev/blog/2023/05/26/7.22.0#import-attributes-15536-15620
+    // cf. https://babeljs.io/blog/2023/05/26/7.22.0#import-attributes-15536-15620
     '@babel/plugin-syntax-import-attributes',
-    // cf. https://babel.dev/blog/2023/05/26/7.22.0#decorators-updates-15570
+    // cf. https://babeljs.io/blog/2023/05/26/7.22.0#decorators-updates-15570
     [
       '@babel/plugin-proposal-decorators',
       {
