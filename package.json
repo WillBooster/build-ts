@@ -33,7 +33,7 @@
   },
   "prettier": "@willbooster/prettier-config",
   "dependencies": {
-    "@babel/core": "7.22.11",
+    "@babel/core": "7.22.10",
     "@babel/plugin-proposal-decorators": "7.22.10",
     "@babel/plugin-proposal-explicit-resource-management": "7.22.6",
     "@babel/plugin-syntax-import-attributes": "7.22.5",
