@@ -379,6 +379,33 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/plugin-proposal-decorators@npm:7.22.10":
+  version: 7.22.10
+  resolution: "@babel/plugin-proposal-decorators@npm:7.22.10"
+  dependencies:
+    "@babel/helper-create-class-features-plugin": "npm:^7.22.10"
+    "@babel/helper-plugin-utils": "npm:^7.22.5"
+    "@babel/helper-replace-supers": "npm:^7.22.9"
+    "@babel/helper-split-export-declaration": "npm:^7.22.6"
+    "@babel/plugin-syntax-decorators": "npm:^7.22.10"
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: af74030af74408302298375d6e9fd115dec4977a6cd5832057d139919d1eda64780ef8d4d6af0eee893bf4bfcacfbc8497898fddaabe31638825a0fd5e174dd1
+  languageName: node
+  linkType: hard
+
+"@babel/plugin-proposal-explicit-resource-management@npm:7.22.6":
+  version: 7.22.6
+  resolution: "@babel/plugin-proposal-explicit-resource-management@npm:7.22.6"
+  dependencies:
+    "@babel/helper-plugin-utils": "npm:^7.22.5"
+    "@babel/plugin-syntax-explicit-resource-management": "npm:^7.22.5"
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: ad7303466933703c159c08fd4011ddfcd00c4abd39113a64ef93276c8f0bf07465e4f49c3f35af402498f038b2156fc53e7167ae4ffc2694c08f6274060dd2ca
+  languageName: node
+  linkType: hard
+
 "@babel/plugin-proposal-numeric-separator@npm:7.18.6":
   version: 7.18.6
   resolution: "@babel/plugin-proposal-numeric-separator@npm:7.18.6"
@@ -433,6 +460,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/plugin-syntax-decorators@npm:^7.22.10":
+  version: 7.22.10
+  resolution: "@babel/plugin-syntax-decorators@npm:7.22.10"
+  dependencies:
+    "@babel/helper-plugin-utils": "npm:^7.22.5"
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: cf606ef13ed98b3adf560ede27a873c0ab37e884c762a6f15493c881f5a78b67f24dcdd5c70e8cd8f39dbe4b23475cb98619729812f29feb2dcc241130195e7c
+  languageName: node
+  linkType: hard
+
 "@babel/plugin-syntax-dynamic-import@npm:^7.8.3":
   version: 7.8.3
   resolution: "@babel/plugin-syntax-dynamic-import@npm:7.8.3"
@@ -441,6 +479,17 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.0.0-0
   checksum: 9c50927bf71adf63f60c75370e2335879402648f468d0172bc912e303c6a3876927d8eb35807331b57f415392732ed05ab9b42c68ac30a936813ab549e0246c5
+  languageName: node
+  linkType: hard
+
+"@babel/plugin-syntax-explicit-resource-management@npm:^7.22.5":
+  version: 7.22.5
+  resolution: "@babel/plugin-syntax-explicit-resource-management@npm:7.22.5"
+  dependencies:
+    "@babel/helper-plugin-utils": "npm:^7.22.5"
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: ca0d9ff17f901c66213c8c665e52dab8c0a9d32e704681546a879bd939df3851c92b2470d16b19ad15223797747ad05761352941a3eb9c30197ab2000227e7b0
   languageName: node
   linkType: hard
 
@@ -466,7 +515,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/plugin-syntax-import-attributes@npm:^7.22.5":
+"@babel/plugin-syntax-import-attributes@npm:7.22.5, @babel/plugin-syntax-import-attributes@npm:^7.22.5":
   version: 7.22.5
   resolution: "@babel/plugin-syntax-import-attributes@npm:7.22.5"
   dependencies:
@@ -3439,8 +3488,11 @@ __metadata:
   dependencies:
     "@babel/core": "npm:7.22.10"
     "@babel/plugin-proposal-class-properties": "npm:7.18.6"
+    "@babel/plugin-proposal-decorators": "npm:7.22.10"
+    "@babel/plugin-proposal-explicit-resource-management": "npm:7.22.6"
     "@babel/plugin-proposal-numeric-separator": "npm:7.18.6"
     "@babel/plugin-syntax-import-assertions": "npm:7.22.5"
+    "@babel/plugin-syntax-import-attributes": "npm:7.22.5"
     "@babel/plugin-transform-runtime": "npm:7.22.10"
     "@babel/preset-env": "npm:7.22.10"
     "@babel/preset-react": "npm:7.22.5"
