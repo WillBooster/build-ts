@@ -84,7 +84,10 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
   if (argv['core-js']) {
     process.env.BUILD_TS_COREJS = '1';
+  } else if (argv['core-js-proposals']) {
+    process.env.BUILD_TS_COREJS_WITH_PROPOSALS = '1';
   }
+
   if (verbose) {
     process.env.BUILD_TS_VERBOSE = '1';
   }

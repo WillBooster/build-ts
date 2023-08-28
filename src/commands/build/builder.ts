@@ -13,6 +13,11 @@ export const builder = {
     type: 'boolean',
     default: false,
   },
+  'core-js-proposals': {
+    description: 'Whether or not core-js with proposals support is employed.',
+    type: 'boolean',
+    default: false,
+  },
   minify: {
     description: 'Whether or not minification is enabled.',
     type: 'boolean',

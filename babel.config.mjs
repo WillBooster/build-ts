@@ -4,6 +4,22 @@ import url from 'node:url';
 
 /** @type {import('@babel/core').TransformOptions} */
 const config = {
+  assumptions: {
+    constantReexports: true,
+    constantSuper: true,
+    enumerableModuleMeta: true,
+    ignoreFunctionLength: true,
+    noClassCalls: true,
+    noDocumentAll: true,
+    noIncompleteNsImportDetection: true,
+    noNewArrows: true,
+    privateFieldsAsProperties: true,
+    privateFieldsAsSymbols: true,
+    setClassMethods: true,
+    setComputedProperties: true,
+    setPublicClassFields: true,
+    superIsCallableConstructor: true,
+  },
   presets: [
     [
       '@babel/preset-env',
@@ -58,18 +74,20 @@ const config = {
   },
 };
 
-if (process.env.BUILD_TS_COREJS) {
+if (process.env.BUILD_TS_COREJS || process.env.BUILD_TS_COREJS_WITH_PROPOSALS) {
   const rootPath = url.fileURLToPath(path.dirname(import.meta.url));
   const packageJson = JSON.parse(fs.readFileSync(path.join(rootPath, 'package.json'), 'utf8'));
   const [major, minor] = packageJson.dependencies['core-js'].split('.');
+  const proposals = process.env.BUILD_TS_COREJS_WITH_PROPOSALS ? { proposals: true } : {};
 
   if (process.env.BUILD_TS_TARGET_CATEGORY === 'app') {
     /** @type {import('@babel/core').PluginItem} */
     const presetEnvConfig = config.presets[0][1];
     presetEnvConfig.useBuiltIns = 'usage';
-    presetEnvConfig.corejs = `${major}.${minor}`;
+    presetEnvConfig.corejs = { version: `${major}.${minor}`, ...proposals };
   } else if (process.env.BUILD_TS_TARGET_CATEGORY === 'lib') {
-    config.plugins.push(['polyfill-corejs3', { method: 'usage-pure', version: `${major}.${minor}` }]);
+    // cf. https://github.com/babel/babel-polyfills#injection-methods
+    config.plugins.push(['polyfill-corejs3', { method: 'usage-pure', version: `${major}.${minor}`, ...proposals }]);
   }
 }
 
