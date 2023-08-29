@@ -19,12 +19,14 @@ describe(
       expect(packageJson).to.includes('"main":"index.js"');
     });
 
-    it.concurrent('lib', async () => {
-      const dirName = 'lib';
+    it.concurrent.each([
+      ['lib', 'index.js', 'index.mjs'],
+      ['lib-esm', 'index.cjs', 'index.js'],
+    ])('%s', async (dirName, cjsName, esmName) => {
       await buildWithCommand(dirName, 'lib', '--module-type', 'both');
       const [cjsCode, esmCode] = await Promise.all([
-        fs.promises.readFile(`test-fixtures/${dirName}/dist/cjs/index.js`, 'utf8'),
-        fs.promises.readFile(`test-fixtures/${dirName}/dist/esm/index.mjs`, 'utf8'),
+        fs.promises.readFile(`test-fixtures/${dirName}/dist/cjs/${cjsName}`, 'utf8'),
+        fs.promises.readFile(`test-fixtures/${dirName}/dist/esm/${esmName}`, 'utf8'),
       ]);
       expect(cjsCode).to.includes('lodash/chunk');
       expect(esmCode).to.includes('lodash/chunk');
