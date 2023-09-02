@@ -32,6 +32,12 @@ export function createPlugins(
   if (packageJson.dependencies?.['@prisma/client']) {
     externalDeps.push('prisma-client');
   }
+  // Since `deps: true` does not work for `import chunk from 'lodash/chunk.js';`
+  externalDeps.push(
+    ...Object.keys(packageJson.dependencies ?? {}),
+    ...Object.keys(packageJson.peerDependencies ?? {}),
+    ...Object.keys(packageJson.optionalDependencies ?? {})
+  );
   // Add external dependencies from sibling packages
   if (fs.existsSync(path.join('..', '..', 'package.json'))) {
     const packageDirs = fs.readdirSync(path.join('..'), { withFileTypes: true });
@@ -66,8 +72,8 @@ export function createPlugins(
       devDeps: false,
       peerDeps: true,
       optDeps: true,
-      include: externalDeps.map((name) => new RegExp(`${name}(?:\\/.+)?`)),
-      exclude: namespace && new RegExp(`${namespace}(?:\\/.+)?`),
+      include: externalDeps.map((name) => new RegExp(`^${name}(?:\\/.+)?`)),
+      exclude: namespace && new RegExp(`^${namespace}(?:\\/.+)?`),
     }),
     resolve({ extensions }),
     commonjs(),

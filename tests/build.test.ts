@@ -25,13 +25,13 @@ describe(
     ])('%s', async (dirName, cjsName, esmName) => {
       await buildWithCommand(dirName, 'lib', '--module-type', 'both');
       const [cjsCode, esmCode] = await Promise.all([
-        fs.promises.readFile(`test-fixtures/${dirName}/dist/cjs/${cjsName}`, 'utf8'),
-        fs.promises.readFile(`test-fixtures/${dirName}/dist/esm/${esmName}`, 'utf8'),
+        fs.promises.readFile(`test-fixtures/${dirName}/dist/${cjsName}`, 'utf8'),
+        fs.promises.readFile(`test-fixtures/${dirName}/dist/${esmName}`, 'utf8'),
       ]);
       expect(cjsCode).to.includes('lodash/chunk');
       expect(esmCode).to.includes('lodash/chunk');
 
-      const execRet = await spawnAsync('node', ['dist/cjs/index.js'], { cwd: `test-fixtures/lib` });
+      const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: `test-fixtures/${dirName}` });
       expect(execRet.status).toBe(0);
     });
 
@@ -39,8 +39,8 @@ describe(
       const dirName = 'lib-react';
       await buildWithCommand(dirName, 'lib', '--js-extension', 'both');
       const [cjsCode, esmCode] = await Promise.all([
-        fs.promises.readFile(`test-fixtures/${dirName}/dist/cjs/index.js`, 'utf8'),
-        fs.promises.readFile(`test-fixtures/${dirName}/dist/esm/index.js`, 'utf8'),
+        fs.promises.readFile(`test-fixtures/${dirName}/dist/index.js`, 'utf8'),
+        fs.promises.readFile(`test-fixtures/${dirName}/dist/index.js`, 'utf8'),
       ]);
       expect(cjsCode).to.includes('lodash/chunk');
       expect(esmCode).to.includes('lodash/chunk');

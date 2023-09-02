@@ -294,10 +294,11 @@ function getOutputOptionsList(
   targetDetail: string,
   isEsmPackage: boolean
 ): OutputOptions[] {
+  const outDirPath = path.join(packageDirPath, 'dist');
   if (targetDetail === 'app-node' || targetDetail === 'functions') {
     return [
       {
-        dir: path.join(packageDirPath, 'dist'),
+        dir: outDirPath,
         format: isEsmOutput(isEsmPackage, argv.moduleType) ? 'module' : 'commonjs',
         sourcemap: argv.sourcemap,
       },
@@ -317,7 +318,7 @@ function getOutputOptionsList(
   const jsExt = argv.jsExtension || 'either';
   if (moduleType === 'cjs' || moduleType === 'both' || (moduleType === 'either' && !isEsmPackage)) {
     outputOptionsList.push({
-      dir: path.join(packageDirPath, 'dist', 'cjs'),
+      dir: outDirPath,
       entryFileNames: jsExt === 'both' || (jsExt === 'either' && !isEsmPackage) ? '[name].js' : '[name].cjs',
       format: 'commonjs',
       preserveModules: true,
@@ -326,7 +327,7 @@ function getOutputOptionsList(
   }
   if (moduleType === 'esm' || moduleType === 'both' || (moduleType === 'either' && isEsmPackage)) {
     outputOptionsList.push({
-      dir: path.join(packageDirPath, 'dist', 'esm'),
+      dir: outDirPath,
       entryFileNames: jsExt === 'both' || (jsExt === 'either' && isEsmPackage) ? '[name].js' : '[name].mjs',
       format: 'module',
       preserveModules: true,
