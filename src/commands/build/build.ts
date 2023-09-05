@@ -12,6 +12,7 @@ import type { PackageJson } from 'type-fest';
 import type { CommandModule } from 'yargs';
 
 import { loadEnvironmentVariablesWithCache } from '../../env.js';
+import { generateDeclarationFiles } from '../../typeScript.js';
 import type { ArgumentsType, TargetCategory, TargetDetail } from '../../types.js';
 import { allTargetCategories } from '../../types.js';
 import { getNamespaceAndName, readPackageJson } from '../../utils.js';
@@ -94,7 +95,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   process.env.BUILD_TS_TARGET_CATEGORY = targetCategory;
   process.env.BUILD_TS_TARGET_DETAIL = targetDetail;
 
-  const outputOptionsList = getOutputOptionsList(argv, packageDirPath, targetDetail, isEsmPackage);
+  const outputOptionsList = getOutputOptionsList(argv, targetDetail, packageDirPath, isEsmPackage);
   if (verbose) {
     console.info('OutputOptions:', outputOptionsList);
   }
@@ -123,7 +124,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   const pathToRelativePath = (paths: string | Readonly<string[]>): string[] =>
     (Array.isArray(paths) ? paths : [paths]).map((p) => path.relative(packageDirPath, p));
   if (argv.watch) {
-    watchRollup(argv, packageDirPath, options, outputOptionsList, pathToRelativePath);
+    watchRollup(argv, targetDetail, packageDirPath, options, outputOptionsList, pathToRelativePath);
   } else {
     if (!argv.silent) {
       console.info(
@@ -158,11 +159,16 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     }
     await bundle?.close();
     if (buildFailed) process.exit(1);
+
+    if (targetDetail !== 'app-node' && targetDetail !== 'functions' && !generateDeclarationFiles(packageDirPath)) {
+      process.exit(1);
+    }
   }
 }
 
 function watchRollup(
   argv: ArgumentsType<AnyBuilderType>,
+  targetDetail: string,
   packageDirPath: string,
   options: RollupOptions,
   outputOptionsList: OutputOptions[],
@@ -218,6 +224,10 @@ function watchRollup(
             `Created ${chalk.bold(pathToRelativePath(event.output).join(', '))} in ${chalk.bold(ms(event.duration))}`
           )
         );
+
+        if (targetDetail !== 'app-node' && targetDetail !== 'functions') {
+          generateDeclarationFiles(packageDirPath);
+        }
         break;
       }
       case 'END': {
@@ -290,8 +300,8 @@ async function generatePackageJsonForFunctions(
 
 function getOutputOptionsList(
   argv: ArgumentsType<AnyBuilderType>,
-  packageDirPath: string,
   targetDetail: string,
+  packageDirPath: string,
   isEsmPackage: boolean
 ): OutputOptions[] {
   const outDirPath = path.join(packageDirPath, 'dist');

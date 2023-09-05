@@ -1,6 +1,6 @@
 import ts from 'typescript';
 
-export function generateDeclarationFiles(projectDirPath: string): void {
+export function generateDeclarationFiles(projectDirPath: string): boolean {
   const configFile = ts.findConfigFile(projectDirPath, ts.sys.fileExists);
   if (!configFile) throw new Error('Failed to find tsconfig.json.');
 
@@ -32,5 +32,5 @@ export function generateDeclarationFiles(projectDirPath: string): void {
     console.warn(message);
   }
 
-  process.exitCode = emitSkipped ? 1 : 0;
+  return emitSkipped;
 }
