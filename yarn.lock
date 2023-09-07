@@ -2909,10 +2909,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:20.5.9":
+"@types/node@npm:*":
   version: 20.5.9
   resolution: "@types/node@npm:20.5.9"
   checksum: a071a19019b4045ba65cbacb3a24fcdf1ef41474fd15fb160a082a4c7aba7643b69c5d681637d2b0ce081f2127ce4332ea4d8bf007595efe8e82ba795872c7d0
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:18.17.14":
+  version: 18.17.14
+  resolution: "@types/node@npm:18.17.14"
+  checksum: dec3cebb12b16344d91e6e8eae32a64b6dd2754e2ba9fd06ab823d2968f19bfe6c7d27e622cfa65cb5c0738ef33a203e9d1d530bfad91bb716a33e6ab533fa47
   languageName: node
   linkType: hard
 
@@ -3773,7 +3780,7 @@ __metadata:
     "@types/babel__plugin-transform-runtime": "npm:7.9.2"
     "@types/babel__preset-env": "npm:7.9.2"
     "@types/eslint": "npm:8.44.2"
-    "@types/node": "npm:20.5.9"
+    "@types/node": "npm:18.17.14"
     "@types/signal-exit": "npm:3.0.1"
     "@types/yargs": "npm:17.0.24"
     "@typescript-eslint/eslint-plugin": "npm:6.6.0"
@@ -3786,7 +3793,7 @@ __metadata:
     babel-plugin-polyfill-corejs3: "npm:0.8.3"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     chalk: "npm:5.3.0"
-    conventional-changelog-conventionalcommits: "npm:7.0.1"
+    conventional-changelog-conventionalcommits: "npm:6.1.0"
     core-js: "npm:3.32.2"
     core-js-pure: "npm:3.32.2"
     date-time: "npm:4.0.0"
@@ -4244,12 +4251,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"conventional-changelog-conventionalcommits@npm:7.0.1":
-  version: 7.0.1
-  resolution: "conventional-changelog-conventionalcommits@npm:7.0.1"
+"conventional-changelog-conventionalcommits@npm:6.1.0":
+  version: 6.1.0
+  resolution: "conventional-changelog-conventionalcommits@npm:6.1.0"
   dependencies:
     compare-func: "npm:^2.0.0"
-  checksum: 5cb9b5eb505d5fb8de595cb011d1db4e209086afd0424c431d22ee39d8168e2abcd08f9572a9f82a5e54a8bd4ce46ddfdf1b26ee9823b26ce8ef745e6d1f2c8f
+  checksum: b313f5c0160d109f58d976566e1331ede3a25ab19fbf43f86763b280659195de00a68551f7f3930bf1cbf39a5e707d94f2a25b79996e59043fa9ee0bed68a79f
   languageName: node
   linkType: hard
 
