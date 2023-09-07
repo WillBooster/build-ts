@@ -32,5 +32,5 @@ export function generateDeclarationFiles(projectDirPath: string): boolean {
     console.warn(message);
   }
 
-  return emitSkipped;
+  return !emitSkipped;
 }

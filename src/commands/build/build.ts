@@ -160,7 +160,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     await bundle?.close();
     if (buildFailed) process.exit(1);
 
-    if (targetDetail !== 'app-node' && targetDetail !== 'functions' && generateDeclarationFiles(packageDirPath)) {
+    if (targetDetail !== 'app-node' && targetDetail !== 'functions' && !generateDeclarationFiles(packageDirPath)) {
       process.exit(1);
     }
   }
