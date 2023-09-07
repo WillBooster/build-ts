@@ -82,11 +82,9 @@ export function createPlugins(
     babel({
       configFile: babelConfigPath,
       extensions,
-      babelHelpers:
-        targetDetail === 'app-node' || targetDetail === 'functions' || !externalDeps.includes('@babel/runtime')
-          ? 'bundled'
-          : 'runtime',
-      exclude: 'node_modules/**',
+      // Prefer polyfill-corejs3 over @babel/plugin-transform-runtime and @babel/runtime
+      babelHelpers: 'bundled',
+      exclude: /^(.+\/)?node_modules\/.+$/,
     }),
     string({ include: ['**/*.csv', '**/*.txt'] })
   );
