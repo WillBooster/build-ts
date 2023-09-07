@@ -2,7 +2,7 @@ import ts from 'typescript';
 
 export function generateDeclarationFiles(projectDirPath: string): boolean {
   const configFile = ts.findConfigFile(projectDirPath, ts.sys.fileExists);
-  if (!configFile) throw new Error('Failed to find tsconfig.json.');
+  if (!configFile) throw new Error('Failed to find `tsconfig.json`.');
 
   const { config } = ts.readConfigFile(configFile, ts.sys.readFile);
   config.compilerOptions = {
