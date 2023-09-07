@@ -12,7 +12,6 @@ import analyze from 'rollup-plugin-analyzer';
 import { keepImport } from 'rollup-plugin-keep-import';
 import { nodeExternals } from 'rollup-plugin-node-externals';
 import { string } from 'rollup-plugin-string';
-import ts from 'rollup-plugin-ts';
 import type { PackageJson } from 'type-fest';
 
 import { createEnvironmentVariablesDefinition } from '../../env.js';
@@ -79,24 +78,18 @@ export function createPlugins(
     commonjs(),
     keepImport({ moduleNames: argv.keepImport?.map((item) => item.toString()) ?? [] }),
   ];
-  if (targetDetail === 'app-node' || targetDetail === 'functions') {
-    plugins.push(
-      babel({
-        configFile: babelConfigPath,
-        extensions,
-        babelHelpers: 'bundled',
-        exclude: 'node_modules/**',
-      })
-    );
-  } else {
-    plugins.push(
-      ts({
-        transpiler: 'babel',
-        babelConfig: babelConfigPath,
-      })
-    );
-  }
-  plugins.push(string({ include: ['**/*.csv', '**/*.txt'] }));
+  plugins.push(
+    babel({
+      configFile: babelConfigPath,
+      extensions,
+      babelHelpers:
+        targetDetail === 'app-node' || targetDetail === 'functions' || !externalDeps.includes('@babel/runtime')
+          ? 'bundled'
+          : 'runtime',
+      exclude: 'node_modules/**',
+    }),
+    string({ include: ['**/*.csv', '**/*.txt'] })
+  );
   if (argv.minify) {
     plugins.push(terser());
   }
