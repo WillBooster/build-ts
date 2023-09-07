@@ -13,15 +13,12 @@ export function generateDeclarationFiles(projectDirPath: string): boolean {
     noEmitOnError: true,
     outDir: 'dist',
   };
-
   const { errors, fileNames, options } = ts.parseJsonConfigFileContent(config, ts.sys, projectDirPath);
 
   const program = ts.createProgram({ options, rootNames: fileNames, configFileParsingDiagnostics: errors });
-
   const { diagnostics, emitSkipped } = program.emit();
 
   const allDiagnostics = [...ts.getPreEmitDiagnostics(program), ...diagnostics, ...errors];
-
   if (allDiagnostics.length > 0) {
     const formatHost: ts.FormatDiagnosticsHost = {
       getCanonicalFileName: (path) => path,
