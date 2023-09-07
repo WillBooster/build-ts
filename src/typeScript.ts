@@ -13,6 +13,7 @@ export function generateDeclarationFiles(projectDirPath: string): boolean {
     noEmitOnError: true,
     outDir: 'dist',
   };
+  config.include = ['src/**/*'];
   const { errors, fileNames, options } = ts.parseJsonConfigFileContent(config, ts.sys, projectDirPath);
 
   const program = ts.createProgram({ options, rootNames: fileNames, configFileParsingDiagnostics: errors });
