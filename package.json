@@ -33,7 +33,7 @@
   },
   "prettier": "@willbooster/prettier-config",
   "dependencies": {
-    "@babel/core": "7.22.15",
+    "@babel/core": "7.22.17",
     "@babel/plugin-proposal-decorators": "7.22.15",
     "@babel/plugin-proposal-explicit-resource-management": "7.22.6",
     "@babel/plugin-syntax-import-assertions": "7.22.5",
@@ -97,7 +97,7 @@
     "semantic-release": "21.1.1",
     "sort-package-json": "2.5.1",
     "type-fest": "4.3.1",
-    "vitest": "0.34.3"
+    "vitest": "0.34.4"
   },
   "packageManager": "yarn@4.0.0-rc.50",
   "engines": {
