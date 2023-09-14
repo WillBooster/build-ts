@@ -3695,7 +3695,7 @@ __metadata:
     pinst: "npm:3.0.0"
     prettier: "npm:3.0.3"
     pretty-ms: "npm:8.0.0"
-    rollup: "npm:3.29.0"
+    rollup: "npm:3.29.1"
     rollup-plugin-analyzer: "npm:4.0.0"
     rollup-plugin-keep-import: "npm:1.0.2"
     rollup-plugin-node-externals: "npm:6.1.1"
@@ -8827,21 +8827,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup@npm:3.29.0":
-  version: 3.29.0
-  resolution: "rollup@npm:3.29.0"
-  dependencies:
-    fsevents: "npm:~2.3.2"
-  dependenciesMeta:
-    fsevents:
-      optional: true
-  bin:
-    rollup: dist/bin/rollup
-  checksum: 6759c1e8bc5193ad761d54f429d14d0f59a374ef38b4dbbbb097144b8cef7aeed6bd5d3be62d6411926fac5e321d30d5773a8c1ea83cca57597f6d6082fca38f
-  languageName: node
-  linkType: hard
-
-"rollup@npm:^3.27.1, rollup@npm:^3.28.0":
+"rollup@npm:3.29.1, rollup@npm:^3.27.1, rollup@npm:^3.28.0":
   version: 3.29.1
   resolution: "rollup@npm:3.29.1"
   dependencies:

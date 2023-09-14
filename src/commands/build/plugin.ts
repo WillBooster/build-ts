@@ -20,7 +20,7 @@ import { getBuildTsRootPath } from '../../utils.js';
 
 import type { builder } from './builder.js';
 
-export function createPlugins(
+export function setupPlugins(
   argv: ArgumentsType<typeof builder>,
   targetDetail: TargetDetail,
   packageJson: PackageJson,
@@ -72,7 +72,7 @@ export function createPlugins(
       peerDeps: true,
       optDeps: true,
       include: externalDeps.map((name) => new RegExp(`^${name}(?:\\/.+)?`)),
-      exclude: namespace && new RegExp(`^${namespace}(?:\\/.+)?`),
+      exclude: namespace && new RegExp(`^@?${namespace}(?:\\/.+)?`),
     }),
     resolve({ extensions }),
     commonjs(),

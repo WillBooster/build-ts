@@ -19,7 +19,7 @@ import { getNamespaceAndName, readPackageJson } from '../../utils.js';
 
 import type { AnyBuilderType, builder } from './builder.js';
 import { appBuilder, functionsBuilder, libBuilder } from './builder.js';
-import { createPlugins } from './plugin.js';
+import { setupPlugins } from './plugin.js';
 import { handleError } from './rollupLogger.js';
 
 export const app: CommandModule<unknown, ArgumentsType<typeof appBuilder>> = {
@@ -117,7 +117,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
             inputs.map((input, index) => [index === 0 ? 'index' : path.basename(input, path.extname(input)), input])
           )
         : inputs,
-    plugins: createPlugins(argv, targetDetail, packageJson, namespace, packageDirPath),
+    plugins: setupPlugins(argv, targetDetail, packageJson, namespace, packageDirPath),
     watch: argv.watch ? { clearScreen: false } : undefined,
   };
 
