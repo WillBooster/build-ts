@@ -1446,15 +1446,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:7.22.11":
-  version: 7.22.11
-  resolution: "@babel/runtime@npm:7.22.11"
-  dependencies:
-    regenerator-runtime: "npm:^0.14.0"
-  checksum: 5c875ad67a8b0c06ca3d7b5a3d90271e6b7b27ffc64ca7ce7a84ec11d520d91e5712a2796ef97b97418499cdb85bca11fb31ba605b9336c9728a908b6e0d0a9b
-  languageName: node
-  linkType: hard
-
 "@babel/runtime@npm:^7.8.4":
   version: 7.22.15
   resolution: "@babel/runtime@npm:7.22.15"
@@ -3098,18 +3089,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/wb@npm:4.12.0":
-  version: 4.12.0
-  resolution: "@willbooster/wb@npm:4.12.0"
+"@willbooster/wb@npm:4.12.2":
+  version: 4.12.2
+  resolution: "@willbooster/wb@npm:4.12.2"
   dependencies:
     chalk: "npm:5.3.0"
     dotenv: "npm:16.3.1"
     kill-port: "npm:2.0.1"
-    minimal-promise-pool: "npm:3.0.3"
+    minimal-promise-pool: "npm:4.0.0"
     tree-kill: "npm:1.2.2"
   bin:
     wb: bin/index.js
-  checksum: 1657348ebf336d52e0691955fc22d47f23a8b41a849ed1dd6c6d53a8120bcd62d06e390bd5082b654663d8812b18758c35dc7ea5e1989ba0c1304d633ab896b3
+  checksum: cc12d9ac41b4586668ae3ab9fd1325220e76bd7fbb362bdffa223d47605b509ede542dd91b47457a942eb9a53c4daa71b8fbc46fb6965f5a625d29707bb3adc9
   languageName: node
   linkType: hard
 
@@ -3674,7 +3665,7 @@ __metadata:
     "@willbooster/eslint-config-ts": "npm:10.5.0"
     "@willbooster/prettier-config": "npm:9.1.1"
     "@willbooster/shared-lib-node": "npm:2.8.3"
-    "@willbooster/wb": "npm:4.12.0"
+    "@willbooster/wb": "npm:4.12.2"
     babel-plugin-polyfill-corejs3: "npm:0.8.3"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     chalk: "npm:5.3.0"
@@ -7092,12 +7083,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimal-promise-pool@npm:3.0.3":
-  version: 3.0.3
-  resolution: "minimal-promise-pool@npm:3.0.3"
-  dependencies:
-    "@babel/runtime": "npm:7.22.11"
-  checksum: 421433da1b420e5b8b6cd97d4d427cdeb2ec41b9565718d67108f632a3ad9510017863cb338f059a041b3e950b5e415fd690ecdbc43efb79f31bc8c56d726a8a
+"minimal-promise-pool@npm:4.0.0":
+  version: 4.0.0
+  resolution: "minimal-promise-pool@npm:4.0.0"
+  checksum: 05c1bbf7c304e9382e8947c7d70ae78fc7d0dae8a6ce978f4df6a1c0bb01e1ddf009847c00d39c8fb497e87116260dafb913f60c4d49b079029a2df263c6fd3a
   languageName: node
   linkType: hard
 
