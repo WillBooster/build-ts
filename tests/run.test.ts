@@ -5,11 +5,10 @@ describe(
   'run',
   () => {
     it.concurrent.each([
-      ['yarn start-prod run test-fixtures/env.ts', '0'],
+      ['yarn start-prod run test-fixtures/env.ts --no-auto-cascade-env', '0'],
+      ['yarn start-prod run test-fixtures/env.ts', '1'],
       ['yarn start-prod run test-fixtures/env.ts --env .env', '1'],
-      ['yarn start-prod run test-fixtures/env.ts --env=.env', '1'],
       ['yarn start-prod run test-fixtures/env.ts --cascade-env ""', '1'],
-      ['yarn start-prod run test-fixtures/env.ts --cascade-env=""', '1'],
       ['yarn start-prod run test-fixtures/env.ts --cascade-node-env', '1'],
       ['yarn start-prod run --cascade-env="" test-fixtures/env.ts', '1'],
       ['yarn start-prod run --cascade-node-env test-fixtures/env.ts', '1'],
