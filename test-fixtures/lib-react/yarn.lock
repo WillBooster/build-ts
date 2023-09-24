@@ -13,9 +13,9 @@ __metadata:
   linkType: hard
 
 "@types/prop-types@npm:*":
-  version: 15.7.5
-  resolution: "@types/prop-types@npm:15.7.5"
-  checksum: 648aae41423821c61c83823ae36116c8d0f68258f8b609bdbc257752dcd616438d6343d554262aa9a7edaee5a19aca2e028a74fa2d0f40fffaf2816bc7056857
+  version: 15.7.6
+  resolution: "@types/prop-types@npm:15.7.6"
+  checksum: 2871c61f662b91c7366204ae6801bc0a88e1e7e8d48962f7f2143cf0f0f4dbbe9a57978063729d15ffd7fad13bd648cc70ff019b7a3fc8f4b84f72fb259b4dfb
   languageName: node
   linkType: hard
 
