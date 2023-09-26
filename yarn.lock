@@ -2992,9 +2992,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/wb@npm:4.13.2":
-  version: 4.13.2
-  resolution: "@willbooster/wb@npm:4.13.2"
+"@willbooster/wb@npm:4.14.1":
+  version: 4.14.1
+  resolution: "@willbooster/wb@npm:4.14.1"
   dependencies:
     chalk: "npm:5.3.0"
     dotenv: "npm:16.3.1"
@@ -3003,7 +3003,7 @@ __metadata:
     tree-kill: "npm:1.2.2"
   bin:
     wb: bin/index.js
-  checksum: 390140edc8a110cc6c4a3c4eb8947ed1fb2fac264d5332a08c438a34efc304903aa3a7c2307782df608a22f00e880bf88ed898278ba0fc2df059a1e9245f785e
+  checksum: 7dda029c60fb8a1732cd475f6c3e56055246346dc31e42787707c4ae9a837319712895352178e1f42bbf761b77ab28dbc91535defcecb191cc68fda69470b7ef
   languageName: node
   linkType: hard
 
@@ -3571,7 +3571,7 @@ __metadata:
     "@willbooster/eslint-config-ts": "npm:10.5.0"
     "@willbooster/prettier-config": "npm:9.1.1"
     "@willbooster/shared-lib-node": "npm:3.2.0"
-    "@willbooster/wb": "npm:4.13.2"
+    "@willbooster/wb": "npm:4.14.1"
     babel-plugin-polyfill-corejs3: "npm:0.8.4"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     chalk: "npm:5.3.0"
