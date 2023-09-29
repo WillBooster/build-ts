@@ -12,10 +12,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:18.17.19":
-  version: 18.17.19
-  resolution: "@types/node@npm:18.17.19"
-  checksum: e6103fa9add6f715a164b32a4a2845a0c9cd544a54f57dce4a1889241101f4e3c293bf62a9366ec6691489a6b09db9afa25a073a5e72aec326dfbda9a1eff646
+"@types/node@npm:18.18.1":
+  version: 18.18.1
+  resolution: "@types/node@npm:18.18.1"
+  checksum: 3ceab7a66ab1719b9217db61c64c5f65b22a7f520d34a8397e52a819b731dbb5f52adb1a140536b6007d238e18b6207054e79beeb28e06048e584c890d263ff7
   languageName: node
   linkType: hard
 
@@ -24,7 +24,7 @@ __metadata:
   resolution: "lib-node@workspace:."
   dependencies:
     "@types/lodash": "npm:4.14.199"
-    "@types/node": "npm:18.17.19"
+    "@types/node": "npm:18.18.1"
     lodash.chunk: "npm:4.2.0"
   peerDependencies:
     lodash.chunk: 4.2.0
