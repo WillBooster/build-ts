@@ -1,6 +1,6 @@
 {
   "name": "app-node",
-  "packageManager": "yarn@4.0.0-rc.51",
+  "packageManager": "yarn@4.0.0-rc.53",
   "dependencies": {
     "lodash.chunk": "4.2.0"
   },
