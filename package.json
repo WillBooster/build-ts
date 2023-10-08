@@ -80,7 +80,7 @@
     "@willbooster/babel-configs": "1.3.0",
     "@willbooster/eslint-config-ts": "10.5.0",
     "@willbooster/prettier-config": "9.1.1",
-    "@willbooster/wb": "5.0.12",
+    "@willbooster/wb": "5.1.1",
     "conventional-changelog-conventionalcommits": "7.0.2",
     "eslint": "8.51.0",
     "eslint-config-prettier": "9.0.0",
