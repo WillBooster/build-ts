@@ -56,7 +56,7 @@
     "core-js-pure": "3.33.0",
     "date-time": "4.0.0",
     "pretty-ms": "8.0.0",
-    "rollup": "3.29.4",
+    "rollup": "4.0.2",
     "rollup-plugin-analyzer": "4.0.0",
     "rollup-plugin-keep-import": "1.0.2",
     "rollup-plugin-node-externals": "6.1.2",
