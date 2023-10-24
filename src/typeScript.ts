@@ -11,7 +11,7 @@ import {
 
 export function generateDeclarationFiles(projectDirPath: string): boolean {
   const configFile = findConfigFile(projectDirPath, sys.fileExists);
-  if (!configFile) throw new Error('Failed to find `tsconfig.json`.');
+  if (!configFile) throw new Error(`Failed to find tsconfig.json in ${projectDirPath}.`);
 
   const { config } = readConfigFile(configFile, sys.readFile);
   config.compilerOptions = {
