@@ -38,9 +38,9 @@ export const functions: CommandModule<unknown, ArgumentsType<typeof functionsBui
   async handler(argv) {
     if (argv.onlyPackageJson) {
       const packageDirPath = path.resolve(argv.package?.toString() ?? '.');
-      const packageJson = await readPackageJson(packageDirPath);
+      const [packageJson, packageJsonPath] = await readPackageJson(packageDirPath);
       if (!packageJson) {
-        console.error('Failed to parse package.json.');
+        console.error(`Failed to parse package.json (${packageJsonPath}).`);
         process.exit(1);
       }
       await generatePackageJsonForFunctions(packageDirPath, packageJson, argv.moduleType);
@@ -65,9 +65,9 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   const cwd = process.cwd();
 
   const packageDirPath = path.resolve(argv.package?.toString() ?? '.');
-  const packageJson = await readPackageJson(packageDirPath);
+  const [packageJson, packageJsonPath] = await readPackageJson(packageDirPath);
   if (!packageJson) {
-    console.error('Failed to parse package.json.');
+    console.error(`Failed to parse package.json (${packageJsonPath}).`);
     process.exit(1);
   }
 

@@ -1,10 +1,19 @@
-import ts from 'typescript';
+import type { FormatDiagnosticsHost } from 'typescript';
+import {
+  createProgram,
+  findConfigFile,
+  formatDiagnostics,
+  getPreEmitDiagnostics,
+  parseJsonConfigFileContent,
+  readConfigFile,
+  sys,
+} from 'typescript';
 
 export function generateDeclarationFiles(projectDirPath: string): boolean {
-  const configFile = ts.findConfigFile(projectDirPath, ts.sys.fileExists);
+  const configFile = findConfigFile(projectDirPath, sys.fileExists);
   if (!configFile) throw new Error('Failed to find `tsconfig.json`.');
 
-  const { config } = ts.readConfigFile(configFile, ts.sys.readFile);
+  const { config } = readConfigFile(configFile, sys.readFile);
   config.compilerOptions = {
     ...config.compilerOptions,
     declaration: true,
@@ -14,19 +23,19 @@ export function generateDeclarationFiles(projectDirPath: string): boolean {
     outDir: 'dist',
   };
   config.include = ['src/**/*'];
-  const { errors, fileNames, options } = ts.parseJsonConfigFileContent(config, ts.sys, projectDirPath);
+  const { errors, fileNames, options } = parseJsonConfigFileContent(config, sys, projectDirPath);
 
-  const program = ts.createProgram({ options, rootNames: fileNames, configFileParsingDiagnostics: errors });
+  const program = createProgram({ options, rootNames: fileNames, configFileParsingDiagnostics: errors });
   const { diagnostics, emitSkipped } = program.emit();
 
-  const allDiagnostics = [...ts.getPreEmitDiagnostics(program), ...diagnostics, ...errors];
+  const allDiagnostics = [...getPreEmitDiagnostics(program), ...diagnostics, ...errors];
   if (allDiagnostics.length > 0) {
-    const formatHost: ts.FormatDiagnosticsHost = {
+    const formatHost: FormatDiagnosticsHost = {
       getCanonicalFileName: (path) => path,
-      getCurrentDirectory: ts.sys.getCurrentDirectory,
-      getNewLine: () => ts.sys.newLine,
+      getCurrentDirectory: sys.getCurrentDirectory,
+      getNewLine: () => sys.newLine,
     };
-    const message = ts.formatDiagnostics(allDiagnostics, formatHost);
+    const message = formatDiagnostics(allDiagnostics, formatHost);
     console.warn(message);
   }
 

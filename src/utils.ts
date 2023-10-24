@@ -4,13 +4,15 @@ import url from 'node:url';
 
 import type { PackageJson } from 'type-fest';
 
-export async function readPackageJson(dirPath: string): Promise<PackageJson | undefined> {
+export async function readPackageJson(dirPath: string): Promise<[PackageJson | undefined, string]> {
+  const packageJsonPath = path.join(dirPath, 'package.json');
   try {
-    const packageJsonText = await fs.promises.readFile(path.join(dirPath, 'package.json'), 'utf8');
-    return JSON.parse(packageJsonText) as PackageJson;
+    const packageJsonText = await fs.promises.readFile(packageJsonPath, 'utf8');
+    return [JSON.parse(packageJsonText) as PackageJson, packageJsonPath];
   } catch {
     // do nothing
   }
+  return [undefined, packageJsonPath];
 }
 
 export function getBuildTsRootPath(): string {

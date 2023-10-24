@@ -60,7 +60,7 @@ async function detectModuleType(file: string, module?: string): Promise<'cjs' | 
 
   let dirPath = path.dirname(file);
   for (;;) {
-    const packageJson = await readPackageJson(dirPath);
+    const [packageJson] = await readPackageJson(dirPath);
     if (packageJson) {
       if (packageJson.type === 'module') {
         return 'esm';
