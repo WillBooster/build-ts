@@ -82,8 +82,11 @@ export function setupPlugins(
     babel({
       configFile: babelConfigPath,
       extensions,
-      // Prefer polyfill-corejs3 over @babel/plugin-transform-runtime and @babel/runtime
-      babelHelpers: 'bundled',
+      // We need `runtime since `bundled` may break directory structure by creating _virtual directory.
+      babelHelpers:
+        targetDetail === 'app-node' || targetDetail === 'functions' || !externalDeps.includes('@babel/runtime')
+          ? 'bundled'
+          : 'runtime',
       exclude: /^(.+\/)?node_modules\/.+$/,
     }),
     string({ include: ['**/*.csv', '**/*.txt'] })
