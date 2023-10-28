@@ -1,11 +1,17 @@
 /* eslint-disable import/no-named-as-default-member */
 
 // We cannot use named imports from 'typescript' because of build errors.
+import fs from 'node:fs';
+import path from 'node:path';
+
 import ts from 'typescript';
 
 export function generateDeclarationFiles(projectDirPath: string): boolean {
   const configFile = ts.findConfigFile(projectDirPath, ts.sys.fileExists);
   if (!configFile) throw new Error(`Failed to find tsconfig.json in ${projectDirPath}.`);
+
+  let outDir = path.join('dist', path.basename(projectDirPath), 'src');
+  if (!fs.existsSync(outDir)) outDir = 'dist';
 
   const { config } = ts.readConfigFile(configFile, ts.sys.readFile);
   config.compilerOptions = {
@@ -14,7 +20,7 @@ export function generateDeclarationFiles(projectDirPath: string): boolean {
     emitDeclarationOnly: true,
     noEmit: false,
     noEmitOnError: true,
-    outDir: 'dist',
+    outDir,
   };
   config.include = ['src/**/*'];
   const { errors, fileNames, options } = ts.parseJsonConfigFileContent(config, ts.sys, projectDirPath);

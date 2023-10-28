@@ -43,6 +43,7 @@ const config = {
         version: '2023-05',
       },
     ],
+    ...(process.env.BUILDTS_USE_BABLE_RUNTIME ? ['@babel/plugin-transform-runtime'] : []),
   ],
   env: {
     production: {

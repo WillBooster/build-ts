@@ -78,15 +78,15 @@ export function setupPlugins(
     commonjs(),
     keepImport({ moduleNames: argv.keepImport?.map((item) => item.toString()) ?? [] }),
   ];
+  const isBabelHelpersBundled =
+    targetDetail === 'app-node' || targetDetail === 'functions' || !externalDeps.includes('@babel/runtime');
+  process.env.BUILDTS_USE_BABLE_RUNTIME = isBabelHelpersBundled ? '' : '1';
   plugins.push(
     babel({
       configFile: babelConfigPath,
       extensions,
       // We need `runtime since `bundled` may break directory structure by creating _virtual directory.
-      babelHelpers:
-        targetDetail === 'app-node' || targetDetail === 'functions' || !externalDeps.includes('@babel/runtime')
-          ? 'bundled'
-          : 'runtime',
+      babelHelpers: isBabelHelpersBundled ? 'bundled' : 'runtime',
       exclude: /^(.+\/)?node_modules\/.+$/,
     }),
     string({ include: ['**/*.csv', '**/*.txt'] })
