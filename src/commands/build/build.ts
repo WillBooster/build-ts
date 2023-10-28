@@ -12,7 +12,6 @@ import type { PackageJson } from 'type-fest';
 import type { CommandModule } from 'yargs';
 
 import { loadEnvironmentVariablesWithCache } from '../../env.js';
-import { generateDeclarationFiles } from '../../typeScript.js';
 import type { ArgumentsType, TargetCategory, TargetDetail } from '../../types.js';
 import { allTargetCategories } from '../../types.js';
 import { getNamespaceAndName, readPackageJson } from '../../utils.js';
@@ -21,6 +20,7 @@ import type { AnyBuilderType, builder } from './builder.js';
 import { appBuilder, functionsBuilder, libBuilder } from './builder.js';
 import { setupPlugins } from './plugin.js';
 import { handleError } from './rollupLogger.js';
+import { generateDeclarationFiles } from './typeScript.js';
 
 export const app: CommandModule<unknown, ArgumentsType<typeof appBuilder>> = {
   command: 'app [package]',
@@ -160,7 +160,11 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     await bundle?.close();
     if (buildFailed) process.exit(1);
 
-    if (targetDetail !== 'app-node' && targetDetail !== 'functions' && !generateDeclarationFiles(packageDirPath)) {
+    if (
+      targetDetail !== 'app-node' &&
+      targetDetail !== 'functions' &&
+      !(await generateDeclarationFiles(packageDirPath))
+    ) {
       process.exit(1);
     }
   }
@@ -189,7 +193,7 @@ function watchRollup(
     process.stdin.resume();
   }
 
-  watcher.on('event', (event) => {
+  watcher.on('event', async (event) => {
     switch (event.code) {
       case 'ERROR': {
         handleError(event.error, true);
@@ -226,7 +230,7 @@ function watchRollup(
         );
 
         if (targetDetail !== 'app-node' && targetDetail !== 'functions') {
-          generateDeclarationFiles(packageDirPath);
+          await generateDeclarationFiles(packageDirPath);
         }
         break;
       }
@@ -248,11 +252,10 @@ function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDi
   if (argv.input && argv.input.length > 0) return argv.input.map((p) => path.join(cwd, p.toString()));
 
   const srcDirPath = path.join(packageDirPath, 'src');
-  let input = path.join(srcDirPath, 'index.ts');
-  if (fs.existsSync(input)) return [input];
-
-  input = path.join(srcDirPath, 'index.tsx');
-  if (fs.existsSync(input)) return [input];
+  for (const ext of ['ts', 'tsx', 'cts', 'mts']) {
+    const input = path.join(srcDirPath, `index.${ext}`);
+    if (fs.existsSync(input)) return [input];
+  }
 
   console.error('Failed to detect input file.');
   process.exit(1);
