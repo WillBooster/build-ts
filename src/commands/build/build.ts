@@ -60,6 +60,8 @@ export const lib: CommandModule<unknown, ArgumentsType<typeof libBuilder>> = {
 };
 
 export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory: TargetCategory): Promise<void> {
+  process.env.NODE_ENV ||= 'production';
+
   // `silent` is stronger than `verbose`.
   const verbose = !argv.silent && argv.verbose;
   const cwd = process.cwd();
