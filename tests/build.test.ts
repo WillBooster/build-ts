@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-import { spawnAsync } from '@willbooster/shared-lib-node';
+import { removeNpmAndYarnEnvironmentVariables, spawnAsync } from '@willbooster/shared-lib-node';
 import { describe, expect, it } from 'vitest';
 
 describe(
@@ -28,8 +28,8 @@ describe(
         fs.promises.readFile(`test-fixtures/${dirName}/dist/${cjsName}`, 'utf8'),
         fs.promises.readFile(`test-fixtures/${dirName}/dist/${esmName}`, 'utf8'),
       ]);
-      expect(cjsCode).to.includes('lodash/chunk');
-      expect(esmCode).to.includes('lodash/chunk');
+      expect(cjsCode).to.includes('lodash.chunk');
+      expect(esmCode).to.includes('lodash.chunk');
 
       const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: `test-fixtures/${dirName}` });
       expect(execRet.status).toBe(0);
@@ -42,8 +42,8 @@ describe(
         fs.promises.readFile(`test-fixtures/${dirName}/dist/index.js`, 'utf8'),
         fs.promises.readFile(`test-fixtures/${dirName}/dist/index.js`, 'utf8'),
       ]);
-      expect(cjsCode).to.includes('lodash/chunk');
-      expect(esmCode).to.includes('lodash/chunk');
+      expect(cjsCode).to.includes('lodash.chunk');
+      expect(esmCode).to.includes('lodash.chunk');
     });
   },
   { timeout: 60_000 }
@@ -56,14 +56,15 @@ async function buildAndRunApp(dirName: string, subCommand: string, ...options: s
     fs.promises.readFile(`test-fixtures/${dirName}/dist/index.js`, 'utf8'),
     fs.promises.rm(`test-fixtures/${dirName}/node_modules/lodash.compact`, { recursive: true, force: true }),
   ]);
-  expect(code).to.includes('lodash/chunk');
-  expect(code).to.not.includes('lodash/compact');
-  expect(code).to.includes('lodash/concat');
+  expect(code).to.includes('lodash.chunk');
+  expect(code).to.not.includes('lodash.compact');
+  expect(code).to.includes('lodash.concat');
   const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: `test-fixtures/${dirName}` });
   expect(execRet.status).toBe(0);
 }
 
 async function buildWithCommand(dirName: string, subCommand: string, ...options: string[]): Promise<void> {
+  removeNpmAndYarnEnvironmentVariables(process.env);
   await spawnAsync('yarn', [], { cwd: `test-fixtures/${dirName}`, stdio: 'ignore' });
   const buildRet = await spawnAsync('yarn', ['start', subCommand, `test-fixtures/${dirName}`, ...options], {
     stdio: 'ignore',

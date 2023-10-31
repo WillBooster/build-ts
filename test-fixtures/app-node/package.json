@@ -1,14 +1,17 @@
 {
   "name": "app-node",
-  "packageManager": "yarn@4.0.0-rc.53",
   "dependencies": {
     "lodash.chunk": "4.2.0"
   },
   "devDependencies": {
+    "@types/lodash.chunk": "4.2.8",
+    "@types/lodash.compact": "3.0.8",
+    "@types/lodash.concat": "4.5.8",
     "lodash.compact": "3.0.1",
     "lodash.concat": "4.5.0"
   },
   "peerDependencies": {
     "lodash.concat": "4.5.0"
-  }
+  },
+  "packageManager": "yarn@4.0.1"
 }

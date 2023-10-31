@@ -5,10 +5,47 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
+"@types/lodash.chunk@npm:4.2.8":
+  version: 4.2.8
+  resolution: "@types/lodash.chunk@npm:4.2.8"
+  dependencies:
+    "@types/lodash": "npm:*"
+  checksum: 9ebe7dcb6733e96e5e9287b2ed79290217de3d1dd29bcbf3ab91e4f67e7598186776ac5f101cc1ec156ef16b731055c86fd5c6d935e76a9bcd13364bf89a8f1d
+  languageName: node
+  linkType: hard
+
+"@types/lodash.compact@npm:3.0.8":
+  version: 3.0.8
+  resolution: "@types/lodash.compact@npm:3.0.8"
+  dependencies:
+    "@types/lodash": "npm:*"
+  checksum: 9d00ce87bfd507d311cc9d6bb75d8ad130c4dc20e97a15cd7833416b0f702d7b398cff70a67f6fc74afcf8d25ee759d617574be66bdb8790c639b42b605c40be
+  languageName: node
+  linkType: hard
+
+"@types/lodash.concat@npm:4.5.8":
+  version: 4.5.8
+  resolution: "@types/lodash.concat@npm:4.5.8"
+  dependencies:
+    "@types/lodash": "npm:*"
+  checksum: 547a660cd0ba5436db2fd22cee492cc0a709706fe539cdf70c8319b3ff4b6e63b5b40f923582c4b035dc8ca07e55aa53b2a8ffd5d3660413997aa144e6d9b9b3
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:*":
+  version: 4.14.200
+  resolution: "@types/lodash@npm:4.14.200"
+  checksum: 7a8dac6dc866f10d1888846d6189d1faeb4f65adb139f0837a005fd1adcde62e60d7e7abb1a2733d13fc57bebb337d74182d8ad3dbd1d211dcd0c310c47e81bc
+  languageName: node
+  linkType: hard
+
 "functions@workspace:.":
   version: 0.0.0-use.local
   resolution: "functions@workspace:."
   dependencies:
+    "@types/lodash.chunk": "npm:4.2.8"
+    "@types/lodash.compact": "npm:3.0.8"
+    "@types/lodash.concat": "npm:4.5.8"
     lodash.chunk: "npm:4.2.0"
     lodash.compact: "npm:3.0.1"
     lodash.concat: "npm:4.5.0"

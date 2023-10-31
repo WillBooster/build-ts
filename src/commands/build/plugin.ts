@@ -31,7 +31,7 @@ export function setupPlugins(
   if (packageJson.dependencies?.['@prisma/client']) {
     externalDeps.push('prisma-client');
   }
-  // Since `deps: true` does not work for `import chunk from 'lodash/chunk.js';`
+  // Since `deps: true` does not work for `import chunk from 'lodash.chunk/index.js';`
   externalDeps.push(
     ...Object.keys(packageJson.dependencies ?? {}),
     ...Object.keys(packageJson.peerDependencies ?? {}),
