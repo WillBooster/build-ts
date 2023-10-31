@@ -1,10 +1,10 @@
-import { loadEnvironmentVariables } from '@willbooster/shared-lib-node';
+import { readAndApplyEnvironmentVariables } from '@willbooster/shared-lib-node';
 
 import type { builder } from './commands/build/builder.js';
 import type { sharedOptionsBuilder } from './sharedOptionsBuilder.js';
 import type { ArgumentsType } from './types.js';
 
-let envVars: Record<string, string> | undefined;
+let envVars: Record<string, string | undefined> | undefined;
 
 /**
  * This function loads environment variables from `.env` files.
@@ -12,9 +12,9 @@ let envVars: Record<string, string> | undefined;
 export function loadEnvironmentVariablesWithCache(
   argv: ArgumentsType<typeof sharedOptionsBuilder>,
   cwd: string
-): Record<string, string> {
+): Record<string, string | undefined> {
   if (!envVars) {
-    envVars = loadEnvironmentVariables(argv, cwd);
+    envVars = readAndApplyEnvironmentVariables(argv, cwd);
     if (argv.verbose) {
       console.info('Loaded env vars:', Object.keys(envVars));
     }
