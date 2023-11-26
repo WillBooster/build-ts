@@ -40,9 +40,9 @@ __metadata:
   linkType: hard
 
 "@types/scheduler@npm:*":
-  version: 0.16.7
-  resolution: "@types/scheduler@npm:0.16.7"
-  checksum: e7d738400618f380d050f91b65a0232be7f2d4d2a68bf5c3ec3c901b359181a6a09b9a0d21c2ee66e534727c87b7c8ae166819b03990cdc7658c190cdf6401da
+  version: 0.16.8
+  resolution: "@types/scheduler@npm:0.16.8"
+  checksum: f86de504945b8fc41b1f391f847444d542e2e4067cf7e5d9bfeb5d2d2393d3203b1161bc0ef3b1e104d828dabfb60baf06e8d2c27e27ff7e8258e6e618d8c4ec
   languageName: node
   linkType: hard
 
