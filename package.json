@@ -60,6 +60,7 @@
     "rollup-plugin-analyzer": "4.0.0",
     "rollup-plugin-keep-import": "1.0.2",
     "rollup-plugin-node-externals": "6.1.2",
+    "rollup-plugin-preserve-directives": "0.2.0",
     "rollup-plugin-string": "3.0.0",
     "rollup-plugin-ts": "3.4.5",
     "signal-exit": "4.1.0",
