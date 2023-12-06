@@ -39,9 +39,12 @@ describe(
       const dirName = 'lib-react';
       await buildWithCommand(dirName, 'lib', '--js-extension', 'both');
       const [cjsCode, esmCode] = await Promise.all([
-        fs.promises.readFile(`test-fixtures/${dirName}/dist/index.js`, 'utf8'),
-        fs.promises.readFile(`test-fixtures/${dirName}/dist/index.js`, 'utf8'),
+        fs.promises.readFile(`test-fixtures/${dirName}/dist/ClientComponent.js`, 'utf8'),
+        fs.promises.readFile(`test-fixtures/${dirName}/dist/ClientComponent.js`, 'utf8'),
       ]);
+      expect(cjsCode).to.includes('use client');
+      expect(esmCode).to.includes('use client');
+
       expect(cjsCode).to.includes('lodash.chunk');
       expect(esmCode).to.includes('lodash.chunk');
     });
