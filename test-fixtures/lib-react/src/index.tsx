@@ -1,3 +1,4 @@
+'use client';
 import chunk from 'lodash.chunk';
 
 export function Component() {

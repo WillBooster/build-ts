@@ -11,6 +11,7 @@ import type { Plugin } from 'rollup';
 import analyze from 'rollup-plugin-analyzer';
 import { keepImport } from 'rollup-plugin-keep-import';
 import { nodeExternals } from 'rollup-plugin-node-externals';
+import preserveDirectives from 'rollup-plugin-preserve-directives';
 import { string } from 'rollup-plugin-string';
 import type { PackageJson } from 'type-fest';
 
@@ -89,10 +90,11 @@ export function setupPlugins(
       babelHelpers: isBabelHelpersBundled ? 'bundled' : 'runtime',
       exclude: /^(.+\/)?node_modules\/.+$/,
     }),
+    preserveDirectives(),
     string({ include: ['**/*.csv', '**/*.txt'] })
   );
   if (argv.minify) {
-    plugins.push(terser());
+    plugins.push(terser({ compress: { directives: false } }));
   }
   plugins.push(analyze({ summaryOnly: true }));
   return plugins;
