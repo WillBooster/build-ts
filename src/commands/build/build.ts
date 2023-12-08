@@ -76,7 +76,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   loadEnvironmentVariablesWithCache(argv, packageDirPath);
 
   const inputs = verifyInput(argv, cwd, packageDirPath);
-  const targetDetail = detectTargetDetail(targetCategory, inputs[0]);
+  const targetDetail = detectTargetDetail(targetCategory, inputs);
 
   if (verbose) {
     console.info('Target (Category):', `${targetDetail} (${targetCategory})`);
@@ -263,7 +263,7 @@ function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDi
   process.exit(1);
 }
 
-function detectTargetDetail(targetCategory: string, input: string): TargetDetail {
+function detectTargetDetail(targetCategory: string, inputs: string[]): TargetDetail {
   switch (targetCategory) {
     case 'app': {
       return 'app-node';
@@ -272,7 +272,7 @@ function detectTargetDetail(targetCategory: string, input: string): TargetDetail
       return 'functions';
     }
     case 'lib': {
-      if (input.endsWith('.tsx')) {
+      if (inputs.some((input) => input.endsWith('.tsx'))) {
         return 'lib-react';
       }
       return 'lib';
