@@ -9,7 +9,7 @@ describe(
     it.concurrent('app-node', async () => {
       await buildAndRunApp('app-node', 'app');
       const packageJson = await fs.promises.readFile('test-fixtures/app-node/dist/index.js', 'utf8');
-      expect(packageJson).to.includes('(1)');
+      expect(packageJson).to.includes('("1")');
       expect(packageJson).to.not.includes('process.env.A');
     });
 

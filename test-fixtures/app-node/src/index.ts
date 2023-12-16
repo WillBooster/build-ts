@@ -7,7 +7,8 @@ import concat from 'lodash.concat';
 assert(JSON.stringify(chunk(['a', 'b', 'c', 'd'], 2)) === '[["a","b"],["c","d"]]');
 assert(JSON.stringify(compact([0, 1, false, 2, '', 3])) === '[1,2,3]');
 assert(JSON.stringify(concat([1], 2, [3], [4])) === '[1,2,3,4]');
-console.log(process.env.A);
+assert(process.env.A);
+assert(Math.random() ? process.env.A : '0');
 
 // cf. https://babeljs.io/blog/2023/05/26/7.22.0#decorators-updates-15570
 let MyDecs = {
