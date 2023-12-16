@@ -1,0 +1,11 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: ['github>WillBooster/willbooster-configs:renovate.json5'],
+  packageRules: [
+    {
+      // Enable @rollup/plugin-replace after https://github.com/rollup/plugins/issues/1619 is fixed.
+      packageNames: ['@rollup/plugin-replace'],
+      enabled: false,
+    },
+  ],
+}
