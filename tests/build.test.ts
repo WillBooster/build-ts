@@ -8,11 +8,14 @@ describe(
   () => {
     it.concurrent('app-node', async () => {
       await buildAndRunApp('app-node', 'app');
+      const packageJson = await fs.promises.readFile('test-fixtures/app-node/dist/index.js', 'utf8');
+      expect(packageJson).to.includes('(1)');
+      expect(packageJson).to.not.includes('process.env.A');
     });
 
     it.concurrent('functions', async () => {
       await buildAndRunApp('functions', 'functions');
-      const packageJson = await fs.promises.readFile(`test-fixtures/functions/dist/package.json`, 'utf8');
+      const packageJson = await fs.promises.readFile('test-fixtures/functions/dist/package.json', 'utf8');
       expect(packageJson).to.includes('lodash.chunk');
       expect(packageJson).to.not.includes('lodash.compact');
       expect(packageJson).to.includes('lodash.concat');
