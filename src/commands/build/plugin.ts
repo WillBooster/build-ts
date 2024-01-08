@@ -7,7 +7,7 @@ import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 import terser from '@rollup/plugin-terser';
-import type { Plugin } from 'rollup';
+import type { OutputOptions, Plugin } from 'rollup';
 import analyze from 'rollup-plugin-analyzer';
 import { keepImport } from 'rollup-plugin-keep-import';
 import { nodeExternals } from 'rollup-plugin-node-externals';
@@ -26,7 +26,8 @@ export function setupPlugins(
   targetDetail: TargetDetail,
   packageJson: PackageJson,
   namespace: string | undefined,
-  packageDirPath: string
+  packageDirPath: string,
+  outputOptionsList: OutputOptions[]
 ): Plugin[] {
   const externalDeps = [...(argv.external ?? [])].map((item) => item.toString());
   if (packageJson.dependencies?.['@prisma/client']) {
@@ -90,7 +91,7 @@ export function setupPlugins(
       babelHelpers: isBabelHelpersBundled ? 'bundled' : 'runtime',
       exclude: /^(.+\/)?node_modules\/.+$/,
     }),
-    preserveDirectives(),
+    ...(outputOptionsList.some((opts) => opts.preserveModules) ? [preserveDirectives()] : []),
     string({ include: ['**/*.csv', '**/*.txt'] })
   );
   if (argv.minify) {

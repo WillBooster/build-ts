@@ -119,7 +119,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
             inputs.map((input, index) => [index === 0 ? 'index' : path.basename(input, path.extname(input)), input])
           )
         : inputs,
-    plugins: setupPlugins(argv, targetDetail, packageJson, namespace, packageDirPath),
+    plugins: setupPlugins(argv, targetDetail, packageJson, namespace, packageDirPath, outputOptionsList),
     watch: argv.watch ? { clearScreen: false } : undefined,
   };
 
