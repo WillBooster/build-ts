@@ -10,23 +10,23 @@ __metadata:
   resolution: "@types/lodash.chunk@npm:4.2.9"
   dependencies:
     "@types/lodash": "npm:*"
-  checksum: 5759b3d969c5db4b0893b70261ae40d4b9a6466c984c16de6fa1d3945b3199cc09f948a444a3b4e6cfa0dd984044cf937cbc8dab5fe0ac8da67244ed74d9e4e4
+  checksum: 10c0/5759b3d969c5db4b0893b70261ae40d4b9a6466c984c16de6fa1d3945b3199cc09f948a444a3b4e6cfa0dd984044cf937cbc8dab5fe0ac8da67244ed74d9e4e4
   languageName: node
   linkType: hard
 
 "@types/lodash@npm:*":
   version: 4.14.202
   resolution: "@types/lodash@npm:4.14.202"
-  checksum: 6064d43c8f454170841bd67c8266cc9069d9e570a72ca63f06bceb484cb4a3ee60c9c1f305c1b9e3a87826049fd41124b8ef265c4dd08b00f6766609c7fe9973
+  checksum: 10c0/6064d43c8f454170841bd67c8266cc9069d9e570a72ca63f06bceb484cb4a3ee60c9c1f305c1b9e3a87826049fd41124b8ef265c4dd08b00f6766609c7fe9973
   languageName: node
   linkType: hard
 
-"@types/node@npm:20.11.7":
-  version: 20.11.7
-  resolution: "@types/node@npm:20.11.7"
+"@types/node@npm:20.11.16":
+  version: 20.11.16
+  resolution: "@types/node@npm:20.11.16"
   dependencies:
     undici-types: "npm:~5.26.4"
-  checksum: ba4b41542b64f21a881a277189e761c553d00af0b1c02f2d8a47ebe8bc29a00ed21b45adf0bf9af2cf8ea6c92a443853d4f7b690081ceaecc150719cc574e9ea
+  checksum: 10c0/4886b90278e9c877a84efd3edd4667cd990e032d77268d2a798b99ebc1901ea336fa7dfbe9eaf4ad6ad1da9ce2ec31baf300038a3905838692362eb19904ebde
   languageName: node
   linkType: hard
 
@@ -35,7 +35,7 @@ __metadata:
   resolution: "lib-esm@workspace:."
   dependencies:
     "@types/lodash.chunk": "npm:4.2.9"
-    "@types/node": "npm:20.11.7"
+    "@types/node": "npm:20.11.16"
     lodash.chunk: "npm:4.2.0"
   peerDependencies:
     lodash.chunk: 4.2.0
@@ -45,13 +45,13 @@ __metadata:
 "lodash.chunk@npm:4.2.0":
   version: 4.2.0
   resolution: "lodash.chunk@npm:4.2.0"
-  checksum: f9f99969561ad2f62af1f9a96c5bd0af776f000292b0d8db3126c28eb3b32e210d7c31b49c18d0d7901869bd769057046dc134b60cfa0c2c4ce017823a26bb23
+  checksum: 10c0/f9f99969561ad2f62af1f9a96c5bd0af776f000292b0d8db3126c28eb3b32e210d7c31b49c18d0d7901869bd769057046dc134b60cfa0c2c4ce017823a26bb23
   languageName: node
   linkType: hard
 
 "undici-types@npm:~5.26.4":
   version: 5.26.5
   resolution: "undici-types@npm:5.26.5"
-  checksum: bb673d7876c2d411b6eb6c560e0c571eef4a01c1c19925175d16e3a30c4c428181fb8d7ae802a261f283e4166a0ac435e2f505743aa9e45d893f9a3df017b501
+  checksum: 10c0/bb673d7876c2d411b6eb6c560e0c571eef4a01c1c19925175d16e3a30c4c428181fb8d7ae802a261f283e4166a0ac435e2f505743aa9e45d893f9a3df017b501
   languageName: node
   linkType: hard
