@@ -28,14 +28,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:18.2.51":
-  version: 18.2.51
-  resolution: "@types/react@npm:18.2.51"
+"@types/react@npm:18.2.55":
+  version: 18.2.55
+  resolution: "@types/react@npm:18.2.55"
   dependencies:
     "@types/prop-types": "npm:*"
     "@types/scheduler": "npm:*"
     csstype: "npm:^3.0.2"
-  checksum: 10c0/409f684dc1cb03ed542e1f185da7e84f81186d7945119adb553fe0e4e28bad3468213fce9096e1867b358c87fb57fc80b53a3e544a3779f7080ddde7c1b99eb1
+  checksum: 10c0/6b1c73beafbbc582dc54ffd92b3779f6d850e8f6b5ce5d04b31e9498a3d77bfc416bb08f0d8d63ab4f4649ccd6639996472416871c01c74a528b16a55faeaf38
   languageName: node
   linkType: hard
 
@@ -65,7 +65,7 @@ __metadata:
   resolution: "lib-react@workspace:."
   dependencies:
     "@types/lodash.chunk": "npm:4.2.9"
-    "@types/react": "npm:18.2.51"
+    "@types/react": "npm:18.2.55"
     lodash.chunk: "npm:4.2.0"
     react: "npm:18.2.0"
   peerDependencies:
