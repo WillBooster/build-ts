@@ -76,8 +76,8 @@
     "@types/node": "20.11.24",
     "@types/signal-exit": "3.0.4",
     "@types/yargs": "17.0.32",
-    "@typescript-eslint/eslint-plugin": "7.1.0",
-    "@typescript-eslint/parser": "7.1.0",
+    "@typescript-eslint/eslint-plugin": "7.1.1",
+    "@typescript-eslint/parser": "7.1.1",
     "@willbooster/babel-configs": "1.3.1",
     "@willbooster/eslint-config-ts": "10.5.1",
     "@willbooster/prettier-config": "9.1.2",
@@ -100,7 +100,7 @@
     "type-fest": "4.10.3",
     "vitest": "1.3.1"
   },
-  "packageManager": "yarn@4.1.0",
+  "packageManager": "yarn@4.1.1",
   "engines": {
     "node": ">=18"
   }
