@@ -36,11 +36,11 @@ const config = {
     // '@babel/plugin-syntax-import-attributes',
     // cf. https://babeljs.io/blog/2023/05/26/7.22.0#explicit-resource-management-15633-15520
     '@babel/plugin-proposal-explicit-resource-management',
-    // cf. https://babeljs.io/blog/2023/05/26/7.22.0#decorators-updates-15570
+    // cf. https://babeljs.io/blog/2024/02/28/7.24.0#decorators-updates-16242
     [
       '@babel/plugin-proposal-decorators',
       {
-        version: '2023-05',
+        version: '2023-11',
       },
     ],
     ...(process.env.BUILDTS_USE_BABLE_RUNTIME ? ['@babel/plugin-transform-runtime'] : []),
