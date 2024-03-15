@@ -32,7 +32,7 @@ export const builder = {
     description: 'Additional external dependencies.',
     type: 'array',
   },
-  'env-var': {
+  inline: {
     description: 'Environment variables to be inlined.',
     type: 'array',
     alias: 'inline',

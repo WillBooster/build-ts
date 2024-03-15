@@ -31,7 +31,7 @@ export function createEnvironmentVariablesDefinition(
 ): Record<string, string> {
   const envVarsDef: Record<string, string> = {};
   const names = new Set([
-    ...(argv.envVar ?? []).map((e) => e.toString()),
+    ...(argv.inline ?? []).flatMap((e) => e.toString().split(',')),
     ...Object.keys(loadEnvironmentVariablesWithCache(argv, cwd)),
   ]);
   for (const name of names) {
@@ -40,7 +40,7 @@ export function createEnvironmentVariablesDefinition(
     envVarsDef[`process.env.${name}`] = JSON.stringify(process.env[name]);
   }
   if (argv.verbose) {
-    console.info('Embed env vars:', Object.keys(envVarsDef));
+    console.info('Inline env vars:', Object.keys(envVarsDef));
   }
   return envVarsDef;
 }
