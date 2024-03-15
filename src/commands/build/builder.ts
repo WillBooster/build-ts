@@ -35,7 +35,6 @@ export const builder = {
   inline: {
     description: 'Environment variables to be inlined.',
     type: 'array',
-    alias: 'inline',
   },
   watch: {
     description: 'Whether watch mode is enabled or not',
