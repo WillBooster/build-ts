@@ -3046,18 +3046,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/wb@npm:7.1.1":
-  version: 7.1.1
-  resolution: "@willbooster/wb@npm:7.1.1"
+"@willbooster/wb@npm:7.2.1":
+  version: 7.2.1
+  resolution: "@willbooster/wb@npm:7.2.1"
   dependencies:
     chalk: "npm:5.3.0"
     dotenv: "npm:16.4.5"
+    globby: "npm:14.0.1"
     kill-port: "npm:2.0.1"
     minimal-promise-pool: "npm:4.0.0"
     tree-kill: "npm:1.2.2"
   bin:
     wb: bin/index.js
-  checksum: 10c0/0fb53adf65fbdb8b13c426adabe6551d8d46763ecfab126910293c00dbe5fc0f6655e171463cf484b8174d8182066c3747d6afe9e37bc4d997e365b4941feb6c
+  checksum: 10c0/4878d0e6ca9c3a72ac1a9b898b4add00c801e5ebb815ac55dd881216404043c7f2a75af06fcf3f08db0ec976fc0f00be5be4aa97685dab9d8ec53f1e18abd4b9
   languageName: node
   linkType: hard
 
@@ -3545,7 +3546,7 @@ __metadata:
     "@willbooster/eslint-config-ts": "npm:10.5.1"
     "@willbooster/prettier-config": "npm:9.1.2"
     "@willbooster/shared-lib-node": "npm:5.0.14"
-    "@willbooster/wb": "npm:7.1.1"
+    "@willbooster/wb": "npm:7.2.1"
     babel-plugin-polyfill-corejs3: "npm:0.10.4"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     chalk: "npm:5.3.0"
@@ -5429,6 +5430,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"globby@npm:14.0.1, globby@npm:^14.0.0":
+  version: 14.0.1
+  resolution: "globby@npm:14.0.1"
+  dependencies:
+    "@sindresorhus/merge-streams": "npm:^2.1.0"
+    fast-glob: "npm:^3.3.2"
+    ignore: "npm:^5.2.4"
+    path-type: "npm:^5.0.0"
+    slash: "npm:^5.1.0"
+    unicorn-magic: "npm:^0.1.0"
+  checksum: 10c0/749a6be91cf455c161ebb5c9130df3991cb9fd7568425db850a8279a6cf45acd031c5069395beb7aeb4dd606b64f0d6ff8116c93726178d8e6182fee58c2736d
+  languageName: node
+  linkType: hard
+
 "globby@npm:^11.1.0":
   version: 11.1.0
   resolution: "globby@npm:11.1.0"
@@ -5453,20 +5468,6 @@ __metadata:
     merge2: "npm:^1.4.1"
     slash: "npm:^4.0.0"
   checksum: 10c0/a8d7cc7cbe5e1b2d0f81d467bbc5bc2eac35f74eaded3a6c85fc26d7acc8e6de22d396159db8a2fc340b8a342e74cac58de8f4aee74146d3d146921a76062664
-  languageName: node
-  linkType: hard
-
-"globby@npm:^14.0.0":
-  version: 14.0.1
-  resolution: "globby@npm:14.0.1"
-  dependencies:
-    "@sindresorhus/merge-streams": "npm:^2.1.0"
-    fast-glob: "npm:^3.3.2"
-    ignore: "npm:^5.2.4"
-    path-type: "npm:^5.0.0"
-    slash: "npm:^5.1.0"
-    unicorn-magic: "npm:^0.1.0"
-  checksum: 10c0/749a6be91cf455c161ebb5c9130df3991cb9fd7568425db850a8279a6cf45acd031c5069395beb7aeb4dd606b64f0d6ff8116c93726178d8e6182fee58c2736d
   languageName: node
   linkType: hard
 
