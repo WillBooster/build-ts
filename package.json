@@ -57,10 +57,10 @@
     "core-js-pure": "3.37.0",
     "date-time": "4.0.0",
     "pretty-ms": "9.0.0",
-    "rollup": "4.14.3",
+    "rollup": "4.16.4",
     "rollup-plugin-analyzer": "4.0.0",
     "rollup-plugin-keep-import": "1.0.2",
-    "rollup-plugin-node-externals": "7.1.1",
+    "rollup-plugin-node-externals": "7.1.2",
     "rollup-plugin-preserve-directives": "0.4.0",
     "rollup-plugin-string": "3.0.0",
     "rollup-plugin-ts": "3.4.5",
@@ -98,8 +98,8 @@
     "prettier": "3.2.5",
     "semantic-release": "23.0.8",
     "sort-package-json": "2.10.0",
-    "type-fest": "4.15.0",
-    "vitest": "1.5.0"
+    "type-fest": "4.17.0",
+    "vitest": "1.5.2"
   },
   "packageManager": "yarn@4.1.1",
   "engines": {
