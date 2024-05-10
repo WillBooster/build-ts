@@ -74,7 +74,7 @@
     "@types/babel__plugin-transform-runtime": "7.9.5",
     "@types/babel__preset-env": "7.9.6",
     "@types/eslint": "8.56.10",
-    "@types/node": "20.12.8",
+    "@types/node": "20.12.11",
     "@types/signal-exit": "3.0.4",
     "@types/yargs": "17.0.32",
     "@typescript-eslint/eslint-plugin": "7.8.0",
@@ -98,7 +98,7 @@
     "prettier": "3.2.5",
     "semantic-release": "23.0.8",
     "sort-package-json": "2.10.0",
-    "type-fest": "4.18.1",
+    "type-fest": "4.18.2",
     "vitest": "1.6.0"
   },
   "packageManager": "yarn@4.2.2",
