@@ -2,7 +2,7 @@ import { spawnAsync } from '@willbooster/shared-lib-node';
 import { describe, expect, it } from 'vitest';
 
 describe(
-  'run',
+  'run env.ts',
   () => {
     it.concurrent.each([
       ['yarn start-prod run test-fixtures/env.ts --no-auto-cascade-env', '0'],
@@ -25,6 +25,22 @@ describe(
       const [command, ...args] = commandWithArgs.split(' ');
       const execRet = await spawnAsync(command, args);
       expect(execRet.stdout.trim().split('\n').at(-1)?.trim()).toBe(expectedStdout);
+      expect(execRet.status).toBe(0);
+    });
+  },
+  { timeout: 60_000 }
+);
+
+describe.only(
+  'run hello.(c|m)ts',
+  () => {
+    it.concurrent.each([
+      ['yarn start-prod run test-fixtures/hello.cts'],
+      ['yarn start-prod run test-fixtures/hello.mts'],
+    ])('%s', async (commandWithArgs) => {
+      const [command, ...args] = commandWithArgs.split(' ');
+      const execRet = await spawnAsync(command, args);
+      expect(execRet.stdout.trim().split('\n').at(-1)?.trim()).toBe('hello');
       expect(execRet.status).toBe(0);
     });
   },
