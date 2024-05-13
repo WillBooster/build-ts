@@ -5,15 +5,10 @@
   "license": "UNLICENSED",
   "author": "WillBooster Inc.",
   "type": "module",
-  "exports": {
-    "./register": "./exports/register.cjs",
-    "./loader": "./exports/loader.mjs"
-  },
   "bin": "bin/index.js",
   "files": [
     "bin/",
     "dist/",
-    "exports/",
     "babel.*"
   ],
   "scripts": {
@@ -27,7 +22,7 @@
     "postpack": "pinst --enable",
     "prepare": "husky || true",
     "prettify": "prettier --cache --color --write \"**/{.*/,}*.{cjs,css,cts,htm,html,js,json,json5,jsonc,jsx,md,mjs,mts,scss,ts,tsx,vue,yaml,yml}\" \"!**/test-fixtures/**\"",
-    "start": "node --no-warnings --loader ts-node/esm src/index.ts",
+    "start": "tsx src/index.ts",
     "start-prod": "yarn build && yarn build-ts",
     "test": "vitest",
     "typecheck": "wb typecheck"
@@ -65,7 +60,7 @@
     "rollup-plugin-string": "3.0.0",
     "rollup-plugin-ts": "3.4.5",
     "signal-exit": "4.1.0",
-    "ts-node": "10.9.2",
+    "tsx": "4.10.2",
     "typescript": "5.4.5",
     "yargs": "17.7.2"
   },
