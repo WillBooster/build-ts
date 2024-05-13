@@ -28,8 +28,7 @@ export const run: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
 
     const file = argv.file?.toString() || '';
 
-    const args: string[] = [];
-    args.push('--import', 'tsx', file);
+    const args = ['--no-warnings', '--import', 'tsx', file];
     if (argv.watch) {
       args.push('--watch');
     }
