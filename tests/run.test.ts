@@ -31,7 +31,7 @@ describe(
   { timeout: 60_000 }
 );
 
-describe.only(
+describe(
   'run hello.(c|m)ts',
   () => {
     it.concurrent.each([
