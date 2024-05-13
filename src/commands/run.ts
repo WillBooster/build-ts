@@ -29,10 +29,10 @@ export const run: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
     const file = argv.file?.toString() || '';
 
     const args: string[] = [];
+    args.push('--import', 'tsx', file);
     if (argv.watch) {
       args.push('--watch');
     }
-    args.push('--import', 'tsx', file);
     const [, ...additionalArguments] = argv._;
     if (argv.verbose) {
       console.info(`Running 'node ${[...args, ...additionalArguments.map((arg) => arg.toString())].join(' ')}'`);
