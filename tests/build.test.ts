@@ -8,9 +8,9 @@ describe(
   () => {
     it.concurrent('app-node', async () => {
       await buildAndRunApp('app-node', 'app');
-      const packageJson = await fs.promises.readFile('test-fixtures/app-node/dist/index.js', 'utf8');
-      expect(packageJson).to.includes('("1")');
-      expect(packageJson).to.not.includes('process.env.A');
+      const indexJs = await fs.promises.readFile('test-fixtures/app-node/dist/index.js', 'utf8');
+      expect(indexJs).to.includes('("1")');
+      expect(indexJs).to.not.includes('process.env.A');
     });
 
     it.concurrent('functions', async () => {
@@ -33,6 +33,8 @@ describe(
       ]);
       expect(cjsCode).to.includes('lodash.chunk');
       expect(esmCode).to.includes('lodash.chunk');
+      expect(fs.existsSync(`test-fixtures/${dirName}/dist/index.d.ts`)).toBeTruthy();
+      expect(fs.existsSync(`test-fixtures/${dirName}/dist/module.d.ts`)).toBeTruthy();
 
       const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: `test-fixtures/${dirName}` });
       expect(execRet.status).toBe(0);
@@ -47,9 +49,9 @@ describe(
       ]);
       expect(cjsCode).to.includes('use client');
       expect(esmCode).to.includes('use client');
-
       expect(cjsCode).to.includes('lodash.chunk');
       expect(esmCode).to.includes('lodash.chunk');
+      expect(fs.existsSync(`test-fixtures/${dirName}/dist/index.d.ts`)).toBeTruthy();
     });
   },
   { timeout: 60_000 }

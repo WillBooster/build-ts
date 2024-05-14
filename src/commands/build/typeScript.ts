@@ -6,19 +6,30 @@ import path from 'node:path';
 
 import ts from 'typescript';
 
-export async function generateDeclarationFiles(coreProjectDirPath: string): Promise<boolean> {
+import type { ArgumentsType } from '../../types.js';
+
+import type { AnyBuilderType } from './builder.js';
+
+export async function generateDeclarationFiles(
+  argv: ArgumentsType<AnyBuilderType>,
+  coreProjectDirPath: string
+): Promise<boolean> {
   const coreConfigFile = ts.findConfigFile(coreProjectDirPath, ts.sys.fileExists);
   if (!coreConfigFile) throw new Error(`Failed to find tsconfig.json in ${coreProjectDirPath}.`);
+  if (argv.verbose) {
+    console.info('Found tsconfig.json:', coreConfigFile);
+  }
 
   const projects: [string, string, string][] = [];
   let outDir = path.join('dist', path.basename(coreProjectDirPath), 'src');
   if (fs.existsSync(outDir)) {
-    const dirents = await fs.promises.readdir(path.dirname(coreProjectDirPath), { withFileTypes: true });
+    const parentDirPath = path.dirname(coreProjectDirPath);
+    const dirents = await fs.promises.readdir(parentDirPath, { withFileTypes: true });
     coreProjectDirPath = path.resolve(coreProjectDirPath);
     for (const dirent of dirents) {
       if (!dirent.isDirectory()) continue;
 
-      const projectDirPath = path.resolve(dirent.path, dirent.name);
+      const projectDirPath = path.resolve(parentDirPath, dirent.name);
       if (projectDirPath === coreProjectDirPath) continue;
 
       const configFile = ts.findConfigFile(projectDirPath, ts.sys.fileExists);
@@ -34,12 +45,21 @@ export async function generateDeclarationFiles(coreProjectDirPath: string): Prom
 
   let allSucceeded = true;
   for (const [projectDirPath, configFile, outDir] of projects) {
-    allSucceeded &&= runTypeScriptCompiler(projectDirPath, configFile, path.join(coreProjectDirPath, outDir));
+    allSucceeded &&= runTypeScriptCompiler(argv, projectDirPath, configFile, path.join(coreProjectDirPath, outDir));
   }
   return allSucceeded;
 }
 
-function runTypeScriptCompiler(projectDirPath: string, configFile: string, outDir: string): boolean {
+function runTypeScriptCompiler(
+  argv: ArgumentsType<AnyBuilderType>,
+  projectDirPath: string,
+  configFile: string,
+  outDir: string
+): boolean {
+  if (argv.verbose) {
+    console.info('runTypeScriptCompiler()', projectDirPath, configFile, outDir);
+  }
+
   const { config } = ts.readConfigFile(configFile, ts.sys.readFile);
   config.compilerOptions = {
     ...config.compilerOptions,

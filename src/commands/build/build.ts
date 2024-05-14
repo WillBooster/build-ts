@@ -165,7 +165,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     if (
       targetDetail !== 'app-node' &&
       targetDetail !== 'functions' &&
-      !(await generateDeclarationFiles(packageDirPath))
+      !(await generateDeclarationFiles(argv, packageDirPath))
     ) {
       process.exit(1);
     }
@@ -232,7 +232,7 @@ function watchRollup(
         );
 
         if (targetDetail !== 'app-node' && targetDetail !== 'functions') {
-          await generateDeclarationFiles(packageDirPath);
+          await generateDeclarationFiles(argv, packageDirPath);
         }
         break;
       }
