@@ -30,7 +30,7 @@ export const run: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
 
     const isRunningOnBun = process.argv[0].endsWith('/bun');
     const runtime = isRunningOnBun ? 'bun' : 'node';
-    const args = isRunningOnBun ? [] : ['--no-warnings', '--import', 'tsx', file];
+    const args = isRunningOnBun ? ['--bun', file] : ['--no-warnings', '--import', 'tsx', file];
     if (argv.watch) {
       args.push('--watch');
     }
@@ -41,7 +41,7 @@ export const run: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
     }
     const ret = child_process.spawnSync(runtime, runtimeArgs, {
       stdio: 'inherit',
-      env: { ...process.env, NODE_NO_WARNINGS: '1' },
+      env: { ...process.env },
     });
     process.exit(ret.status ?? 1);
   },
