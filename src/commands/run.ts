@@ -28,15 +28,18 @@ export const run: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
 
     const file = argv.file?.toString() || '';
 
-    const args = ['--no-warnings', '--import', 'tsx', file];
+    const isRunningOnBun = process.argv[0].endsWith('/bun');
+    const runtime = isRunningOnBun ? 'bun' : 'node';
+    const args = isRunningOnBun ? [] : ['--no-warnings', '--import', 'tsx', file];
     if (argv.watch) {
       args.push('--watch');
     }
     const [, ...additionalArguments] = argv._;
+    const runtimeArgs = [...args, ...additionalArguments.map((arg) => arg.toString())];
     if (argv.verbose) {
-      console.info(`Running 'node ${[...args, ...additionalArguments.map((arg) => arg.toString())].join(' ')}'`);
+      console.info(`Running '${runtime} ${runtimeArgs.join(' ')}'`);
     }
-    const ret = child_process.spawnSync('node', [...args, ...additionalArguments.map((arg) => arg.toString())], {
+    const ret = child_process.spawnSync(runtime, runtimeArgs, {
       stdio: 'inherit',
       env: { ...process.env, NODE_NO_WARNINGS: '1' },
     });
