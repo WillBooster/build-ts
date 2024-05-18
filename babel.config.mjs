@@ -29,11 +29,8 @@ const config = {
     '@babel/typescript',
   ],
   plugins: [
-    // We should use import assertions until TypeScript supports import attributes.
-    // cf. https://github.com/microsoft/TypeScript/issues/53656
-    '@babel/plugin-syntax-import-assertions',
     // cf. https://babeljs.io/blog/2023/05/26/7.22.0#import-attributes-15536-15620
-    // '@babel/plugin-syntax-import-attributes',
+    '@babel/plugin-syntax-import-attributes',
     // cf. https://babeljs.io/blog/2023/05/26/7.22.0#explicit-resource-management-15633-15520
     '@babel/plugin-proposal-explicit-resource-management',
     // cf. https://babeljs.io/blog/2024/02/28/7.24.0#decorators-updates-16242
