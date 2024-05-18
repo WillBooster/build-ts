@@ -305,7 +305,7 @@ async function generatePackageJsonForFunctions(
 
 function getOutputOptionsList(
   argv: ArgumentsType<AnyBuilderType>,
-  targetDetail: string,
+  targetDetail: TargetDetail,
   packageDirPath: string,
   isEsmPackage: boolean
 ): OutputOptions[] {
@@ -315,7 +315,7 @@ function getOutputOptionsList(
       {
         dir: outDirPath,
         format: isEsmOutput(isEsmPackage, argv.moduleType) ? 'module' : 'commonjs',
-        sourcemap: argv.sourcemap,
+        sourcemap: argv.sourcemap && 'inline',
       },
     ];
   }
