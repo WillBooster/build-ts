@@ -3045,13 +3045,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/shared-lib-node@npm:5.1.0":
-  version: 5.1.0
-  resolution: "@willbooster/shared-lib-node@npm:5.1.0"
+"@willbooster/shared-lib-node@npm:6.0.3":
+  version: 6.0.3
+  resolution: "@willbooster/shared-lib-node@npm:6.0.3"
   dependencies:
     dotenv: "npm:16.4.5"
     tree-kill: "npm:1.2.2"
-  checksum: 10c0/340441eb0c464cb7b535f40b7aee317f60dd9d31ccd404ce10e505bc9f99dcac1404bc32b0d3abeff59c76711670869244779b655bfcb477d56907ce0aba8244
+  checksum: 10c0/3754420541104c86ae9f336929ed9e888f937ed31db3274fb465618c0b0594487a759854e239c15643161fd19ee43e70723efdff96db4a93ff441604d1f41b30
   languageName: node
   linkType: hard
 
@@ -3540,7 +3540,7 @@ __metadata:
     "@willbooster/babel-configs": "npm:1.3.1"
     "@willbooster/eslint-config-ts": "npm:10.6.0"
     "@willbooster/prettier-config": "npm:9.1.2"
-    "@willbooster/shared-lib-node": "npm:5.1.0"
+    "@willbooster/shared-lib-node": "npm:6.0.3"
     "@willbooster/wb": "npm:7.6.4"
     babel-plugin-polyfill-corejs3: "npm:0.10.4"
     babel-plugin-transform-remove-console: "npm:6.9.4"
