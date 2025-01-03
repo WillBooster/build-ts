@@ -21,12 +21,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:20.12.12":
-  version: 20.12.12
-  resolution: "@types/node@npm:20.12.12"
+"@types/node@npm:20.17.11":
+  version: 20.17.11
+  resolution: "@types/node@npm:20.17.11"
   dependencies:
-    undici-types: "npm:~5.26.4"
-  checksum: 10c0/f374b763c744e8f16e4f38cf6e2c0eef31781ec9228c9e43a6f267880fea420fab0a238b59f10a7cb3444e49547c5e3785787e371fc242307310995b21988812
+    undici-types: "npm:~6.19.2"
+  checksum: 10c0/16cb9c63d5b8903a6ee05b2948af3379e34b438682cb219f7877521fb24cf3ec5dbd7016dc95a156ae60821a936dea0018f460a7016cc3228b7f572d862bad68
   languageName: node
   linkType: hard
 
@@ -35,7 +35,7 @@ __metadata:
   resolution: "lib@workspace:."
   dependencies:
     "@types/lodash.chunk": "npm:4.2.9"
-    "@types/node": "npm:20.12.12"
+    "@types/node": "npm:20.17.11"
     lodash.chunk: "npm:4.2.0"
   peerDependencies:
     lodash.chunk: 4.2.0
@@ -49,9 +49,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici-types@npm:~5.26.4":
-  version: 5.26.5
-  resolution: "undici-types@npm:5.26.5"
-  checksum: 10c0/bb673d7876c2d411b6eb6c560e0c571eef4a01c1c19925175d16e3a30c4c428181fb8d7ae802a261f283e4166a0ac435e2f505743aa9e45d893f9a3df017b501
+"undici-types@npm:~6.19.2":
+  version: 6.19.8
+  resolution: "undici-types@npm:6.19.8"
+  checksum: 10c0/078afa5990fba110f6824823ace86073b4638f1d5112ee26e790155f481f2a868cc3e0615505b6f4282bdf74a3d8caad715fd809e870c2bb0704e3ea6082f344
   languageName: node
   linkType: hard
