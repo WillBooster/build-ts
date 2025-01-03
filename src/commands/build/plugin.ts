@@ -64,7 +64,7 @@ export function setupPlugins(
   const plugins: Plugin[] = [
     replace({
       // Ignore word boundaries and replace every instance of the string.
-      // c.f. https://github.com/rollup/plugins/tree/master/packages/replace#word-boundaries
+      // cf. https://github.com/rollup/plugins/tree/master/packages/replace#word-boundaries
       delimiters: ['', ''],
       preventAssignment: true,
       values: createEnvironmentVariablesDefinition(argv, packageDirPath),
