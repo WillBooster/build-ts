@@ -5,7 +5,7 @@
   },
   "devDependencies": {
     "@types/lodash.chunk": "4.2.9",
-    "@types/react": "19.0.4",
+    "@types/react": "19.0.7",
     "react": "19.0.0"
   },
   "peerDependencies": {
