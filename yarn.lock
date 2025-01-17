@@ -3016,9 +3016,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/wb@npm:8.0.20":
-  version: 8.0.20
-  resolution: "@willbooster/wb@npm:8.0.20"
+"@willbooster/wb@npm:8.0.21":
+  version: 8.0.21
+  resolution: "@willbooster/wb@npm:8.0.21"
   dependencies:
     chalk: "npm:5.4.1"
     dotenv: "npm:16.4.7"
@@ -3029,7 +3029,7 @@ __metadata:
     yargs: "npm:17.7.2"
   bin:
     wb: bin/index.js
-  checksum: 10c0/da741336de4ba0674ff73713828e0c9b2c687f51a0bc55c7daee71356d0cc42ac7abb1b0890b70604a1016aed7400d22ba375169e3bb4489e7b3a7303006e6e2
+  checksum: 10c0/d4abe9ceff653ab68f3c779f149a86a9cd208dfd3bccf7a3ca321844f5da65f3e60260f98516f211dacdbff6af0f7484af40cb209ea8a0fd01d58c551bb40510
   languageName: node
   linkType: hard
 
@@ -3489,7 +3489,7 @@ __metadata:
     "@willbooster/eslint-config-ts": "npm:10.6.1"
     "@willbooster/prettier-config": "npm:9.1.3"
     "@willbooster/shared-lib-node": "npm:6.0.5"
-    "@willbooster/wb": "npm:8.0.20"
+    "@willbooster/wb": "npm:8.0.21"
     babel-plugin-polyfill-corejs3: "npm:0.11.0"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     chalk: "npm:5.4.1"
@@ -3505,7 +3505,7 @@ __metadata:
     eslint-plugin-sort-destructure-keys: "npm:2.0.0"
     eslint-plugin-unicorn: "npm:56.0.1"
     husky: "npm:9.1.7"
-    lint-staged: "npm:15.4.0"
+    lint-staged: "npm:15.4.1"
     micromatch: "npm:4.0.8"
     pinst: "npm:3.0.0"
     prettier: "npm:3.4.2"
@@ -6630,9 +6630,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lint-staged@npm:15.4.0":
-  version: 15.4.0
-  resolution: "lint-staged@npm:15.4.0"
+"lint-staged@npm:15.4.1":
+  version: 15.4.1
+  resolution: "lint-staged@npm:15.4.1"
   dependencies:
     chalk: "npm:~5.4.1"
     commander: "npm:~12.1.0"
@@ -6646,7 +6646,7 @@ __metadata:
     yaml: "npm:~2.6.1"
   bin:
     lint-staged: bin/lint-staged.js
-  checksum: 10c0/ada9a79a984840c4e51e9e77a00e995151d4a1a410c7aceee8a0403d63fb94ec57531fa752081874c97da12f8809aa6d7645a8b321be0d099a43fe0ac856a9af
+  checksum: 10c0/1ba9ac047f644a36d476f5e139854ea7fef8bfa97b59d6f709ffca36d3d8b3b45b8c0dbcdeed9d9b9eacb36ca4abc8170d857761d8e0e748f85f1e155ef3e47d
   languageName: node
   linkType: hard
 
