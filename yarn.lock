@@ -3213,19 +3213,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/shared-lib-node@npm:6.1.7":
-  version: 6.1.7
-  resolution: "@willbooster/shared-lib-node@npm:6.1.7"
+"@willbooster/shared-lib-node@npm:6.1.8":
+  version: 6.1.8
+  resolution: "@willbooster/shared-lib-node@npm:6.1.8"
   dependencies:
     dotenv: "npm:16.4.7"
     tree-kill: "npm:1.2.2"
-  checksum: 10c0/45efe2d6019ed67bc586cf6467abcd73df268fd6faaff47200a2d7e6fef46301261be0f72871338670d57cc978b2489ea8a01ed175c43accc527e8962c34ca22
+  checksum: 10c0/c7c2bcd167206c844e52f1cd5ff6ef31eddc96283be149a886adf4f0a1fbb79aefe59f3b780a8bd841b29d95377401859fead5292a52f96a0b84e2fdfbf86ced
   languageName: node
   linkType: hard
 
-"@willbooster/wb@npm:8.0.29":
-  version: 8.0.29
-  resolution: "@willbooster/wb@npm:8.0.29"
+"@willbooster/wb@npm:8.0.30":
+  version: 8.0.30
+  resolution: "@willbooster/wb@npm:8.0.30"
   dependencies:
     chalk: "npm:5.4.1"
     dotenv: "npm:16.4.7"
@@ -3236,7 +3236,7 @@ __metadata:
     yargs: "npm:17.7.2"
   bin:
     wb: bin/index.js
-  checksum: 10c0/602b67230977e348cf55d141b831f2a30788d6b578e2bbbfb995a4557c51808e6f781e64adfeec0f2ae7e583ca66ad14e62a57a891c195fee5893198eccacb77
+  checksum: 10c0/a8072bb9f44567597ce2b35bdb5e104808bae5d29706118e6607da72a008feef530cf5c42e96c2b8bab55c1a5ba471377cdd0e0fa4021cf3e7d1ea0e34912f8e
   languageName: node
   linkType: hard
 
@@ -3695,8 +3695,8 @@ __metadata:
     "@willbooster/babel-configs": "npm:1.3.2"
     "@willbooster/eslint-config-ts": "npm:10.6.1"
     "@willbooster/prettier-config": "npm:9.1.3"
-    "@willbooster/shared-lib-node": "npm:6.1.7"
-    "@willbooster/wb": "npm:8.0.29"
+    "@willbooster/shared-lib-node": "npm:6.1.8"
+    "@willbooster/wb": "npm:8.0.30"
     babel-plugin-polyfill-corejs3: "npm:0.11.1"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     chalk: "npm:5.4.1"
