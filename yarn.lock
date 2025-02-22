@@ -3170,9 +3170,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/wb@npm:8.0.33":
-  version: 8.0.33
-  resolution: "@willbooster/wb@npm:8.0.33"
+"@willbooster/wb@npm:8.0.34":
+  version: 8.0.34
+  resolution: "@willbooster/wb@npm:8.0.34"
   dependencies:
     chalk: "npm:5.4.1"
     dotenv: "npm:16.4.7"
@@ -3183,7 +3183,7 @@ __metadata:
     yargs: "npm:17.7.2"
   bin:
     wb: bin/index.js
-  checksum: 10c0/8ad00dcb460f4a8311ab56adf4f56e2cc12125c6286822652141d57a92d15dad7b7cf6175b632bc9bb1c91dbb465776fb5e15f68b01389ae4753e74889786594
+  checksum: 10c0/5458d1cff9b41632f8a337635398ceac89c87797b3acce6d9886a21111dd35e2e98b4d17ca5eeb78a14036d37d200492fc3ac45ffb48f837b7cccc5e79251de1
   languageName: node
   linkType: hard
 
@@ -3643,7 +3643,7 @@ __metadata:
     "@willbooster/eslint-config-ts": "npm:10.6.1"
     "@willbooster/prettier-config": "npm:9.1.3"
     "@willbooster/shared-lib-node": "npm:6.1.9"
-    "@willbooster/wb": "npm:8.0.33"
+    "@willbooster/wb": "npm:8.0.34"
     babel-plugin-polyfill-corejs3: "npm:0.11.1"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     chalk: "npm:5.4.1"
@@ -3662,7 +3662,7 @@ __metadata:
     lint-staged: "npm:15.4.3"
     micromatch: "npm:4.0.8"
     pinst: "npm:3.0.0"
-    prettier: "npm:3.5.1"
+    prettier: "npm:3.5.2"
     pretty-ms: "npm:9.2.0"
     rollup: "npm:4.34.8"
     rollup-plugin-analyzer: "npm:4.0.0"
@@ -8153,12 +8153,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prettier@npm:3.5.1":
-  version: 3.5.1
-  resolution: "prettier@npm:3.5.1"
+"prettier@npm:3.5.2":
+  version: 3.5.2
+  resolution: "prettier@npm:3.5.2"
   bin:
     prettier: bin/prettier.cjs
-  checksum: 10c0/9f6f810eae455d6e4213845151a484a2338f2e0d6a8b84ee8e13a83af8a2421ef6c1e31e61e4b135671fb57b9541f6624648880cc2061ac803e243ac898c0123
+  checksum: 10c0/d7b597ed33f39c32ace675896ad187f06a3e48dc8a1e80051b5c5f0dae3586d53981704b8fda5ac3b080e6c2e0e197d239131b953702674f044351621ca5e1ac
   languageName: node
   linkType: hard
 
