@@ -23,7 +23,7 @@ export const run: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
   command: 'run <file>',
   describe: 'Run script',
   builder,
-  async handler(argv) {
+  handler(argv) {
     loadEnvironmentVariablesWithCache(argv, process.cwd());
 
     const file = argv.file?.toString() || '';
