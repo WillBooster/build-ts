@@ -28,7 +28,8 @@ export const run: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
 
     const file = argv.file?.toString() || '';
 
-    const isRunningOnBun = process.argv[0].endsWith('/bun');
+    // cf. https://bun.sh/guides/util/detect-bun
+    const isRunningOnBun = process.versions.bun;
     const runtime = isRunningOnBun ? 'bun' : 'node';
     const args = isRunningOnBun ? ['--bun'] : ['--no-warnings', '--import', 'tsx'];
     if (argv.watch) {
