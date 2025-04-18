@@ -3123,13 +3123,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/shared-lib-node@npm:6.1.13":
-  version: 6.1.13
-  resolution: "@willbooster/shared-lib-node@npm:6.1.13"
+"@willbooster/shared-lib-node@npm:6.1.14":
+  version: 6.1.14
+  resolution: "@willbooster/shared-lib-node@npm:6.1.14"
   dependencies:
-    dotenv: "npm:16.4.7"
+    dotenv: "npm:16.5.0"
     tree-kill: "npm:1.2.2"
-  checksum: 10c0/ffd26cc78afba90dd9b847a13eb3a438ba155ce9986fdd7ca8837e147a0a2300976ec99015ed00f9ee76e89c36e1b4fa8112f0e1c84e63c70396a9aa02a04470
+  checksum: 10c0/59a5b3ccab7b13b4f93136427f89fa9edd182ec6b5ccd29f25ae5a1aa4b6faec0797a7a61e03c5c9f21fe981ce8af6d0de471e05068a41b9c70e3d0c054e3610
   languageName: node
   linkType: hard
 
@@ -3510,7 +3510,7 @@ __metadata:
     "@willbooster/babel-configs": "npm:2.1.0"
     "@willbooster/eslint-config-ts": "npm:11.2.0"
     "@willbooster/prettier-config": "npm:10.0.0"
-    "@willbooster/shared-lib-node": "npm:6.1.13"
+    "@willbooster/shared-lib-node": "npm:6.1.14"
     "@willbooster/wb": "npm:8.0.39"
     babel-plugin-polyfill-corejs3: "npm:0.12.0"
     babel-plugin-transform-remove-console: "npm:6.9.4"
@@ -3546,7 +3546,7 @@ __metadata:
     signal-exit: "npm:4.1.0"
     sort-package-json: "npm:3.0.0"
     tsx: "npm:4.19.3"
-    type-fest: "npm:4.39.1"
+    type-fest: "npm:4.40.0"
     typescript: "npm:5.8.3"
     typescript-eslint: "npm:8.30.1"
     vitest: "npm:3.1.1"
@@ -4158,13 +4158,6 @@ __metadata:
   dependencies:
     is-obj: "npm:^2.0.0"
   checksum: 10c0/93f0d343ef87fe8869320e62f2459f7e70f49c6098d948cc47e060f4a3f827d0ad61e83cb82f2bd90cd5b9571b8d334289978a43c0f98fea4f0e99ee8faa0599
-  languageName: node
-  linkType: hard
-
-"dotenv@npm:16.4.7":
-  version: 16.4.7
-  resolution: "dotenv@npm:16.4.7"
-  checksum: 10c0/be9f597e36a8daf834452daa1f4cc30e5375a5968f98f46d89b16b983c567398a330580c88395069a77473943c06b877d1ca25b4afafcdd6d4adb549e8293462
   languageName: node
   linkType: hard
 
@@ -8515,10 +8508,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"type-fest@npm:4.39.1, type-fest@npm:^4.39.1, type-fest@npm:^4.6.0":
-  version: 4.39.1
-  resolution: "type-fest@npm:4.39.1"
-  checksum: 10c0/f5bf302eb2e2f70658be1757aa578f4a09da3f65699b0b12b7ae5502ccea76e5124521a6e6b69540f442c3dc924c394202a2ab58718d0582725c7ac23c072594
+"type-fest@npm:4.40.0":
+  version: 4.40.0
+  resolution: "type-fest@npm:4.40.0"
+  checksum: 10c0/b39d4da6f9a154e3db7e714cd05ccf56b53f4f0bbf74dd294cb6be4921b16ecca5cb00cb81b53ab621a31c8e8509c74b5101895ada47af9de368a317d24538a3
   languageName: node
   linkType: hard
 
@@ -8533,6 +8526,13 @@ __metadata:
   version: 2.19.0
   resolution: "type-fest@npm:2.19.0"
   checksum: 10c0/a5a7ecf2e654251613218c215c7493574594951c08e52ab9881c9df6a6da0aeca7528c213c622bc374b4e0cb5c443aa3ab758da4e3c959783ce884c3194e12cb
+  languageName: node
+  linkType: hard
+
+"type-fest@npm:^4.39.1, type-fest@npm:^4.6.0":
+  version: 4.39.1
+  resolution: "type-fest@npm:4.39.1"
+  checksum: 10c0/f5bf302eb2e2f70658be1757aa578f4a09da3f65699b0b12b7ae5502ccea76e5124521a6e6b69540f442c3dc924c394202a2ab58718d0582725c7ac23c072594
   languageName: node
   linkType: hard
 
