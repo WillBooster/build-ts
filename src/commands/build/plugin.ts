@@ -80,7 +80,6 @@ export function setupPlugins(
     }),
     resolve({
       extensions,
-      // Set preferBuiltins to false for 'undici' to prevent it from being transformed to 'node:undici'
       preferBuiltins: (id: string) => !argv.bundleBuiltins?.includes(id),
     }),
     commonjs(),
