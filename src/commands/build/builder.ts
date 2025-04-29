@@ -45,6 +45,10 @@ export const builder = {
     description: 'Identifiers to be kept as import statements.',
     type: 'array',
   },
+  bundleBuiltins: {
+    description: 'Module names same with builtins (e.g., undici) to be bundled.',
+    type: 'array',
+  },
 } as const;
 
 export const appBuilder = {

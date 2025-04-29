@@ -78,9 +78,13 @@ export function setupPlugins(
       include: externalDeps.map((name) => new RegExp(`^${name}(?:\\/.+)?`)),
       exclude: namespace && new RegExp(`^@?${namespace}(?:\\/.+)?`),
     }),
-    resolve({ extensions }),
+    resolve({
+      extensions,
+      // Set preferBuiltins to false for 'undici' to prevent it from being transformed to 'node:undici'
+      preferBuiltins: (id: string) => !argv.bundleBuiltins?.includes(id),
+    }),
     commonjs(),
-    keepImport({ moduleNames: argv.keepImport?.map((item) => item.toString()) ?? [] }),
+    keepImport({ moduleNames: [...(argv.keepImport?.map((item) => item.toString()) ?? []), 'undici'] }),
   ];
   const isBabelHelpersBundled =
     targetDetail === 'app-node' || targetDetail === 'functions' || !externalDeps.includes('@babel/runtime');
