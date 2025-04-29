@@ -79,6 +79,8 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   const targetDetail = detectTargetDetail(targetCategory, inputs);
 
   if (verbose) {
+    console.info('argv:', argv);
+    console.info('packageJsonPath:', packageJsonPath);
     console.info('Target (Category):', `${targetDetail} (${targetCategory})`);
   }
 
