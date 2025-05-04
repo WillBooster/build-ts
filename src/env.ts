@@ -25,16 +25,10 @@ export function loadEnvironmentVariablesWithCache(
 /**
  * This function creates a definition of environment variables that will be injected into the build.
  * */
-export function createEnvironmentVariablesDefinition(
-  argv: ArgumentsType<typeof builder>,
-  cwd: string
-): Record<string, string> {
+export function createEnvironmentVariablesDefinition(argv: ArgumentsType<typeof builder>): Record<string, string> {
   const envVarsDef: Record<string, string> = {};
-  const names = new Set([
-    ...(argv.inline ?? []).flatMap((e) => e.toString().split(',')),
-    ...Object.keys(loadEnvironmentVariablesWithCache(argv, cwd)),
-  ]);
-  for (const name of names) {
+  const envVarNames = new Set((argv.inline ?? []).flatMap((e) => e.toString().split(',')));
+  for (const name of envVarNames) {
     if (process.env[name] === undefined) continue;
 
     envVarsDef[`process.env.${name}`] = JSON.stringify(process.env[name]);

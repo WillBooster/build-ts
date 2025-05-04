@@ -67,7 +67,7 @@ export function setupPlugins(
       // cf. https://github.com/rollup/plugins/tree/master/packages/replace#word-boundaries
       delimiters: ['', ''],
       preventAssignment: true,
-      values: createEnvironmentVariablesDefinition(argv, packageDirPath),
+      values: createEnvironmentVariablesDefinition(argv),
     }),
     json(),
     nodeExternals({
@@ -83,7 +83,7 @@ export function setupPlugins(
       preferBuiltins: (id: string) => !argv.bundleBuiltins?.includes(id),
     }),
     commonjs(),
-    keepImport({ moduleNames: [...(argv.keepImport?.map((item) => item.toString()) ?? []), 'undici'] }),
+    keepImport({ moduleNames: argv.keepImport?.map((item) => item.toString()) ?? [] }),
   ];
   const isBabelHelpersBundled =
     targetDetail === 'app-node' || targetDetail === 'functions' || !externalDeps.includes('@babel/runtime');
