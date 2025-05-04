@@ -3,59 +3,55 @@ import fs from 'node:fs';
 import { removeNpmAndYarnEnvironmentVariables, spawnAsync } from '@willbooster/shared-lib-node';
 import { describe, expect, it } from 'vitest';
 
-describe(
-  'build',
-  () => {
-    it.concurrent('app-node', async () => {
-      await buildAndRunApp('app-node', 'app');
-      const indexJs = await fs.promises.readFile('test-fixtures/app-node/dist/index.js', 'utf8');
-      expect(indexJs).to.includes('("1")');
-      expect(indexJs).to.not.includes('process.env.A');
-    });
+describe('build', { timeout: 60_000 }, () => {
+  it.concurrent('app-node', async () => {
+    await buildAndRunApp('app-node', 'app', '--inline', 'A');
+    const indexJs = await fs.promises.readFile('test-fixtures/app-node/dist/index.js', 'utf8');
+    expect(indexJs).to.includes('("1")');
+    expect(indexJs).to.not.includes('process.env.A');
+  });
 
-    it.concurrent('functions', async () => {
-      await buildAndRunApp('functions', 'functions');
-      const packageJson = await fs.promises.readFile('test-fixtures/functions/dist/package.json', 'utf8');
-      expect(packageJson).to.includes('lodash.chunk');
-      expect(packageJson).to.not.includes('lodash.compact');
-      expect(packageJson).to.includes('lodash.concat');
-      expect(packageJson).to.includes('"main":"index.js"');
-    });
+  it.concurrent('functions', async () => {
+    await buildAndRunApp('functions', 'functions');
+    const packageJson = await fs.promises.readFile('test-fixtures/functions/dist/package.json', 'utf8');
+    expect(packageJson).to.includes('lodash.chunk');
+    expect(packageJson).to.not.includes('lodash.compact');
+    expect(packageJson).to.includes('lodash.concat');
+    expect(packageJson).to.includes('"main":"index.js"');
+  });
 
-    it.concurrent.each([
-      ['lib', 'index.js', 'index.mjs'],
-      ['lib-esm', 'index.cjs', 'index.js'],
-    ])('%s', async (dirName, cjsName, esmName) => {
-      await buildWithCommand(dirName, 'lib', '--module-type', 'both');
-      const [cjsCode, esmCode] = await Promise.all([
-        fs.promises.readFile(`test-fixtures/${dirName}/dist/${cjsName}`, 'utf8'),
-        fs.promises.readFile(`test-fixtures/${dirName}/dist/${esmName}`, 'utf8'),
-      ]);
-      expect(cjsCode).to.includes('lodash.chunk');
-      expect(esmCode).to.includes('lodash.chunk');
-      expect(fs.existsSync(`test-fixtures/${dirName}/dist/index.d.ts`)).toBeTruthy();
-      expect(fs.existsSync(`test-fixtures/${dirName}/dist/module.d.ts`)).toBeTruthy();
+  it.concurrent.each([
+    ['lib', 'index.js', 'index.mjs'],
+    ['lib-esm', 'index.cjs', 'index.js'],
+  ])('%s', async (dirName, cjsName, esmName) => {
+    await buildWithCommand(dirName, 'lib', '--module-type', 'both');
+    const [cjsCode, esmCode] = await Promise.all([
+      fs.promises.readFile(`test-fixtures/${dirName}/dist/${cjsName}`, 'utf8'),
+      fs.promises.readFile(`test-fixtures/${dirName}/dist/${esmName}`, 'utf8'),
+    ]);
+    expect(cjsCode).to.includes('lodash.chunk');
+    expect(esmCode).to.includes('lodash.chunk');
+    expect(fs.existsSync(`test-fixtures/${dirName}/dist/index.d.ts`)).toBeTruthy();
+    expect(fs.existsSync(`test-fixtures/${dirName}/dist/module.d.ts`)).toBeTruthy();
 
-      const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: `test-fixtures/${dirName}` });
-      expect(execRet.status).toBe(0);
-    });
+    const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: `test-fixtures/${dirName}` });
+    expect(execRet.status).toBe(0);
+  });
 
-    it.concurrent('lib-react', async () => {
-      const dirName = 'lib-react';
-      await buildWithCommand(dirName, 'lib', '--js-extension', 'both');
-      const [cjsCode, esmCode] = await Promise.all([
-        fs.promises.readFile(`test-fixtures/${dirName}/dist/index.js`, 'utf8'),
-        fs.promises.readFile(`test-fixtures/${dirName}/dist/index.js`, 'utf8'),
-      ]);
-      expect(cjsCode).to.includes('use client');
-      expect(esmCode).to.includes('use client');
-      expect(cjsCode).to.includes('lodash.chunk');
-      expect(esmCode).to.includes('lodash.chunk');
-      expect(fs.existsSync(`test-fixtures/${dirName}/dist/index.d.ts`)).toBeTruthy();
-    });
-  },
-  { timeout: 60_000 }
-);
+  it.concurrent('lib-react', async () => {
+    const dirName = 'lib-react';
+    await buildWithCommand(dirName, 'lib', '--js-extension', 'both');
+    const [cjsCode, esmCode] = await Promise.all([
+      fs.promises.readFile(`test-fixtures/${dirName}/dist/index.js`, 'utf8'),
+      fs.promises.readFile(`test-fixtures/${dirName}/dist/index.js`, 'utf8'),
+    ]);
+    expect(cjsCode).to.includes('use client');
+    expect(esmCode).to.includes('use client');
+    expect(cjsCode).to.includes('lodash.chunk');
+    expect(esmCode).to.includes('lodash.chunk');
+    expect(fs.existsSync(`test-fixtures/${dirName}/dist/index.d.ts`)).toBeTruthy();
+  });
+});
 
 async function buildAndRunApp(dirName: string, subCommand: string, ...options: string[]): Promise<void> {
   await buildWithCommand(dirName, subCommand, ...options);
