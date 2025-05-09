@@ -67,7 +67,7 @@ export function setupPlugins(
       // cf. https://github.com/rollup/plugins/tree/master/packages/replace#word-boundaries
       delimiters: ['', ''],
       preventAssignment: true,
-      values: createEnvironmentVariablesDefinition(argv),
+      values: createEnvironmentVariablesDefinition(argv, packageDirPath),
     }),
     json(),
     nodeExternals({

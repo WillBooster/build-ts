@@ -36,6 +36,11 @@ export const builder = {
     description: 'Environment variables to be inlined.',
     type: 'array',
   },
+  'auto-inline': {
+    description: 'Inline environment variables defined at env files.',
+    type: 'boolean',
+    default: false,
+  },
   watch: {
     description: 'Whether watch mode is enabled or not',
     type: 'boolean',
