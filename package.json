@@ -93,7 +93,7 @@
     "micromatch": "4.0.8",
     "pinst": "3.0.0",
     "prettier": "3.5.3",
-    "semantic-release": "24.2.4",
+    "semantic-release": "24.2.5",
     "sort-package-json": "3.2.1",
     "type-fest": "4.41.0",
     "typescript-eslint": "8.32.1",
