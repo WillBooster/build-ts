@@ -69,9 +69,9 @@ async function buildAndRunApp(dirName: string, subCommand: string, ...options: s
 
 async function buildWithCommand(dirName: string, subCommand: string, ...options: string[]): Promise<void> {
   removeNpmAndYarnEnvironmentVariables(process.env);
-  await spawnAsync('yarn', [], { cwd: `test-fixtures/${dirName}`, stdio: 'ignore' });
+  await spawnAsync('yarn', [], { cwd: `test-fixtures/${dirName}`, stdio: 'inherit' });
   const buildRet = await spawnAsync('yarn', ['start', subCommand, `test-fixtures/${dirName}`, ...options], {
-    stdio: 'ignore',
+    stdio: 'inherit',
   });
   expect(buildRet.status).toBe(0);
 }

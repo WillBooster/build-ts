@@ -47,7 +47,7 @@ __metadata:
     react: "npm:19.1.0"
   peerDependencies:
     lodash.chunk: 4.2.0
-    react: ">=18"
+    react: ">=19"
   languageName: unknown
   linkType: soft
 
