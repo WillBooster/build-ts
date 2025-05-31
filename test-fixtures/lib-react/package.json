@@ -10,7 +10,7 @@
   },
   "peerDependencies": {
     "lodash.chunk": "4.2.0",
-    "react": ">=18"
+    "react": ">=20"
   },
   "packageManager": "yarn@4.9.1"
 }
