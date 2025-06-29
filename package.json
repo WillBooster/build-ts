@@ -46,7 +46,7 @@
     "@rollup/plugin-replace": "6.0.2",
     "@rollup/plugin-terser": "0.4.4",
     "@rollup/pluginutils": "5.2.0",
-    "@willbooster/shared-lib-node": "6.2.5",
+    "@willbooster/shared-lib-node": "7.0.0",
     "babel-plugin-polyfill-corejs3": "0.13.0",
     "babel-plugin-transform-remove-console": "6.9.4",
     "chalk": "5.4.1",
