@@ -74,7 +74,7 @@
     "@types/node": "22.15.34",
     "@types/signal-exit": "3.0.4",
     "@types/yargs": "17.0.33",
-    "@willbooster/babel-configs": "2.2.3",
+    "@willbooster/babel-configs": "2.3.0",
     "@willbooster/eslint-config-ts": "11.4.0",
     "@willbooster/prettier-config": "10.2.0",
     "@willbooster/wb": "9.0.0",
