@@ -8,4 +8,4 @@ export const allTargetDetails = ['app-node', 'functions', 'lib', 'lib-react'] as
 
 export type TargetDetail = (typeof allTargetDetails)[number];
 
-export type ArgumentsType<T extends { [key: string]: Options }> = ArgumentsCamelCase<InferredOptionTypes<T>>;
+export type ArgumentsType<T extends Record<string, Options>> = ArgumentsCamelCase<InferredOptionTypes<T>>;
