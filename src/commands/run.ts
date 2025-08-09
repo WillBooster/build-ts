@@ -26,7 +26,7 @@ export const run: CommandModule<unknown, InferredOptionTypes<typeof builder>> = 
   handler(argv) {
     loadEnvironmentVariablesWithCache(argv, process.cwd());
 
-    const file = argv.file?.toString() || '';
+    const file = argv.file?.toString() ?? '';
 
     // cf. https://bun.sh/guides/util/detect-bun
     const isRunningOnBun = process.versions.bun;
