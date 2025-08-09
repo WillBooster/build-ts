@@ -3220,21 +3220,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/shared-lib-node@npm:7.0.3":
-  version: 7.0.3
-  resolution: "@willbooster/shared-lib-node@npm:7.0.3"
+"@willbooster/shared-lib-node@npm:7.0.4":
+  version: 7.0.4
+  resolution: "@willbooster/shared-lib-node@npm:7.0.4"
   dependencies:
     dotenv: "npm:17.2.1"
     tree-kill: "npm:1.2.2"
-  checksum: 10c0/f954b09a6f0b4a219a64913119b11ffb7fdd9aebea3d877a832309934ac7110f23542713cf1faaa37d2d50576999fb978ff8e36e48bd15dda766199d01c2216d
+  checksum: 10c0/5b9a691e7f76591a74cdc6568f4c4051db23ef93e0ab95f0fe41c5f37039d61b85424063726cf306eaa6a913bbf4bd96366190b1812d6e88e9972508cb129776
   languageName: node
   linkType: hard
 
-"@willbooster/wb@npm:9.0.7":
-  version: 9.0.7
-  resolution: "@willbooster/wb@npm:9.0.7"
+"@willbooster/wb@npm:9.0.9":
+  version: 9.0.9
+  resolution: "@willbooster/wb@npm:9.0.9"
   dependencies:
-    chalk: "npm:5.4.1"
+    chalk: "npm:5.5.0"
     dotenv: "npm:17.2.1"
     globby: "npm:14.1.0"
     kill-port: "npm:2.0.1"
@@ -3243,7 +3243,7 @@ __metadata:
     yargs: "npm:18.0.0"
   bin:
     wb: bin/index.js
-  checksum: 10c0/0b6af336d86fd93a29d7ba15e3063c72816d0a3612b874a8147baec6a70ee90679edbab370ee1bb54381c2c0b90dbe800a3b5590ce0081acc006b35d0337c2d1
+  checksum: 10c0/f38ef5a355aa9d049939ad546447aebdf5a918271dfbd998af95ed163fb716671fb1a508e37c77f90f8d8dd8d2c5c07ed5a06d0eb41aa8a214634b367bcb73ee
   languageName: node
   linkType: hard
 
@@ -3585,8 +3585,8 @@ __metadata:
     "@willbooster/babel-configs": "npm:2.3.0"
     "@willbooster/eslint-config-ts": "npm:11.4.1"
     "@willbooster/prettier-config": "npm:10.2.0"
-    "@willbooster/shared-lib-node": "npm:7.0.3"
-    "@willbooster/wb": "npm:9.0.7"
+    "@willbooster/shared-lib-node": "npm:7.0.4"
+    "@willbooster/wb": "npm:9.0.9"
     babel-plugin-polyfill-corejs3: "npm:0.13.0"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     chalk: "npm:5.5.0"
@@ -3690,13 +3690,6 @@ __metadata:
     loupe: "npm:^3.1.0"
     pathval: "npm:^2.0.0"
   checksum: 10c0/58209c03ae9b2fd97cfa1cb0fbe372b1906e6091311b9ba1b0468cc4923b0766a50a1050a164df3ccefb9464944c9216b632f1477c9e429068013bdbb57220f6
-  languageName: node
-  linkType: hard
-
-"chalk@npm:5.4.1":
-  version: 5.4.1
-  resolution: "chalk@npm:5.4.1"
-  checksum: 10c0/b23e88132c702f4855ca6d25cb5538b1114343e41472d5263ee8a37cccfccd9c4216d111e1097c6a27830407a1dc81fecdf2a56f2c63033d4dbbd88c10b0dcef
   languageName: node
   linkType: hard
 
