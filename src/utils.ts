@@ -20,8 +20,8 @@ export function getBuildTsRootPath(): string {
 }
 
 export function getNamespaceAndName(packageJson: PackageJson): [string | undefined, string | undefined] {
-  const packageName = packageJson.name?.toString() || '';
+  const packageName = packageJson.name?.toString() ?? '';
   const match = /@([^/]+)\/(.+)/.exec(packageName);
-  const [, namespace, name] = match || [];
+  const [, namespace, name] = match ?? [];
   return [namespace, name];
 }
