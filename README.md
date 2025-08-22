@@ -25,9 +25,9 @@ An opinionated tool for building a Node.js app and library written in TypeScript
 `npx build-ts app [project path]`, e.g.,
 
 ```sh
-npx build-ts app fixtures/app-node
+npx build-ts app test/fixtures/app-node
 # or
-cd fixtures/app-node && npx build-ts app
+cd test/fixtures/app-node && npx build-ts app
 ```
 
 ## Firebase Functions
@@ -35,9 +35,9 @@ cd fixtures/app-node && npx build-ts app
 `npx build-ts functions [project path]`, e.g.,
 
 ```sh
-npx build-ts app fixtures/functions
+npx build-ts app test/fixtures/functions
 # or
-cd fixtures/functions && npx build-ts app
+cd test/fixtures/functions && npx build-ts app
 ```
 
 ## Node.js / Browser Library
@@ -45,9 +45,9 @@ cd fixtures/functions && npx build-ts app
 `npx build-ts lib [project path]`, e.g.,
 
 ```sh
-npx build-ts lib fixtures/lib
+npx build-ts lib test/fixtures/lib
 # or
-cd fixtures/lib && npx build-ts lib
+cd test/fixtures/lib && npx build-ts lib
 ```
 
 ## React Library
@@ -55,9 +55,9 @@ cd fixtures/lib && npx build-ts lib
 `npx build-ts lib [project path]`, e.g.,
 
 ```sh
-npx build-ts lib fixtures/lib-react
+npx build-ts lib test/fixtures/lib-react
 # or
-cd fixtures/lib-react && npx build-ts lib
+cd test/fixtures/lib-react && npx build-ts lib
 ```
 
 ## Run TypeScript code with arguments
