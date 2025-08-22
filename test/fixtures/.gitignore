@@ -1,5 +1,2 @@
-*/.yarn/cache
-*/.yarn/unplugged
-*/.yarn/build-state.yml
-lib/.yarn/install-state.gz
+.yarn/
 */.pnp.*
