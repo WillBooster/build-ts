@@ -103,6 +103,6 @@
   },
   "packageManager": "yarn@4.9.4",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   }
 }
