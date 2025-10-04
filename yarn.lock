@@ -3392,22 +3392,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/shared-lib-node@npm:7.0.6":
-  version: 7.0.6
-  resolution: "@willbooster/shared-lib-node@npm:7.0.6"
+"@willbooster/shared-lib-node@npm:7.0.7":
+  version: 7.0.7
+  resolution: "@willbooster/shared-lib-node@npm:7.0.7"
   dependencies:
-    dotenv: "npm:17.2.2"
+    dotenv: "npm:17.2.3"
     tree-kill: "npm:1.2.2"
-  checksum: 10c0/9a27639b325883f0fa4bb3ecc12002e1516bac8d9d99b26285f2d4439f45d1df490c4a703e17b50f27458adffb204325ca9da539844dab6667b2b6cc370433f8
+  checksum: 10c0/56c5a57e53fb8ff5810d26c71d0bbd8b25356a311b27c4906e262ed4e03ff07625ac59778ec2bf8f1b24a3886ce515fc8e07973cef6fa9d3533575a1a22350f5
   languageName: node
   linkType: hard
 
-"@willbooster/wb@npm:10.1.1":
-  version: 10.1.1
-  resolution: "@willbooster/wb@npm:10.1.1"
+"@willbooster/wb@npm:10.1.2":
+  version: 10.1.2
+  resolution: "@willbooster/wb@npm:10.1.2"
   dependencies:
     chalk: "npm:5.6.2"
-    dotenv: "npm:17.2.2"
+    dotenv: "npm:17.2.3"
     globby: "npm:14.1.0"
     kill-port: "npm:2.0.1"
     minimal-promise-pool: "npm:5.0.0"
@@ -3415,7 +3415,7 @@ __metadata:
     yargs: "npm:18.0.0"
   bin:
     wb: bin/index.js
-  checksum: 10c0/fa3894012105e7598969facf828aaef2e5ea9cf6f31b2b6a89580ac86e1984829bd3eb8dda6455984abaec61979801f33d7cc0a8002bd5e6508e5a185523beb8
+  checksum: 10c0/cd345219b3ca1fb75c8f864d16a4d877c1880e49b54d0fb5da2ec594e767597719ab89b0d45c903057f6e6030ce81f25f5c2db8a8165105a10617043cbc18dc5
   languageName: node
   linkType: hard
 
@@ -3767,8 +3767,8 @@ __metadata:
     "@willbooster/babel-configs": "npm:2.3.0"
     "@willbooster/eslint-config-ts": "npm:11.4.6"
     "@willbooster/prettier-config": "npm:10.2.0"
-    "@willbooster/shared-lib-node": "npm:7.0.6"
-    "@willbooster/wb": "npm:10.1.1"
+    "@willbooster/shared-lib-node": "npm:7.0.7"
+    "@willbooster/wb": "npm:10.1.2"
     babel-plugin-polyfill-corejs3: "npm:0.13.0"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     chalk: "npm:5.6.2"
@@ -4444,10 +4444,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:17.2.2":
-  version: 17.2.2
-  resolution: "dotenv@npm:17.2.2"
-  checksum: 10c0/be66513504590aff6eccb14167625aed9bd42ce80547f4fe5d195860211971a7060949b57108dfaeaf90658f79e40edccd3f233f0a978bff507b5b1565ae162b
+"dotenv@npm:17.2.3":
+  version: 17.2.3
+  resolution: "dotenv@npm:17.2.3"
+  checksum: 10c0/c884403209f713214a1b64d4d1defa4934c2aa5b0002f5a670ae298a51e3c3ad3ba79dfee2f8df49f01ae74290fcd9acdb1ab1d09c7bfb42b539036108bb2ba0
   languageName: node
   linkType: hard
 
