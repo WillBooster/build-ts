@@ -75,7 +75,7 @@
     "@types/signal-exit": "3.0.4",
     "@types/yargs": "17.0.33",
     "@willbooster/babel-configs": "2.3.2",
-    "@willbooster/eslint-config-ts": "11.4.9",
+    "@willbooster/eslint-config-ts": "11.4.10",
     "@willbooster/prettier-config": "10.2.1",
     "@willbooster/wb": "10.5.1",
     "conventional-changelog-conventionalcommits": "9.1.0",
