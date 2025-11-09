@@ -2700,8 +2700,8 @@ __metadata:
   linkType: hard
 
 "@semantic-release/github@npm:^12.0.0":
-  version: 12.0.1
-  resolution: "@semantic-release/github@npm:12.0.1"
+  version: 12.0.2
+  resolution: "@semantic-release/github@npm:12.0.2"
   dependencies:
     "@octokit/core": "npm:^7.0.0"
     "@octokit/plugin-paginate-rest": "npm:^14.0.0"
@@ -2718,10 +2718,11 @@ __metadata:
     mime: "npm:^4.0.0"
     p-filter: "npm:^4.0.0"
     tinyglobby: "npm:^0.2.14"
+    undici: "npm:^7.0.0"
     url-join: "npm:^5.0.0"
   peerDependencies:
     semantic-release: ">=24.1.0"
-  checksum: 10c0/58732bafeec6dc123372c98c15afa74dc2097e0a69f3adbb5f571432ba89faf9566a8d21a062d39a7177a5080e272da322824de39aee6e1671804351ecbfefdc
+  checksum: 10c0/aadb9f761d6041b455958627721e37aa7057d1f826f5115c3992f7bfc1830c06527cbff0b6b98d2c0505e8f96e60056e8aaa704c59287f8d9a01d62f6fdab796
   languageName: node
   linkType: hard
 
@@ -4512,9 +4513,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.5.238":
-  version: 1.5.248
-  resolution: "electron-to-chromium@npm:1.5.248"
-  checksum: 10c0/b2c058d151767e071ab33217517e214f30595e45228c99340458bcd3285c782525a561f246197e0f4022d68e7075d14c7e7c2595b8b5b380b07bd75f2f110438
+  version: 1.5.249
+  resolution: "electron-to-chromium@npm:1.5.249"
+  checksum: 10c0/f5ca6663786b30a063fe42c97a4c3fa8db946a055d5a7a940fbb57d9f86011222b8566048cdb973574f9d02ac44f02ece65eeebf99cc146a42059af7adfb4fe7
   languageName: node
   linkType: hard
 
@@ -5740,9 +5741,9 @@ __metadata:
   linkType: hard
 
 "ip-address@npm:^10.0.1":
-  version: 10.0.1
-  resolution: "ip-address@npm:10.0.1"
-  checksum: 10c0/1634d79dae18394004775cb6d699dc46b7c23df6d2083164025a2b15240c1164fccde53d0e08bd5ee4fc53913d033ab6b5e395a809ad4b956a940c446e948843
+  version: 10.1.0
+  resolution: "ip-address@npm:10.1.0"
+  checksum: 10c0/0103516cfa93f6433b3bd7333fa876eb21263912329bfa47010af5e16934eeeff86f3d2ae700a3744a137839ddfad62b900c7a445607884a49b5d1e32a3d7566
   languageName: node
   linkType: hard
 
@@ -8998,6 +8999,13 @@ __metadata:
   dependencies:
     "@fastify/busboy": "npm:^2.0.0"
   checksum: 10c0/e4e4d631ca54ee0ad82d2e90e7798fa00a106e27e6c880687e445cc2f13b4bc87c5eba2a88c266c3eecffb18f26e227b778412da74a23acc374fca7caccec49b
+  languageName: node
+  linkType: hard
+
+"undici@npm:^7.0.0":
+  version: 7.16.0
+  resolution: "undici@npm:7.16.0"
+  checksum: 10c0/efd867792e9f233facf9efa0a087e2d9c3e4415c0b234061b9b40307ca4fa01d945fee4d43c7b564e1b80e0d519bcc682f9f6e0de13c717146c00a80e2f1fb0f
   languageName: node
   linkType: hard
 
