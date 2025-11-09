@@ -64,8 +64,6 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
   // `silent` is stronger than `verbose`.
   const verbose = !argv.silent && argv.verbose;
-  const cwd = process.cwd();
-
   const packageDirPath = path.resolve(argv.package?.toString() ?? '.');
   const [packageJson, packageJsonPath] = await readPackageJson(packageDirPath);
   if (!packageJson) {
@@ -75,7 +73,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
   loadEnvironmentVariablesWithCache(argv, packageDirPath);
 
-  const inputs = verifyInput(argv, cwd, packageDirPath);
+  const inputs = verifyInput(argv, packageDirPath);
   const targetDetail = detectTargetDetail(targetCategory, inputs);
 
   if (verbose) {
@@ -252,8 +250,10 @@ function watchRollup(
   });
 }
 
-function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDirPath: string): string[] {
-  if (argv.input && argv.input.length > 0) return argv.input.map((p) => path.join(cwd, p.toString()));
+function verifyInput(argv: ArgumentsType<typeof builder>, packageDirPath: string): string[] {
+  if (argv.input && argv.input.length > 0) {
+    return argv.input.map((p) => path.resolve(packageDirPath, p.toString()));
+  }
 
   const srcDirPath = path.join(packageDirPath, 'src');
   for (const ext of ['ts', 'tsx', 'cts', 'mts']) {

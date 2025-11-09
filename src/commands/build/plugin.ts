@@ -11,13 +11,14 @@ import type { OutputOptions, Plugin } from 'rollup';
 import analyze from 'rollup-plugin-analyzer';
 import { keepImport } from 'rollup-plugin-keep-import';
 import { nodeExternals } from 'rollup-plugin-node-externals';
-import preserveDirectives from 'rollup-plugin-preserve-directives';
 import { string } from 'rollup-plugin-string';
 import type { PackageJson } from 'type-fest';
 
 import { createEnvironmentVariablesDefinition } from '../../env.js';
 import type { ArgumentsType, TargetDetail } from '../../types.js';
 import { getBuildTsRootPath } from '../../utils.js';
+import { preserveDirectivesPlugin } from './preserveDirectivesPlugin.js';
+import { rawTemplateWorkaroundPlugin } from './rawTemplateWorkaroundPlugin.js';
 
 import type { builder } from './builder.js';
 
@@ -62,6 +63,7 @@ export function setupPlugins(
   const extensions = ['.cjs', '.mjs', '.js', '.jsx', '.json', '.cts', '.mts', '.ts', '.tsx'];
   const babelConfigPath = path.join(getBuildTsRootPath(), 'babel.config.mjs');
   const plugins: Plugin[] = [
+    rawTemplateWorkaroundPlugin(),
     replace({
       // Ignore word boundaries and replace every instance of the string.
       // cf. https://github.com/rollup/plugins/tree/master/packages/replace#word-boundaries
@@ -96,7 +98,7 @@ export function setupPlugins(
       babelHelpers: isBabelHelpersBundled ? 'bundled' : 'runtime',
       exclude: /^(.+\/)?node_modules\/.+$/,
     }),
-    ...(outputOptionsList.some((opts) => opts.preserveModules) ? [preserveDirectives()] : []),
+    ...(outputOptionsList.some((opts) => opts.preserveModules) ? [preserveDirectivesPlugin()] : []),
     string({ include: ['**/*.csv', '**/*.txt'] })
   );
   if (argv.minify) {
