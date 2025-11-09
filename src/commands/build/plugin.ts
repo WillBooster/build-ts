@@ -64,7 +64,7 @@ export function setupPlugins(
   const babelConfigPath = path.join(getBuildTsRootPath(), 'babel.config.mjs');
   const plugins: Plugin[] = [
     rawTemplateWorkaroundPlugin(),
-    preserveDirectivesPlugin(),
+    ...(targetDetail === 'lib-react' ? [preserveDirectivesPlugin()] : []),
     replace({
       // Ignore word boundaries and replace every instance of the string.
       // cf. https://github.com/rollup/plugins/tree/master/packages/replace#word-boundaries
