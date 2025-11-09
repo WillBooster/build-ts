@@ -64,6 +64,7 @@ export function setupPlugins(
   const babelConfigPath = path.join(getBuildTsRootPath(), 'babel.config.mjs');
   const plugins: Plugin[] = [
     rawTemplateWorkaroundPlugin(),
+    preserveDirectivesPlugin(),
     replace({
       // Ignore word boundaries and replace every instance of the string.
       // cf. https://github.com/rollup/plugins/tree/master/packages/replace#word-boundaries
@@ -98,7 +99,6 @@ export function setupPlugins(
       babelHelpers: isBabelHelpersBundled ? 'bundled' : 'runtime',
       exclude: /^(.+\/)?node_modules\/.+$/,
     }),
-    ...(outputOptionsList.some((opts) => opts.preserveModules) ? [preserveDirectivesPlugin()] : []),
     string({ include: ['**/*.csv', '**/*.txt'] })
   );
   if (argv.minify) {
