@@ -5,6 +5,7 @@ import type { Plugin } from 'rollup';
 type PreserveDirectivesOptions = {
   include?: FilterPattern;
   exclude?: FilterPattern;
+  suppressPreserveModulesWarning?: boolean;
 };
 
 const DEFAULT_EXCLUDE = ['**/*.css'];
@@ -45,7 +46,7 @@ const LINE_TERMINATORS = new Set([
 ]);
 
 export function preserveDirectivesPlugin(options: PreserveDirectivesOptions = {}): Plugin {
-  const { include, exclude } = options;
+  const { include, exclude, suppressPreserveModulesWarning } = options;
   const filter = createFilter(include, exclude ? [DEFAULT_EXCLUDE, exclude].flat() : DEFAULT_EXCLUDE);
   const moduleDirectives = new Map<string, string[]>();
 
@@ -62,7 +63,15 @@ export function preserveDirectivesPlugin(options: PreserveDirectivesOptions = {}
     },
     renderChunk: {
       order: 'post',
-      handler(code, chunk) {
+      handler(code, chunk, outputOptions) {
+        if (!outputOptions.preserveModules) {
+          if (!suppressPreserveModulesWarning) {
+            this.warn(
+              "preserveDirectivesPlugin requires preserveModules: true. Add directives through Rollup's banner option for bundled builds."
+            );
+          }
+          return null;
+        }
         const directives = new Set<string>();
         for (const moduleId in chunk.modules ?? {}) {
           const moduleDirective = moduleDirectives.get(moduleId);

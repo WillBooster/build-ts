@@ -106,7 +106,7 @@ describe('preserveDirectivesPlugin', () => {
   });
 
   describe('renderChunk', () => {
-    it('prepends directives even when preserveModules is false', () => {
+    it('warns when preserveModules is false', () => {
       const plugin = preserveDirectivesPlugin();
       const { context, warnings } = createWarningCollector();
 
@@ -120,9 +120,26 @@ describe('preserveDirectivesPlugin', () => {
         { preserveModules: false }
       );
 
-      expect(result).toBeDefined();
-      if (!result) throw new Error('Result should be defined');
-      expect(result.code).toMatch(/^"use client";\nconst foo = 1;/);
+      expect(result).toBeNull();
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]).toContain('preserveModules');
+    });
+
+    it('does not warn when preserveModules is false and suppressPreserveModulesWarning is true', () => {
+      const plugin = preserveDirectivesPlugin({ suppressPreserveModulesWarning: true });
+      const { context, warnings } = createWarningCollector();
+
+      callTransform(plugin, '"use client";\nconst foo = 1;', 'test.ts');
+
+      const result = callRenderChunk(
+        plugin,
+        context,
+        'const foo = 1;',
+        { modules: createModulesObject(['test.ts']) },
+        { preserveModules: false }
+      );
+
+      expect(result).toBeNull();
       expect(warnings).toHaveLength(0);
     });
 
