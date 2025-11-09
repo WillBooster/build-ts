@@ -253,7 +253,7 @@ function watchRollup(
 }
 
 function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDirPath: string): string[] {
-  if (argv.input && argv.input.length > 0) return argv.input.map((p) => path.join(cwd, p.toString()));
+  if (argv.input && argv.input.length > 0) return argv.input.map((p) => path.resolve(cwd, p.toString()));
 
   const srcDirPath = path.join(packageDirPath, 'src');
   for (const ext of ['ts', 'tsx', 'cts', 'mts']) {
