@@ -50,11 +50,11 @@
     "babel-plugin-polyfill-corejs3": "0.13.0",
     "babel-plugin-transform-remove-console": "6.9.4",
     "chalk": "5.6.2",
-    "core-js": "3.46.0",
-    "core-js-pure": "3.46.0",
+    "core-js": "3.47.0",
+    "core-js-pure": "3.47.0",
     "date-time": "4.0.0",
     "pretty-ms": "9.3.0",
-    "rollup": "4.53.2",
+    "rollup": "4.53.3",
     "rollup-plugin-analyzer": "4.0.0",
     "rollup-plugin-keep-import": "1.0.3",
     "rollup-plugin-node-externals": "8.1.2",
@@ -90,7 +90,7 @@
     "eslint-plugin-unused-imports": "4.3.0",
     "globals": "16.5.0",
     "husky": "9.1.7",
-    "lint-staged": "16.2.6",
+    "lint-staged": "16.2.7",
     "micromatch": "4.0.8",
     "pinst": "3.0.0",
     "prettier": "3.6.2",
@@ -99,7 +99,7 @@
     "sort-package-json": "3.4.0",
     "type-fest": "5.2.0",
     "typescript-eslint": "8.47.0",
-    "vitest": "4.0.9"
+    "vitest": "4.0.13"
   },
   "packageManager": "yarn@4.11.0",
   "engines": {
