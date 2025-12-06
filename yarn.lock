@@ -3251,13 +3251,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/shared-lib-node@npm:7.0.10":
-  version: 7.0.10
-  resolution: "@willbooster/shared-lib-node@npm:7.0.10"
+"@willbooster/shared-lib-node@npm:8.0.1":
+  version: 8.0.1
+  resolution: "@willbooster/shared-lib-node@npm:8.0.1"
   dependencies:
     dotenv: "npm:17.2.3"
+    dotenv-expand: "npm:12.0.3"
     tree-kill: "npm:1.2.2"
-  checksum: 10c0/f31e1f7c5fbbd57998626bb0982f74dfbeef96b781efa16666bbe1303c7d8bef12dcc92b415e5f1fc92615eac1962d652b869b918561c0828b905565c79bcbe1
+  checksum: 10c0/a93ec8a29fb03754570bdda7979581344cdae5a98adc15c7ff6e4f2ac61162de524ce426489068d12e2a6934a23530e0952492cf1243da2f43743d87f62d7e65
   languageName: node
   linkType: hard
 
@@ -3626,7 +3627,7 @@ __metadata:
     "@willbooster/babel-configs": "npm:2.3.3"
     "@willbooster/eslint-config-ts": "npm:11.4.12"
     "@willbooster/prettier-config": "npm:10.2.4"
-    "@willbooster/shared-lib-node": "npm:7.0.10"
+    "@willbooster/shared-lib-node": "npm:8.0.1"
     "@willbooster/wb": "npm:10.7.1"
     babel-plugin-polyfill-corejs3: "npm:0.13.0"
     babel-plugin-transform-remove-console: "npm:6.9.4"
@@ -4257,10 +4258,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dotenv-expand@npm:12.0.3":
+  version: 12.0.3
+  resolution: "dotenv-expand@npm:12.0.3"
+  dependencies:
+    dotenv: "npm:^16.4.5"
+  checksum: 10c0/0824bdc74fc816a28b0744b7853a23e046602e9616c82121dfdae21ebc13c6e89afeb773e794e97c35d48be2be0a990fbca721ee3869a49c04210a58a3cf296f
+  languageName: node
+  linkType: hard
+
 "dotenv@npm:17.2.3":
   version: 17.2.3
   resolution: "dotenv@npm:17.2.3"
   checksum: 10c0/c884403209f713214a1b64d4d1defa4934c2aa5b0002f5a670ae298a51e3c3ad3ba79dfee2f8df49f01ae74290fcd9acdb1ab1d09c7bfb42b539036108bb2ba0
+  languageName: node
+  linkType: hard
+
+"dotenv@npm:^16.4.5":
+  version: 16.6.1
+  resolution: "dotenv@npm:16.6.1"
+  checksum: 10c0/15ce56608326ea0d1d9414a5c8ee6dcf0fffc79d2c16422b4ac2268e7e2d76ff5a572d37ffe747c377de12005f14b3cc22361e79fc7f1061cce81f77d2c973dc
   languageName: node
   linkType: hard
 
