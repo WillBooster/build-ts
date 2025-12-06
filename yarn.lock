@@ -3261,12 +3261,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/wb@npm:10.7.1":
-  version: 10.7.1
-  resolution: "@willbooster/wb@npm:10.7.1"
+"@willbooster/wb@npm:11.0.5":
+  version: 11.0.5
+  resolution: "@willbooster/wb@npm:11.0.5"
   dependencies:
     chalk: "npm:5.6.2"
     dotenv: "npm:17.2.3"
+    dotenv-expand: "npm:12.0.3"
     globby: "npm:16.0.0"
     kill-port: "npm:2.0.1"
     minimal-promise-pool: "npm:6.0.0"
@@ -3274,7 +3275,7 @@ __metadata:
     yargs: "npm:18.0.0"
   bin:
     wb: bin/index.js
-  checksum: 10c0/ab81feb72d29e49c9db66fd76169c2b0a6ddedd03478aabddf1857d86b29a04fe7974ba543abce221d2b15b8f7bb596167514accf1896dd08c75b2b16c82ac0d
+  checksum: 10c0/1fa03c6f809606f371ed2d117be4a7ae4e11ffc5ccea870a5aa77ebe4b0310253e71bf163f010d27e29e09aa3ca53935be402acd5600d216ec8c21bb6eb73b1f
   languageName: node
   linkType: hard
 
@@ -3627,7 +3628,7 @@ __metadata:
     "@willbooster/eslint-config-ts": "npm:11.4.12"
     "@willbooster/prettier-config": "npm:10.2.4"
     "@willbooster/shared-lib-node": "npm:7.0.10"
-    "@willbooster/wb": "npm:10.7.1"
+    "@willbooster/wb": "npm:11.0.5"
     babel-plugin-polyfill-corejs3: "npm:0.13.0"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     chalk: "npm:5.6.2"
@@ -4257,10 +4258,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dotenv-expand@npm:12.0.3":
+  version: 12.0.3
+  resolution: "dotenv-expand@npm:12.0.3"
+  dependencies:
+    dotenv: "npm:^16.4.5"
+  checksum: 10c0/0824bdc74fc816a28b0744b7853a23e046602e9616c82121dfdae21ebc13c6e89afeb773e794e97c35d48be2be0a990fbca721ee3869a49c04210a58a3cf296f
+  languageName: node
+  linkType: hard
+
 "dotenv@npm:17.2.3":
   version: 17.2.3
   resolution: "dotenv@npm:17.2.3"
   checksum: 10c0/c884403209f713214a1b64d4d1defa4934c2aa5b0002f5a670ae298a51e3c3ad3ba79dfee2f8df49f01ae74290fcd9acdb1ab1d09c7bfb42b539036108bb2ba0
+  languageName: node
+  linkType: hard
+
+"dotenv@npm:^16.4.5":
+  version: 16.6.1
+  resolution: "dotenv@npm:16.6.1"
+  checksum: 10c0/15ce56608326ea0d1d9414a5c8ee6dcf0fffc79d2c16422b4ac2268e7e2d76ff5a572d37ffe747c377de12005f14b3cc22361e79fc7f1061cce81f77d2c973dc
   languageName: node
   linkType: hard
 
