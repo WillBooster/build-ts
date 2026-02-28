@@ -3450,21 +3450,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/wb@npm:13.2.7":
-  version: 13.2.7
-  resolution: "@willbooster/wb@npm:13.2.7"
+"@willbooster/wb@npm:13.2.8":
+  version: 13.2.8
+  resolution: "@willbooster/wb@npm:13.2.8"
   dependencies:
     chalk: "npm:5.6.2"
     dotenv: "npm:17.3.1"
     dotenv-expand: "npm:12.0.3"
-    globby: "npm:16.1.0"
+    globby: "npm:16.1.1"
     kill-port: "npm:2.0.1"
     minimal-promise-pool: "npm:6.0.1"
     tree-kill: "npm:1.2.2"
     yargs: "npm:18.0.0"
   bin:
     wb: bin/index.js
-  checksum: 10c0/78e7a74d621fb889f4d047c34937004deb4153eb3b5c3b066c65f69429096db8525d2584e56e07c43fa3ea3369aaa789a2e6003224e33bd68946bc1c7c74d6db
+  checksum: 10c0/6d7ae04921f077ae5fbdb69a18db8e2162945c809d74c921ca7a683280337c17b51ceb5a18b10229fe8f3563aaa1ec82d72e49db3472eeb83ab55f6d598cd46a
   languageName: node
   linkType: hard
 
@@ -3847,7 +3847,7 @@ __metadata:
     "@willbooster/eslint-config-ts": "npm:11.4.12"
     "@willbooster/prettier-config": "npm:10.2.4"
     "@willbooster/shared-lib-node": "npm:8.1.6"
-    "@willbooster/wb": "npm:13.2.7"
+    "@willbooster/wb": "npm:13.2.8"
     babel-plugin-polyfill-corejs3: "npm:0.14.0"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     chalk: "npm:5.6.2"
@@ -5418,9 +5418,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globby@npm:16.1.0":
-  version: 16.1.0
-  resolution: "globby@npm:16.1.0"
+"globby@npm:16.1.1":
+  version: 16.1.1
+  resolution: "globby@npm:16.1.1"
   dependencies:
     "@sindresorhus/merge-streams": "npm:^4.0.0"
     fast-glob: "npm:^3.3.3"
@@ -5428,7 +5428,7 @@ __metadata:
     is-path-inside: "npm:^4.0.0"
     slash: "npm:^5.1.0"
     unicorn-magic: "npm:^0.4.0"
-  checksum: 10c0/45dd4dd8311401b37ed426ad7ea7a6e8fdda2518bb0d62fbf0a46c2e6b81bcbd2c8d4fbcbcf4c0600bba15c5a8f4621785d0177acbb1b545f02f6b49f2cdbe24
+  checksum: 10c0/2fbed8e5c59639a98b9b9c700afe5bcedf14742b43c25950cfd34a032db0cce4b440d8436beb4a936d211744e0b7330646f086b95cd8054251162c5d83001600
   languageName: node
   linkType: hard
 
