@@ -2799,12 +2799,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:24.11.0":
-  version: 24.11.0
-  resolution: "@types/node@npm:24.11.0"
+"@types/node@npm:24.12.0":
+  version: 24.12.0
+  resolution: "@types/node@npm:24.12.0"
   dependencies:
     undici-types: "npm:~7.16.0"
-  checksum: 10c0/4fb7390259e3b158d25dbecf52de8ce70fa18a4ed0949c9444bb6384517c361fa19781e6821ca8c18dc5f6af43eab72e9e159e07000e6b1286d082e8585d8c41
+  checksum: 10c0/8b31c0af5b5474f13048a4e77c57f22cd4f8fe6e58c4b6fde9456b0c13f46a5bfaf5744ff88fd089581de9f0d6e99c584e022681de7acb26a58d258c654c4843
   languageName: node
   linkType: hard
 
@@ -3298,9 +3298,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/wb@npm:13.3.3":
-  version: 13.3.3
-  resolution: "@willbooster/wb@npm:13.3.3"
+"@willbooster/wb@npm:13.4.2":
+  version: 13.4.2
+  resolution: "@willbooster/wb@npm:13.4.2"
   dependencies:
     chalk: "npm:5.6.2"
     dotenv: "npm:17.3.1"
@@ -3311,7 +3311,7 @@ __metadata:
     yargs: "npm:18.0.0"
   bin:
     wb: bin/index.js
-  checksum: 10c0/08b5cc4021677573a7df45379e715323d7ba4b113857ac07335c31b4f1710065cb60eee841c8c179b3f827fb03a2045ca1bb263561ffaea484180aee02456ab3
+  checksum: 10c0/020d54909cc8e5848af2c5f9d95a924987e36e84fbc85791bfcdcad844b77fc10e8bb73c6f7fa824b0970abbed431193a949a04eab838b64665bd6c9dbfcdf8f
   languageName: node
   linkType: hard
 
@@ -3688,18 +3688,18 @@ __metadata:
     "@types/babel__plugin-transform-runtime": "npm:7.9.5"
     "@types/babel__preset-env": "npm:7.10.0"
     "@types/eslint": "npm:9.6.1"
-    "@types/node": "npm:24.11.0"
+    "@types/node": "npm:24.12.0"
     "@types/signal-exit": "npm:3.0.4"
     "@types/yargs": "npm:17.0.35"
     "@willbooster/babel-configs": "npm:2.3.4"
     "@willbooster/eslint-config-ts": "npm:11.4.12"
     "@willbooster/prettier-config": "npm:10.2.4"
     "@willbooster/shared-lib-node": "npm:8.2.2"
-    "@willbooster/wb": "npm:13.3.3"
+    "@willbooster/wb": "npm:13.4.2"
     babel-plugin-polyfill-corejs3: "npm:0.14.1"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     chalk: "npm:5.6.2"
-    conventional-changelog-conventionalcommits: "npm:9.2.0"
+    conventional-changelog-conventionalcommits: "npm:9.3.0"
     core-js: "npm:3.48.0"
     core-js-pure: "npm:3.48.0"
     date-time: "npm:4.0.0"
@@ -4092,12 +4092,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"conventional-changelog-conventionalcommits@npm:9.2.0":
-  version: 9.2.0
-  resolution: "conventional-changelog-conventionalcommits@npm:9.2.0"
+"conventional-changelog-conventionalcommits@npm:9.3.0":
+  version: 9.3.0
+  resolution: "conventional-changelog-conventionalcommits@npm:9.3.0"
   dependencies:
     compare-func: "npm:^2.0.0"
-  checksum: 10c0/1ea8f1b9a9044680c3faf9d7a963a95d65bcec45815426ebdd00f1bd2bfa26aa26c454ebaa3fb67f3dd2c1b69ad48f25f20dd7837b535210576d3e18d5e8f3a7
+  checksum: 10c0/36be9435bb1f6e97bc729a1e69471851b6621054980617dc9a82c03221de5f9c21cd2369308c364f89b2383bd596071f90c8c71efdbe7a2908f91a935685fc76
   languageName: node
   linkType: hard
 
