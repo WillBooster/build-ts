@@ -1585,7 +1585,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@eslint/compat@npm:^2.0.2":
+"@eslint/compat@npm:^2.0.3":
   version: 2.0.3
   resolution: "@eslint/compat@npm:2.0.3"
   dependencies:
@@ -3423,9 +3423,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/wb@npm:13.4.2":
-  version: 13.4.2
-  resolution: "@willbooster/wb@npm:13.4.2"
+"@willbooster/wb@npm:13.5.0":
+  version: 13.5.0
+  resolution: "@willbooster/wb@npm:13.5.0"
   dependencies:
     chalk: "npm:5.6.2"
     dotenv: "npm:17.3.1"
@@ -3436,7 +3436,7 @@ __metadata:
     yargs: "npm:18.0.0"
   bin:
     wb: bin/index.js
-  checksum: 10c0/020d54909cc8e5848af2c5f9d95a924987e36e84fbc85791bfcdcad844b77fc10e8bb73c6f7fa824b0970abbed431193a949a04eab838b64665bd6c9dbfcdf8f
+  checksum: 10c0/e96bb194459a9ec457c742fa5e98c4361865819804f42bbc18fb55a521a09547e0985e206bc641d2ca2a8a6d7c5340b76d74fdba95c2b9e8a6dfef2d510deb9e
   languageName: node
   linkType: hard
 
@@ -3808,7 +3808,7 @@ __metadata:
     "@willbooster/eslint-config-ts": "npm:11.4.12"
     "@willbooster/prettier-config": "npm:10.2.4"
     "@willbooster/shared-lib-node": "npm:8.2.2"
-    "@willbooster/wb": "npm:13.4.2"
+    "@willbooster/wb": "npm:13.5.0"
     babel-plugin-polyfill-corejs3: "npm:0.14.2"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     chalk: "npm:5.6.2"
@@ -3817,7 +3817,7 @@ __metadata:
     core-js-pure: "npm:3.49.0"
     date-time: "npm:4.0.0"
     eslint: "npm:9.39.1"
-    eslint-config-flat-gitignore: "npm:2.2.1"
+    eslint-config-flat-gitignore: "npm:2.3.0"
     eslint-config-prettier: "npm:10.1.8"
     eslint-import-resolver-typescript: "npm:4.4.4"
     eslint-plugin-import-x: "npm:4.16.2"
@@ -4651,14 +4651,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-config-flat-gitignore@npm:2.2.1":
-  version: 2.2.1
-  resolution: "eslint-config-flat-gitignore@npm:2.2.1"
+"eslint-config-flat-gitignore@npm:2.3.0":
+  version: 2.3.0
+  resolution: "eslint-config-flat-gitignore@npm:2.3.0"
   dependencies:
-    "@eslint/compat": "npm:^2.0.2"
+    "@eslint/compat": "npm:^2.0.3"
   peerDependencies:
     eslint: ^9.5.0 || ^10.0.0
-  checksum: 10c0/e2d9069c87b5355ba8d46e9f3b516eac04bbfd76c73b00aced6eb39834b2973cbabbef3dbb5a80a2b638b50d59fa577b6e058daee8fd60d4b57e0d6b930d9bad
+  checksum: 10c0/31aac4524c2bb9f4fb9532674570f93540f4c24e71a19a07898f9f418d7c5b245284105062faf185dbfd6f54eeddf64ad3b68a66651050d61315a9a17e8a1983
   languageName: node
   linkType: hard
 
