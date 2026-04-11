@@ -67,7 +67,7 @@
     "yargs": "18.0.0"
   },
   "devDependencies": {
-    "@eslint/js": "10.0.1",
+    "@eslint/js": "^9.39.4",
     "@tsconfig/node-lts": "24.0.0",
     "@tsconfig/node-ts": "23.6.4",
     "@types/babel__core": "7.20.5",
@@ -80,9 +80,9 @@
     "@willbooster/babel-configs": "2.5.1",
     "@willbooster/eslint-config-ts": "11.5.1",
     "@willbooster/prettier-config": "10.4.0",
-    "@willbooster/wb": "13.7.0",
+    "@willbooster/wb": "13.7.1",
     "conventional-changelog-conventionalcommits": "9.3.1",
-    "eslint": "^9",
+    "eslint": "^9.39.4",
     "eslint-config-flat-gitignore": "2.3.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-import-resolver-typescript": "4.4.4",
