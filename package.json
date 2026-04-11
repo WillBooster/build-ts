@@ -67,7 +67,7 @@
     "yargs": "18.0.0"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.0",
+    "@eslint/js": "10.0.1",
     "@tsconfig/node-lts": "24.0.0",
     "@tsconfig/node-ts": "23.6.4",
     "@types/babel__core": "7.20.5",
