@@ -2,13 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { babel } from '@rollup/plugin-babel';
-import commonjs from '@rollup/plugin-commonjs';
-import json from '@rollup/plugin-json';
-import resolve from '@rollup/plugin-node-resolve';
-import replace from '@rollup/plugin-replace';
-import terser from '@rollup/plugin-terser';
+import * as commonjs from '@rollup/plugin-commonjs';
+import * as json from '@rollup/plugin-json';
+import * as resolve from '@rollup/plugin-node-resolve';
+import * as replace from '@rollup/plugin-replace';
+import * as terser from '@rollup/plugin-terser';
 import type { OutputOptions, Plugin } from 'rollup';
-import analyze from 'rollup-plugin-analyzer';
+import * as analyze from 'rollup-plugin-analyzer';
 import { keepImport } from 'rollup-plugin-keep-import';
 import { nodeExternals } from 'rollup-plugin-node-externals';
 import preserveDirectives from 'rollup-plugin-preserve-directives';
@@ -61,15 +61,21 @@ export function setupPlugins(
 
   const extensions = ['.cjs', '.mjs', '.js', '.jsx', '.json', '.cts', '.mts', '.ts', '.tsx'];
   const babelConfigPath = path.join(getBuildTsRootPath(), 'babel.config.mjs');
+  const replacePlugin = getDefaultPluginFactory(replace);
+  const jsonPlugin = getDefaultPluginFactory(json);
+  const resolvePlugin = getDefaultPluginFactory(resolve);
+  const commonjsPlugin = getDefaultPluginFactory(commonjs);
+  const terserPlugin = getDefaultPluginFactory(terser);
+  const analyzePlugin = getDefaultPluginFactory(analyze);
   const plugins: Plugin[] = [
-    replace({
+    replacePlugin({
       // Ignore word boundaries and replace every instance of the string.
       // cf. https://github.com/rollup/plugins/tree/master/packages/replace#word-boundaries
       delimiters: ['', ''],
       preventAssignment: true,
       values: createEnvironmentVariablesDefinition(argv, packageDirPath),
     }),
-    json(),
+    jsonPlugin(),
     nodeExternals({
       deps: true,
       devDeps: false,
@@ -78,11 +84,11 @@ export function setupPlugins(
       include: externalDeps.map((name) => new RegExp(`^${name}(?:\\/.+)?`)),
       exclude: namespace && new RegExp(`^@?${namespace}(?:\\/.+)?`),
     }),
-    resolve({
+    resolvePlugin({
       extensions,
       preferBuiltins: (id: string) => !argv.bundleBuiltins?.includes(id),
     }),
-    commonjs(),
+    commonjsPlugin(),
     keepImport({ moduleNames: argv.keepImport?.map((item) => item.toString()) ?? [] }),
   ];
   const isBabelHelpersBundled =
@@ -100,8 +106,14 @@ export function setupPlugins(
     string({ include: ['**/*.csv', '**/*.txt'] })
   );
   if (argv.minify) {
-    plugins.push(terser({ compress: { directives: false } }));
+    plugins.push(terserPlugin({ compress: { directives: false } }));
   }
-  plugins.push(analyze({ summaryOnly: true }));
+  plugins.push(analyzePlugin({ summaryOnly: true }));
   return plugins;
+}
+
+type PluginFactory = (options?: unknown) => Plugin;
+
+function getDefaultPluginFactory(module: { default: unknown }): PluginFactory {
+  return module.default as PluginFactory;
 }
