@@ -21,9 +21,9 @@ describe('build', { timeout: 60_000 }, () => {
   });
 
   it.concurrent.each([
-    ['lib', 'index.js', 'index.mjs'],
-    ['lib-esm', 'index.cjs', 'index.js'],
-  ])('%s', async (dirName, cjsName, esmName) => {
+    ['lib', 'index.js', 'index.mjs', "export { add } from './module';"],
+    ['lib-esm', 'index.cjs', 'index.js', "export { add } from './module.js';"],
+  ])('%s', async (dirName, cjsName, esmName, indexDeclaration) => {
     await buildWithCommand(dirName, 'lib', '--module-type', 'both');
     const [cjsCode, esmCode] = await Promise.all([
       fs.promises.readFile(`test/fixtures/${dirName}/dist/${cjsName}`, 'utf8'),
@@ -31,8 +31,10 @@ describe('build', { timeout: 60_000 }, () => {
     ]);
     expect(cjsCode).to.includes('lodash.chunk');
     expect(esmCode).to.includes('lodash.chunk');
-    expect(fs.existsSync(`test/fixtures/${dirName}/dist/index.d.ts`)).toBeTruthy();
-    expect(fs.existsSync(`test/fixtures/${dirName}/dist/module.d.ts`)).toBeTruthy();
+    await expectDeclarationFiles(dirName, {
+      'index.d.ts': indexDeclaration,
+      'module.d.ts': 'export declare function add(a: number, b: number): number;',
+    });
 
     const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: `test/fixtures/${dirName}` });
     expect(execRet.status).toBe(0);
@@ -49,7 +51,9 @@ describe('build', { timeout: 60_000 }, () => {
     expect(esmCode).to.includes('use client');
     expect(cjsCode).to.includes('lodash.chunk');
     expect(esmCode).to.includes('lodash.chunk');
-    expect(fs.existsSync(`test/fixtures/${dirName}/dist/index.d.ts`)).toBeTruthy();
+    await expectDeclarationFiles(dirName, {
+      'index.d.ts': 'export declare function Component(): import("react/jsx-runtime").JSX.Element;',
+    });
   });
 });
 
@@ -74,4 +78,17 @@ async function buildWithCommand(dirName: string, subCommand: string, ...options:
     stdio: 'inherit',
   });
   expect(buildRet.status).toBe(0);
+}
+
+async function expectDeclarationFiles(dirName: string, expectedDeclarations: Record<string, string>): Promise<void> {
+  const fixtureDirPath = `test/fixtures/${dirName}`;
+  await Promise.all(
+    Object.entries(expectedDeclarations).map(async ([fileName, expected]) => {
+      const declaration = await fs.promises.readFile(`${fixtureDirPath}/dist/${fileName}`, 'utf8');
+      expect(declaration.trim()).toBe(expected);
+    })
+  );
+  const fixtureFileNames = await fs.promises.readdir(fixtureDirPath);
+  const tempConfigFiles = fixtureFileNames.filter((fileName) => fileName.startsWith('.build-ts-tsgo.'));
+  expect(tempConfigFiles).toEqual([]);
 }
