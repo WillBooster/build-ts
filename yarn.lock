@@ -3304,13 +3304,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/oxlint-config@npm:1.4.0":
-  version: 1.4.0
-  resolution: "@willbooster/oxlint-config@npm:1.4.0"
+"@willbooster/oxlint-config@npm:1.4.1":
+  version: 1.4.1
+  resolution: "@willbooster/oxlint-config@npm:1.4.1"
   peerDependencies:
     oxlint: ">=1.60.0"
     oxlint-tsgolint: ">=0.18.1"
-  checksum: 10c0/8b298e130818b65efcaf8058d4eba7acdcfd95834790e1fa4a6677061a26905e7c6b195ada225fb3f04814af58d041374be4b11f7c64098c5b22951e1eb0f184
+  checksum: 10c0/8f41637a0bbd3cd0326070351fd317dec893073eed97bbd8f71c5d6b391f8dacc4b354d3d179bfc1dac60c3e3554c54d615b4f6592ecadf6b8185c4bd08046da
   languageName: node
   linkType: hard
 
@@ -3656,7 +3656,7 @@ __metadata:
     "@typescript/native-preview": "npm:7.0.0-dev.20260410.1"
     "@willbooster/babel-configs": "npm:2.5.1"
     "@willbooster/oxfmt-config": "npm:1.2.0"
-    "@willbooster/oxlint-config": "npm:1.4.0"
+    "@willbooster/oxlint-config": "npm:1.4.1"
     "@willbooster/prettier-config": "npm:10.4.0"
     "@willbooster/shared-lib-node": "npm:8.3.2"
     "@willbooster/wb": "npm:13.8.2"
