@@ -3669,7 +3669,7 @@ __metadata:
     date-time: "npm:4.0.0"
     lefthook: "npm:2.1.5"
     oxfmt: "npm:0.45.0"
-    oxlint: "npm:^1.60.0"
+    oxlint: "npm:1.60.0"
     oxlint-tsgolint: "npm:0.21.0"
     prettier: "npm:3.8.1"
     prettier-plugin-java: "npm:2.8.1"
@@ -6413,7 +6413,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"oxlint@npm:^1.60.0":
+"oxlint@npm:1.60.0":
   version: 1.60.0
   resolution: "oxlint@npm:1.60.0"
   dependencies:
