@@ -1,1 +1,1 @@
-yarn wb typecheck
+yarn wb lint
