@@ -1,20 +1,19 @@
-/* eslint-disable import/no-named-as-default-member */
-
-// We cannot use named imports from 'typescript' because of build errors.
+import * as child_process from 'node:child_process';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
-
-import ts from 'typescript';
 
 import type { ArgumentsType } from '../../types.js';
 
 import type { AnyBuilderType } from './builder.js';
 
+const require = createRequire(import.meta.url);
+
 export async function generateDeclarationFiles(
   argv: ArgumentsType<AnyBuilderType>,
   coreProjectDirPath: string
 ): Promise<boolean> {
-  const coreConfigFile = ts.findConfigFile(coreProjectDirPath, ts.sys.fileExists);
+  const coreConfigFile = findConfigFile(coreProjectDirPath);
   if (!coreConfigFile) throw new Error(`Failed to find tsconfig.json in ${coreProjectDirPath}.`);
   if (argv.verbose) {
     console.info('Found tsconfig.json:', coreConfigFile);
@@ -32,7 +31,7 @@ export async function generateDeclarationFiles(
       const projectDirPath = path.resolve(parentDirPath, dirent.name);
       if (projectDirPath === coreProjectDirPath) continue;
 
-      const configFile = ts.findConfigFile(projectDirPath, ts.sys.fileExists);
+      const configFile = findConfigFile(projectDirPath);
       const outDir = path.join('dist', dirent.name, 'src');
       if (configFile && fs.existsSync(outDir)) {
         projects.push([projectDirPath, configFile, outDir]);
@@ -45,45 +44,111 @@ export async function generateDeclarationFiles(
 
   let allSucceeded = true;
   for (const [projectDirPath, configFile, outDir] of projects) {
-    allSucceeded &&= runTypeScriptCompiler(argv, projectDirPath, configFile, path.join(coreProjectDirPath, outDir));
+    allSucceeded &&= await runTypeScriptNative(argv, projectDirPath, configFile, path.join(coreProjectDirPath, outDir));
   }
   return allSucceeded;
 }
 
-function runTypeScriptCompiler(
+async function runTypeScriptNative(
   argv: ArgumentsType<AnyBuilderType>,
   projectDirPath: string,
   configFile: string,
   outDir: string
-): boolean {
+): Promise<boolean> {
   if (argv.verbose) {
-    console.info('runTypeScriptCompiler()', projectDirPath, configFile, outDir);
+    console.info('runTypeScriptNative()', projectDirPath, configFile, outDir);
   }
 
-  const { config } = ts.readConfigFile(configFile, ts.sys.readFile);
-  config.compilerOptions = {
-    ...config.compilerOptions,
+  const configFileDirPath = path.dirname(configFile);
+  const tempConfigFile = path.join(configFileDirPath, `.build-ts-tsgo.${process.pid}.${Date.now()}.json`);
+  try {
+    await fs.promises.writeFile(
+      tempConfigFile,
+      JSON.stringify(await createTypeScriptNativeConfig(projectDirPath, configFile, outDir), undefined, 2)
+    );
+    const ret = child_process.spawnSync(process.execPath, [getTypeScriptNativePath(), '-p', tempConfigFile], {
+      cwd: projectDirPath,
+      stdio: 'inherit',
+    });
+    if (ret.error) throw ret.error;
+    return ret.status === 0;
+  } finally {
+    await fs.promises.rm(tempConfigFile, { force: true });
+  }
+}
+
+async function createTypeScriptNativeConfig(
+  projectDirPath: string,
+  configFile: string,
+  outDir: string
+): Promise<Record<string, unknown>> {
+  const compilerOptions: Record<string, unknown> = {
     declaration: true,
     emitDeclarationOnly: true,
+    module: 'NodeNext',
+    moduleResolution: 'NodeNext',
     noEmit: false,
     noEmitOnError: true,
     outDir,
+    rootDir: 'src',
   };
-  config.include = ['src/**/*'];
-  const { errors, fileNames, options } = ts.parseJsonConfigFileContent(config, ts.sys, projectDirPath);
-
-  const program = ts.createProgram({ options, rootNames: fileNames, configFileParsingDiagnostics: errors });
-  const { diagnostics, emitSkipped } = program.emit();
-
-  const allDiagnostics = [...ts.getPreEmitDiagnostics(program), ...diagnostics, ...errors];
-  if (allDiagnostics.length > 0) {
-    const formatHost: ts.FormatDiagnosticsHost = {
-      getCanonicalFileName: (path) => path,
-      getCurrentDirectory: ts.sys.getCurrentDirectory,
-      getNewLine: () => ts.sys.newLine,
-    };
-    const message = ts.formatDiagnostics(allDiagnostics, formatHost);
-    console.warn(message);
+  if (await usesNodeProtocolImport(path.join(projectDirPath, 'src'))) {
+    const types = await collectTypePackages(path.join(projectDirPath, 'node_modules', '@types'));
+    if (types.includes('node')) {
+      compilerOptions.types = types;
+    }
   }
-  return !emitSkipped;
+  return {
+    compilerOptions,
+    extends: toRelativeConfigPath(path.dirname(configFile), configFile),
+    include: ['src/**/*'],
+  };
+}
+
+function findConfigFile(dirPath: string): string | undefined {
+  let currentDirPath = path.resolve(dirPath);
+  while (true) {
+    const configFile = path.join(currentDirPath, 'tsconfig.json');
+    if (fs.existsSync(configFile)) return configFile;
+
+    const parentDirPath = path.dirname(currentDirPath);
+    if (parentDirPath === currentDirPath) return undefined;
+    currentDirPath = parentDirPath;
+  }
+}
+
+function getTypeScriptNativePath(): string {
+  const packageJsonPath = require.resolve('@typescript/native-preview/package.json');
+  return path.join(path.dirname(packageJsonPath), 'bin', 'tsgo.js');
+}
+
+async function usesNodeProtocolImport(dirPath: string): Promise<boolean> {
+  try {
+    const dirents = await fs.promises.readdir(dirPath, { withFileTypes: true });
+    for (const dirent of dirents) {
+      const childPath = path.join(dirPath, dirent.name);
+      if (dirent.isDirectory()) {
+        if (await usesNodeProtocolImport(childPath)) return true;
+      } else if (/\.[cm]?tsx?$/.test(dirent.name) && (await fs.promises.readFile(childPath, 'utf8')).includes('node:')) {
+        return true;
+      }
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
+async function collectTypePackages(typeRootsDirPath: string): Promise<string[]> {
+  try {
+    const dirents = await fs.promises.readdir(typeRootsDirPath, { withFileTypes: true });
+    return dirents.filter((dirent) => dirent.isDirectory()).map((dirent) => dirent.name);
+  } catch {
+    return [];
+  }
+}
+
+function toRelativeConfigPath(fromDirPath: string, toFilePath: string): string {
+  const relativePath = path.relative(fromDirPath, toFilePath).replaceAll(path.sep, '/');
+  return relativePath.startsWith('.') ? relativePath : `./${relativePath}`;
 }
