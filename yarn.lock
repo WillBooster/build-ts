@@ -3334,9 +3334,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/wb@npm:13.11.1":
-  version: 13.11.1
-  resolution: "@willbooster/wb@npm:13.11.1"
+"@willbooster/wb@npm:13.11.2":
+  version: 13.11.2
+  resolution: "@willbooster/wb@npm:13.11.2"
   dependencies:
     chalk: "npm:5.6.2"
     dotenv: "npm:17.4.1"
@@ -3347,7 +3347,7 @@ __metadata:
     yargs: "npm:18.0.0"
   bin:
     wb: bin/index.js
-  checksum: 10c0/41d814315296db5f0fd630256422c8062565c1f62d66263ee94bb12f5b9ff1e531999b7922b7277e554e82540be7b048d3397cf50e2dcb814868e8f7c189b17c
+  checksum: 10c0/7be8bfa2ec6a85b6a3e9156ba75a635fc971c53482258ecdc4f86c8452d20ebc0398e8f20381aff7d7350db72d589d8afab4b7fecd69a120afad90261b69d760
   languageName: node
   linkType: hard
 
@@ -3626,6 +3626,49 @@ __metadata:
   languageName: node
   linkType: hard
 
+"build-ts@npm:17.1.0":
+  version: 17.1.0
+  resolution: "build-ts@npm:17.1.0"
+  dependencies:
+    "@babel/core": "npm:7.29.0"
+    "@babel/plugin-proposal-decorators": "npm:7.29.0"
+    "@babel/plugin-proposal-explicit-resource-management": "npm:7.27.4"
+    "@babel/plugin-syntax-import-attributes": "npm:7.28.6"
+    "@babel/plugin-transform-runtime": "npm:7.29.0"
+    "@babel/preset-env": "npm:7.29.2"
+    "@babel/preset-react": "npm:7.28.5"
+    "@babel/preset-typescript": "npm:7.28.5"
+    "@rollup/plugin-babel": "npm:7.0.0"
+    "@rollup/plugin-commonjs": "npm:29.0.2"
+    "@rollup/plugin-json": "npm:6.1.0"
+    "@rollup/plugin-node-resolve": "npm:16.0.3"
+    "@rollup/plugin-replace": "npm:6.0.3"
+    "@rollup/plugin-terser": "npm:1.0.0"
+    "@rollup/pluginutils": "npm:5.3.0"
+    "@typescript/native-preview": "npm:7.0.0-dev.20260410.1"
+    "@willbooster/shared-lib-node": "npm:8.3.2"
+    babel-plugin-polyfill-corejs3: "npm:0.14.2"
+    babel-plugin-transform-remove-console: "npm:6.9.4"
+    chalk: "npm:5.6.2"
+    core-js: "npm:3.49.0"
+    core-js-pure: "npm:3.49.0"
+    date-time: "npm:4.0.0"
+    pretty-ms: "npm:9.3.0"
+    rollup: "npm:4.60.1"
+    rollup-plugin-analyzer: "npm:4.0.0"
+    rollup-plugin-keep-import: "npm:1.0.3"
+    rollup-plugin-node-externals: "npm:8.1.2"
+    rollup-plugin-preserve-directives: "npm:0.4.0"
+    rollup-plugin-string: "npm:3.0.0"
+    signal-exit: "npm:4.1.0"
+    tsx: "npm:4.21.0"
+    yargs: "npm:18.0.0"
+  bin:
+    build-ts: bin/index.js
+  checksum: 10c0/b5f34c71991925bb7cb262e84acbb99ac3409766e9badf8c09d0a0cdaf21e50607253a27969541669d33814d12c49e9988a507229123cc0273cf687f6208acfa
+  languageName: node
+  linkType: hard
+
 "build-ts@workspace:.":
   version: 0.0.0-use.local
   resolution: "build-ts@workspace:."
@@ -3659,9 +3702,10 @@ __metadata:
     "@willbooster/oxlint-config": "npm:1.4.2"
     "@willbooster/prettier-config": "npm:10.4.0"
     "@willbooster/shared-lib-node": "npm:8.3.2"
-    "@willbooster/wb": "npm:13.11.1"
+    "@willbooster/wb": "npm:13.11.2"
     babel-plugin-polyfill-corejs3: "npm:0.14.2"
     babel-plugin-transform-remove-console: "npm:6.9.4"
+    build-ts: "npm:17.1.0"
     chalk: "npm:5.6.2"
     conventional-changelog-conventionalcommits: "npm:9.3.1"
     core-js: "npm:3.49.0"
