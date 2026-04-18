@@ -1,0 +1,15 @@
+{
+  "name": "@scope/lib-react-ts-entry",
+  "type": "module",
+  "dependencies": {
+    "@scope/dep": "file:./vendor/scope-dep"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.11",
+    "react": "19.1.1"
+  },
+  "peerDependencies": {
+    "react": ">=19"
+  },
+  "packageManager": "yarn@4.9.3"
+}

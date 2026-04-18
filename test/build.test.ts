@@ -4,14 +4,14 @@ import { removeNpmAndYarnEnvironmentVariables, spawnAsync } from '@willbooster/s
 import { describe, expect, it } from 'vitest';
 
 describe('build', { timeout: 60_000 }, () => {
-  it.concurrent('app-node', async () => {
+  it('app-node', async () => {
     await buildAndRunApp('app-node', 'app', '--inline', 'A');
     const indexJs = await fs.promises.readFile('test/fixtures/app-node/dist/index.js', 'utf8');
     expect(indexJs).to.includes('("1")');
     expect(indexJs).to.not.includes('process.env.A');
   });
 
-  it.concurrent('functions', async () => {
+  it('functions', async () => {
     await buildAndRunApp('functions', 'functions');
     const packageJson = await fs.promises.readFile('test/fixtures/functions/dist/package.json', 'utf8');
     expect(packageJson).to.includes('lodash.chunk');
@@ -20,7 +20,7 @@ describe('build', { timeout: 60_000 }, () => {
     expect(packageJson).to.includes('"main":"index.js"');
   });
 
-  it.concurrent.each([
+  it.each([
     ['lib', 'index.js', 'index.mjs', "export { add } from './module';"],
     ['lib-esm', 'index.cjs', 'index.js', "export { add } from './module.js';"],
   ])('%s', async (dirName, cjsName, esmName, indexDeclaration) => {
@@ -40,7 +40,7 @@ describe('build', { timeout: 60_000 }, () => {
     expect(execRet.status).toBe(0);
   });
 
-  it.concurrent('lib-react', async () => {
+  it('lib-react', async () => {
     const dirName = 'lib-react';
     await buildWithCommand(dirName, 'lib', '--js-extension', 'both');
     const [cjsCode, esmCode] = await Promise.all([
@@ -53,6 +53,29 @@ describe('build', { timeout: 60_000 }, () => {
     expect(esmCode).to.includes('lodash.chunk');
     await expectDeclarationFiles(dirName, {
       'index.d.ts': 'export declare function Component(): import("react/jsx-runtime").JSX.Element;',
+    });
+  });
+
+  it('lib-react-ts-entry', async () => {
+    const dirName = 'lib-react-ts-entry';
+    await buildWithCommand(dirName, 'lib', '--module-type', 'both');
+
+    const [cjsCode, esmCode] = await Promise.all([
+      fs.promises.readFile(`test/fixtures/${dirName}/dist/component.cjs`, 'utf8'),
+      fs.promises.readFile(`test/fixtures/${dirName}/dist/component.js`, 'utf8'),
+    ]);
+    expect(cjsCode).to.includes('use client');
+    expect(esmCode).to.includes('use client');
+    expect(cjsCode).to.includes('require("@scope/dep")');
+    expect(esmCode).to.includes('from"@scope/dep"');
+
+    await expectFileExists(`test/fixtures/${dirName}/dist/index.cjs`);
+    await expectFileExists(`test/fixtures/${dirName}/dist/index.js`);
+    await expectPathDoesNotExist(`test/fixtures/${dirName}/dist/src`);
+    await expectPathDoesNotExist(`test/fixtures/${dirName}/dist/node_modules`);
+    await expectDeclarationFiles(dirName, {
+      'component.d.ts': 'export declare function Component(): import("react/jsx-runtime").JSX.Element;',
+      'index.d.ts': "export { Component } from './component';",
     });
   });
 });
@@ -91,4 +114,12 @@ async function expectDeclarationFiles(dirName: string, expectedDeclarations: Rec
   const fixtureFileNames = await fs.promises.readdir(fixtureDirPath);
   const tempConfigFiles = fixtureFileNames.filter((fileName) => fileName.startsWith('.build-ts-tsgo.'));
   expect(tempConfigFiles).toEqual([]);
+}
+
+async function expectFileExists(filePath: string): Promise<void> {
+  await expect(fs.promises.stat(filePath)).resolves.toBeDefined();
+}
+
+async function expectPathDoesNotExist(filePath: string): Promise<void> {
+  await expect(fs.promises.stat(filePath)).rejects.toMatchObject({ code: 'ENOENT' });
 }
