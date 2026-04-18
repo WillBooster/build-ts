@@ -357,6 +357,7 @@ function getOutputOptionsList(
       entryFileNames: jsExt === 'both' || (jsExt === 'either' && !isEsmPackage) ? '[name].js' : '[name].cjs',
       format: 'commonjs',
       preserveModules: true,
+      preserveModulesRoot: path.join(packageDirPath, 'src'),
       sourcemap: argv.sourcemap,
     });
   }
@@ -366,6 +367,7 @@ function getOutputOptionsList(
       entryFileNames: jsExt === 'both' || (jsExt === 'either' && isEsmPackage) ? '[name].js' : '[name].mjs',
       format: 'module',
       preserveModules: true,
+      preserveModulesRoot: path.join(packageDirPath, 'src'),
       sourcemap: argv.sourcemap,
     });
   }
