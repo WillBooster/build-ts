@@ -3334,6 +3334,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@willbooster/shared-lib-node@npm:8.5.3":
+  version: 8.5.3
+  resolution: "@willbooster/shared-lib-node@npm:8.5.3"
+  dependencies:
+    dotenv: "npm:17.4.1"
+    dotenv-expand: "npm:12.0.3"
+  checksum: 10c0/97900a953f723c6bee050570261cdf1d6f9a2af45300d0b9c9c564704b2c2d0b6e8de4317d2c7f365b44983dda149aa5d12e946b2e290bcafc2c91be860bbc57
+  languageName: node
+  linkType: hard
+
 "@willbooster/wb@npm:13.11.2":
   version: 13.11.2
   resolution: "@willbooster/wb@npm:13.11.2"
@@ -3701,7 +3711,7 @@ __metadata:
     "@willbooster/oxfmt-config": "npm:1.2.1"
     "@willbooster/oxlint-config": "npm:1.4.4"
     "@willbooster/prettier-config": "npm:10.4.0"
-    "@willbooster/shared-lib-node": "npm:8.3.2"
+    "@willbooster/shared-lib-node": "npm:8.5.3"
     "@willbooster/wb": "npm:13.11.2"
     babel-plugin-polyfill-corejs3: "npm:0.14.2"
     babel-plugin-transform-remove-console: "npm:6.9.4"
