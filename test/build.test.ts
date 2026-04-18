@@ -44,16 +44,15 @@ describe('build', { timeout: 60_000 }, () => {
     const dirName = 'lib-react';
     await buildWithCommand(dirName, 'lib', '--js-extension', 'both');
     const [cjsCode, esmCode] = await Promise.all([
-      fs.promises.readFile(`test/fixtures/${dirName}/dist/component.js`, 'utf8'),
-      fs.promises.readFile(`test/fixtures/${dirName}/dist/component.js`, 'utf8'),
+      fs.promises.readFile(`test/fixtures/${dirName}/dist/index.js`, 'utf8'),
+      fs.promises.readFile(`test/fixtures/${dirName}/dist/index.js`, 'utf8'),
     ]);
     expect(cjsCode).to.includes('use client');
     expect(esmCode).to.includes('use client');
     expect(cjsCode).to.includes('lodash.chunk');
     expect(esmCode).to.includes('lodash.chunk');
     await expectDeclarationFiles(dirName, {
-      'component.d.ts': 'export declare function Component(): import("react/jsx-runtime").JSX.Element;',
-      'index.d.ts': "export { Component } from './component';",
+      'index.d.ts': 'export declare function Component(): import("react/jsx-runtime").JSX.Element;',
     });
   });
 });
