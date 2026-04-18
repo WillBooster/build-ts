@@ -82,7 +82,7 @@ export function setupPlugins(
       peerDeps: true,
       optDeps: true,
       include: externalDeps.map((name) => new RegExp(`^${name}(?:\\/.+)?`)),
-      exclude: namespace && new RegExp(`^@?${namespace}(?:\\/.+)?`),
+      exclude: shouldBundleSameNamespaceDependencies(targetDetail) && namespace && new RegExp(`^@?${namespace}(?:\\/.+)?`),
     }),
     resolvePlugin({
       extensions,
@@ -110,6 +110,10 @@ export function setupPlugins(
   }
   plugins.push(analyzePlugin({ summaryOnly: true }));
   return plugins;
+}
+
+function shouldBundleSameNamespaceDependencies(targetDetail: TargetDetail): boolean {
+  return targetDetail === 'app-node' || targetDetail === 'functions';
 }
 
 type PluginFactory = (options?: unknown) => Plugin;

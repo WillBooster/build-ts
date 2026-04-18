@@ -76,7 +76,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   loadEnvironmentVariablesWithCache(argv, packageDirPath);
 
   const inputs = verifyInput(argv, cwd, packageDirPath);
-  const targetDetail = detectTargetDetail(targetCategory, inputs);
+  const targetDetail = detectTargetDetail(targetCategory, inputs, packageDirPath);
 
   if (verbose) {
     console.info('argv:', argv);
@@ -265,7 +265,7 @@ function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDi
   process.exit(1);
 }
 
-function detectTargetDetail(targetCategory: string, inputs: string[]): TargetDetail {
+function detectTargetDetail(targetCategory: string, inputs: string[], packageDirPath: string): TargetDetail {
   switch (targetCategory) {
     case 'app': {
       return 'app-node';
@@ -274,7 +274,7 @@ function detectTargetDetail(targetCategory: string, inputs: string[]): TargetDet
       return 'functions';
     }
     case 'lib': {
-      if (inputs.some((input) => input.endsWith('.tsx'))) {
+      if (inputs.some((input) => input.endsWith('.tsx')) || doesSrcContainTsx(packageDirPath)) {
         return 'lib-react';
       }
       return 'lib';
@@ -283,6 +283,24 @@ function detectTargetDetail(targetCategory: string, inputs: string[]): TargetDet
       console.error('target option must be one of: ' + allTargetCategories.join(', '));
       process.exit(1);
     }
+  }
+}
+
+function doesSrcContainTsx(packageDirPath: string): boolean {
+  const srcDirPath = path.join(packageDirPath, 'src');
+  return doesDirectoryContainTsx(srcDirPath);
+}
+
+function doesDirectoryContainTsx(dirPath: string): boolean {
+  try {
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    return entries.some((entry) => {
+      const entryPath = path.join(dirPath, entry.name);
+      if (entry.isDirectory()) return doesDirectoryContainTsx(entryPath);
+      return entry.isFile() && entry.name.endsWith('.tsx');
+    });
+  } catch {
+    return false;
   }
 }
 
@@ -339,6 +357,7 @@ function getOutputOptionsList(
       entryFileNames: jsExt === 'both' || (jsExt === 'either' && !isEsmPackage) ? '[name].js' : '[name].cjs',
       format: 'commonjs',
       preserveModules: true,
+      preserveModulesRoot: path.join(packageDirPath, 'src'),
       sourcemap: argv.sourcemap,
     });
   }
@@ -348,6 +367,7 @@ function getOutputOptionsList(
       entryFileNames: jsExt === 'both' || (jsExt === 'either' && isEsmPackage) ? '[name].js' : '[name].mjs',
       format: 'module',
       preserveModules: true,
+      preserveModulesRoot: path.join(packageDirPath, 'src'),
       sourcemap: argv.sourcemap,
     });
   }
