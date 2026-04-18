@@ -58,7 +58,7 @@
     "rollup": "4.60.1",
     "rollup-plugin-analyzer": "4.0.0",
     "rollup-plugin-keep-import": "1.0.3",
-    "rollup-plugin-node-externals": "8.1.2",
+    "rollup-plugin-node-externals": "9.0.0",
     "rollup-plugin-preserve-directives": "0.4.0",
     "rollup-plugin-string": "3.0.0",
     "signal-exit": "4.1.0",
