@@ -85,8 +85,6 @@ async function createTypeScriptNativeConfig(
   const compilerOptions: Record<string, unknown> = {
     declaration: true,
     emitDeclarationOnly: true,
-    module: 'NodeNext',
-    moduleResolution: 'NodeNext',
     noEmit: false,
     noEmitOnError: true,
     outDir,
