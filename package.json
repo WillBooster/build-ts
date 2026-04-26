@@ -1,26 +1,26 @@
 {
   "name": "build-ts",
   "version": "0.0.0-semantically-released",
-  "license": "UNLICENSED",
-  "author": "WillBooster Inc.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/WillBooster/build-ts.git"
   },
+  "license": "UNLICENSED",
+  "author": "WillBooster Inc.",
+  "type": "module",
   "bin": "bin/index.js",
   "files": [
     "bin/",
     "dist/",
     "babel.*"
   ],
-  "type": "module",
   "scripts": {
     "build": "wb buildIfNeeded --command 'yarn start app'",
     "check-all-for-ai": "yarn check-for-ai && yarn test",
     "check-for-ai": "yarn install > /dev/null && yarn format > /dev/null 2> /dev/null || true && yarn lint-fix --quiet",
     "cleanup": "yarn format && yarn lint-fix",
     "format": "sort-package-json && yarn format-code",
-    "format-code": "oxfmt --write --no-error-on-unmatched-pattern .",
+    "format-code": "oxfmt --write --no-error-on-unmatched-pattern . '!**/package.json'",
     "lint": "oxlint --no-error-on-unmatched-pattern .",
     "lint-fix": "yarn lint --fix",
     "prepare": "lefthook install || true",
@@ -74,22 +74,22 @@
     "@types/signal-exit": "4.0.0",
     "@types/yargs": "17.0.35",
     "@willbooster/babel-configs": "2.5.1",
-    "@willbooster/oxfmt-config": "1.2.1",
-    "@willbooster/oxlint-config": "1.4.4",
-    "@willbooster/wb": "13.11.10",
+    "@willbooster/oxfmt-config": "1.2.2",
+    "@willbooster/oxlint-config": "1.4.5",
+    "@willbooster/wb": "13.11.11",
     "build-ts": "17.1.8",
     "conventional-changelog-conventionalcommits": "9.3.1",
     "lefthook": "2.1.6",
-    "oxfmt": "0.45.0",
+    "oxfmt": "0.46.0",
     "oxlint": "1.61.0",
-    "oxlint-tsgolint": "0.21.1",
+    "oxlint-tsgolint": "0.22.0",
     "semantic-release": "25.0.3",
     "sort-package-json": "3.6.1",
     "type-fest": "5.6.0",
     "vitest": "4.1.4"
   },
+  "packageManager": "yarn@4.14.1",
   "engines": {
     "node": ">=24"
-  },
-  "packageManager": "yarn@4.14.1"
+  }
 }
