@@ -27,7 +27,9 @@
     "start": "tsx src/index.ts",
     "start-prod": "yarn build && yarn build-ts",
     "test": "vitest run",
-    "typecheck": "wb typecheck"
+    "typecheck": "wb typecheck",
+    "verify": "wb verify",
+    "verify-full": "wb verify --full"
   },
   "dependencies": {
     "@babel/core": "7.29.0",
@@ -76,7 +78,7 @@
     "@willbooster/babel-configs": "2.5.1",
     "@willbooster/oxfmt-config": "1.2.2",
     "@willbooster/oxlint-config": "1.4.6",
-    "@willbooster/wb": "13.11.11",
+    "@willbooster/wb": "13.12.6",
     "build-ts": "17.1.8",
     "conventional-changelog-conventionalcommits": "9.3.1",
     "lefthook": "2.1.6",
