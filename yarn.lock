@@ -3282,20 +3282,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/wb@npm:13.11.11":
-  version: 13.11.11
-  resolution: "@willbooster/wb@npm:13.11.11"
+"@willbooster/wb@npm:13.12.6":
+  version: 13.12.6
+  resolution: "@willbooster/wb@npm:13.12.6"
   dependencies:
     chalk: "npm:5.6.2"
     dotenv: "npm:17.4.2"
     dotenv-expand: "npm:12.0.3"
+    fastest-levenshtein: "npm:1.0.16"
     globby: "npm:16.2.0"
     kill-port: "npm:2.0.1"
     minimal-promise-pool: "npm:6.0.1"
     yargs: "npm:18.0.0"
   bin:
     wb: bin/index.js
-  checksum: 10c0/10ad78781b92dbb680b08d7fc1ec2260cca709bb5417d02acd92b188a3001b623c98bd01cb712a517a086fcea91cf288a40af24967cc9397aedefbee6127ab5a
+  checksum: 10c0/f040429f7949807922ca57accfdc78e0b9a5c7a093ebd432e60f31d72ee8c509c434c60cfb24a7f74f62f505a28e63264a8d03f7fd1f30c544d31123b154a1ce
   languageName: node
   linkType: hard
 
@@ -3649,7 +3650,7 @@ __metadata:
     "@willbooster/oxfmt-config": "npm:1.2.2"
     "@willbooster/oxlint-config": "npm:1.4.6"
     "@willbooster/shared-lib-node": "npm:8.5.9"
-    "@willbooster/wb": "npm:13.11.11"
+    "@willbooster/wb": "npm:13.12.6"
     babel-plugin-polyfill-corejs3: "npm:0.14.2"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     build-ts: "npm:17.1.8"
@@ -4457,7 +4458,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fastest-levenshtein@npm:^1.0.16":
+"fastest-levenshtein@npm:1.0.16, fastest-levenshtein@npm:^1.0.16":
   version: 1.0.16
   resolution: "fastest-levenshtein@npm:1.0.16"
   checksum: 10c0/7e3d8ae812a7f4fdf8cad18e9cde436a39addf266a5986f653ea0d81e0de0900f50c0f27c6d5aff3f686bcb48acbd45be115ae2216f36a6a13a7dbbf5cad878b
