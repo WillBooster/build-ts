@@ -3282,9 +3282,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@willbooster/wb@npm:13.12.8":
-  version: 13.12.8
-  resolution: "@willbooster/wb@npm:13.12.8"
+"@willbooster/wb@npm:13.12.9":
+  version: 13.12.9
+  resolution: "@willbooster/wb@npm:13.12.9"
   dependencies:
     chalk: "npm:5.6.2"
     dotenv: "npm:17.4.2"
@@ -3296,7 +3296,7 @@ __metadata:
     yargs: "npm:18.0.0"
   bin:
     wb: bin/index.js
-  checksum: 10c0/a2edc4cdf9208ce3d423388143683e657a4c9d83e21327fb8fc535a785d7496fcaf9210dd8bdfa799ab25a6534c12e15dc533a2277e98cd08cf87edeb270b6a2
+  checksum: 10c0/65c682bdf1cb3b01faea2e9128449e8a075e88c45c9b994bd19dbfd332b98176c1dd508f95ebf0af6e9216675a5ff92789874c927fa1281d965302b86f7f878d
   languageName: node
   linkType: hard
 
@@ -3650,7 +3650,7 @@ __metadata:
     "@willbooster/oxfmt-config": "npm:1.2.2"
     "@willbooster/oxlint-config": "npm:1.4.6"
     "@willbooster/shared-lib-node": "npm:8.5.9"
-    "@willbooster/wb": "npm:13.12.8"
+    "@willbooster/wb": "npm:13.12.9"
     babel-plugin-polyfill-corejs3: "npm:0.14.2"
     babel-plugin-transform-remove-console: "npm:6.9.4"
     build-ts: "npm:17.1.8"
