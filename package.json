@@ -76,7 +76,7 @@
     "@willbooster/babel-configs": "2.5.1",
     "@willbooster/oxfmt-config": "1.2.2",
     "@willbooster/oxlint-config": "1.4.6",
-    "@willbooster/wb": "13.15.0",
+    "@willbooster/wb": "13.15.2",
     "build-ts": "17.1.15",
     "conventional-changelog-conventionalcommits": "9.3.1",
     "lefthook": "2.1.6",
