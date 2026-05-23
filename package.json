@@ -61,7 +61,7 @@
     "rollup-plugin-preserve-directives": "0.4.0",
     "rollup-plugin-string": "3.0.0",
     "signal-exit": "4.1.0",
-    "tsx": "4.21.0",
+    "tsx": "4.22.1",
     "yargs": "18.0.0"
   },
   "devDependencies": {
@@ -76,7 +76,7 @@
     "@willbooster/babel-configs": "2.5.1",
     "@willbooster/oxfmt-config": "1.2.2",
     "@willbooster/oxlint-config": "1.4.6",
-    "@willbooster/wb": "13.15.2",
+    "@willbooster/wb": "13.19.2",
     "build-ts": "17.1.15",
     "conventional-changelog-conventionalcommits": "9.3.1",
     "lefthook": "2.1.6",
