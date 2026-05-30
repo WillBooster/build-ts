@@ -82,6 +82,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/core@npm:7.29.6":
+  version: 7.29.6
+  resolution: "@babel/core@npm:7.29.6"
+  dependencies:
+    "@babel/code-frame": "npm:^7.29.0"
+    "@babel/generator": "npm:^7.29.6"
+    "@babel/helper-compilation-targets": "npm:^7.28.6"
+    "@babel/helper-module-transforms": "npm:^7.28.6"
+    "@babel/helpers": "npm:^7.29.2"
+    "@babel/parser": "npm:^7.29.3"
+    "@babel/template": "npm:^7.28.6"
+    "@babel/traverse": "npm:^7.29.0"
+    "@babel/types": "npm:^7.29.0"
+    "@jridgewell/remapping": "npm:^2.3.5"
+    convert-source-map: "npm:^2.0.0"
+    debug: "npm:^4.1.0"
+    gensync: "npm:^1.0.0-beta.2"
+    json5: "npm:^2.2.3"
+    semver: "npm:^6.3.1"
+  checksum: 10c0/0179b763970e9e00e35e9ff137fa4536dba45bb8d5a8e93835f72eacedf0ee1098e6012b3e82be2715d2560bab79eb1514003e1cd88e4245f8f9f67d5175df3f
+  languageName: node
+  linkType: hard
+
 "@babel/generator@npm:^7.29.0":
   version: 7.29.1
   resolution: "@babel/generator@npm:7.29.1"
@@ -92,6 +115,19 @@ __metadata:
     "@jridgewell/trace-mapping": "npm:^0.3.28"
     jsesc: "npm:^3.0.2"
   checksum: 10c0/349086e6876258ef3fb2823030fee0f6c0eb9c3ebe35fc572e16997f8c030d765f636ddc6299edae63e760ea6658f8ee9a2edfa6d6b24c9a80c917916b973551
+  languageName: node
+  linkType: hard
+
+"@babel/generator@npm:^7.29.6":
+  version: 7.29.6
+  resolution: "@babel/generator@npm:7.29.6"
+  dependencies:
+    "@babel/parser": "npm:^7.29.3"
+    "@babel/types": "npm:^7.29.0"
+    "@jridgewell/gen-mapping": "npm:^0.3.12"
+    "@jridgewell/trace-mapping": "npm:^0.3.28"
+    jsesc: "npm:^3.0.2"
+  checksum: 10c0/2987b10e67c37e9779a7706363177f49bdf0a9f626fb8ec297b93dd15a83bde767add8ac6e8f522befe2b44170a285b74aedca25e18b3b330705c5d3dd187c91
   languageName: node
   linkType: hard
 
@@ -286,7 +322,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/helpers@npm:^7.28.6":
+"@babel/helpers@npm:^7.28.6, @babel/helpers@npm:^7.29.2":
   version: 7.29.2
   resolution: "@babel/helpers@npm:7.29.2"
   dependencies:
@@ -296,7 +332,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/parser@npm:^7.1.0, @babel/parser@npm:^7.20.7, @babel/parser@npm:^7.28.6, @babel/parser@npm:^7.29.0":
+"@babel/parser@npm:^7.1.0, @babel/parser@npm:^7.20.7, @babel/parser@npm:^7.28.6, @babel/parser@npm:^7.29.0, @babel/parser@npm:^7.29.3":
   version: 7.29.3
   resolution: "@babel/parser@npm:7.29.3"
   dependencies:
@@ -3095,9 +3131,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript/native-preview-darwin-arm64@npm:7.0.0-dev.20260524.1":
-  version: 7.0.0-dev.20260524.1
-  resolution: "@typescript/native-preview-darwin-arm64@npm:7.0.0-dev.20260524.1"
+"@typescript/native-preview-darwin-arm64@npm:7.0.0-dev.20260525.1":
+  version: 7.0.0-dev.20260525.1
+  resolution: "@typescript/native-preview-darwin-arm64@npm:7.0.0-dev.20260525.1"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
@@ -3109,9 +3145,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript/native-preview-darwin-x64@npm:7.0.0-dev.20260524.1":
-  version: 7.0.0-dev.20260524.1
-  resolution: "@typescript/native-preview-darwin-x64@npm:7.0.0-dev.20260524.1"
+"@typescript/native-preview-darwin-x64@npm:7.0.0-dev.20260525.1":
+  version: 7.0.0-dev.20260525.1
+  resolution: "@typescript/native-preview-darwin-x64@npm:7.0.0-dev.20260525.1"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
@@ -3123,9 +3159,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript/native-preview-linux-arm64@npm:7.0.0-dev.20260524.1":
-  version: 7.0.0-dev.20260524.1
-  resolution: "@typescript/native-preview-linux-arm64@npm:7.0.0-dev.20260524.1"
+"@typescript/native-preview-linux-arm64@npm:7.0.0-dev.20260525.1":
+  version: 7.0.0-dev.20260525.1
+  resolution: "@typescript/native-preview-linux-arm64@npm:7.0.0-dev.20260525.1"
   conditions: os=linux & cpu=arm64
   languageName: node
   linkType: hard
@@ -3137,9 +3173,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript/native-preview-linux-arm@npm:7.0.0-dev.20260524.1":
-  version: 7.0.0-dev.20260524.1
-  resolution: "@typescript/native-preview-linux-arm@npm:7.0.0-dev.20260524.1"
+"@typescript/native-preview-linux-arm@npm:7.0.0-dev.20260525.1":
+  version: 7.0.0-dev.20260525.1
+  resolution: "@typescript/native-preview-linux-arm@npm:7.0.0-dev.20260525.1"
   conditions: os=linux & cpu=arm
   languageName: node
   linkType: hard
@@ -3151,9 +3187,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript/native-preview-linux-x64@npm:7.0.0-dev.20260524.1":
-  version: 7.0.0-dev.20260524.1
-  resolution: "@typescript/native-preview-linux-x64@npm:7.0.0-dev.20260524.1"
+"@typescript/native-preview-linux-x64@npm:7.0.0-dev.20260525.1":
+  version: 7.0.0-dev.20260525.1
+  resolution: "@typescript/native-preview-linux-x64@npm:7.0.0-dev.20260525.1"
   conditions: os=linux & cpu=x64
   languageName: node
   linkType: hard
@@ -3165,9 +3201,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript/native-preview-win32-arm64@npm:7.0.0-dev.20260524.1":
-  version: 7.0.0-dev.20260524.1
-  resolution: "@typescript/native-preview-win32-arm64@npm:7.0.0-dev.20260524.1"
+"@typescript/native-preview-win32-arm64@npm:7.0.0-dev.20260525.1":
+  version: 7.0.0-dev.20260525.1
+  resolution: "@typescript/native-preview-win32-arm64@npm:7.0.0-dev.20260525.1"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
@@ -3179,9 +3215,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript/native-preview-win32-x64@npm:7.0.0-dev.20260524.1":
-  version: 7.0.0-dev.20260524.1
-  resolution: "@typescript/native-preview-win32-x64@npm:7.0.0-dev.20260524.1"
+"@typescript/native-preview-win32-x64@npm:7.0.0-dev.20260525.1":
+  version: 7.0.0-dev.20260525.1
+  resolution: "@typescript/native-preview-win32-x64@npm:7.0.0-dev.20260525.1"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -3218,17 +3254,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript/native-preview@npm:7.0.0-dev.20260524.1":
-  version: 7.0.0-dev.20260524.1
-  resolution: "@typescript/native-preview@npm:7.0.0-dev.20260524.1"
+"@typescript/native-preview@npm:7.0.0-dev.20260525.1":
+  version: 7.0.0-dev.20260525.1
+  resolution: "@typescript/native-preview@npm:7.0.0-dev.20260525.1"
   dependencies:
-    "@typescript/native-preview-darwin-arm64": "npm:7.0.0-dev.20260524.1"
-    "@typescript/native-preview-darwin-x64": "npm:7.0.0-dev.20260524.1"
-    "@typescript/native-preview-linux-arm": "npm:7.0.0-dev.20260524.1"
-    "@typescript/native-preview-linux-arm64": "npm:7.0.0-dev.20260524.1"
-    "@typescript/native-preview-linux-x64": "npm:7.0.0-dev.20260524.1"
-    "@typescript/native-preview-win32-arm64": "npm:7.0.0-dev.20260524.1"
-    "@typescript/native-preview-win32-x64": "npm:7.0.0-dev.20260524.1"
+    "@typescript/native-preview-darwin-arm64": "npm:7.0.0-dev.20260525.1"
+    "@typescript/native-preview-darwin-x64": "npm:7.0.0-dev.20260525.1"
+    "@typescript/native-preview-linux-arm": "npm:7.0.0-dev.20260525.1"
+    "@typescript/native-preview-linux-arm64": "npm:7.0.0-dev.20260525.1"
+    "@typescript/native-preview-linux-x64": "npm:7.0.0-dev.20260525.1"
+    "@typescript/native-preview-win32-arm64": "npm:7.0.0-dev.20260525.1"
+    "@typescript/native-preview-win32-x64": "npm:7.0.0-dev.20260525.1"
   dependenciesMeta:
     "@typescript/native-preview-darwin-arm64":
       optional: true
@@ -3246,7 +3282,7 @@ __metadata:
       optional: true
   bin:
     tsgo: bin/tsgo.js
-  checksum: 10c0/24241dcde3ae6d81c40d834e06ee0c78453131b4fb36b6fcd1dc954b97300d4784b61c69e57c7b07f50bd69bea0c2a75d30b11262b2c6425d8294391ae9dbacd
+  checksum: 10c0/20f707f01263a736b72723f9e8a83a5c497558b1b9c5530f3736aadac4bec634f18bfe6e6cfe5cb829f4f15a39160c0e2d2024652a3074e8506484a3c2413212
   languageName: node
   linkType: hard
 
@@ -3729,7 +3765,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "build-ts@workspace:."
   dependencies:
-    "@babel/core": "npm:7.29.0"
+    "@babel/core": "npm:7.29.6"
     "@babel/plugin-proposal-decorators": "npm:7.29.0"
     "@babel/plugin-proposal-explicit-resource-management": "npm:7.27.4"
     "@babel/plugin-syntax-import-attributes": "npm:7.28.6"
@@ -3752,7 +3788,7 @@ __metadata:
     "@types/node": "npm:25.9.1"
     "@types/signal-exit": "npm:4.0.0"
     "@types/yargs": "npm:17.0.35"
-    "@typescript/native-preview": "npm:7.0.0-dev.20260524.1"
+    "@typescript/native-preview": "npm:7.0.0-dev.20260525.1"
     "@willbooster/babel-configs": "npm:2.5.1"
     "@willbooster/oxfmt-config": "npm:1.2.2"
     "@willbooster/oxlint-config": "npm:1.4.7"
