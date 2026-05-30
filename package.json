@@ -30,12 +30,12 @@
     "verify-full": "wb verify --full"
   },
   "dependencies": {
-    "@babel/core": "7.29.6",
-    "@babel/plugin-proposal-decorators": "7.29.0",
+    "@babel/core": "7.29.7",
+    "@babel/plugin-proposal-decorators": "7.29.7",
     "@babel/plugin-proposal-explicit-resource-management": "7.27.4",
     "@babel/plugin-syntax-import-attributes": "7.28.6",
-    "@babel/plugin-transform-runtime": "7.29.0",
-    "@babel/preset-env": "7.29.5",
+    "@babel/plugin-transform-runtime": "7.29.7",
+    "@babel/preset-env": "7.29.7",
     "@babel/preset-react": "7.28.5",
     "@babel/preset-typescript": "7.28.5",
     "@rollup/plugin-babel": "7.0.0",
