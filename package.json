@@ -84,7 +84,7 @@
     "oxlint": "1.69.0",
     "oxlint-tsgolint": "0.23.0",
     "semantic-release": "25.0.5",
-    "sort-package-json": "3.6.1",
+    "sort-package-json": "4.0.0",
     "type-fest": "5.6.0",
     "vitest": "4.1.9"
   },
