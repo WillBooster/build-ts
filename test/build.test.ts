@@ -100,6 +100,33 @@ console.log(mod.marker);
     expect(execRet.stdout.trim()).toBe('lazy-loaded');
   });
 
+  it('app-node preserves explicit js imports when ts sibling exists', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/app-node-explicit-js-import';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({
+        packageManager: 'yarn@4.17.0',
+        type: 'module',
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/index.ts`,
+      `import { marker } from './mod.js';
+console.log(marker);
+`
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/mod.js`, `export const marker = 'js-file';\n`);
+    await fs.promises.writeFile(`${fixtureDirPath}/src/mod.ts`, `export const marker = 'ts-file';\n`);
+
+    await buildWithPackagePath(fixtureDirPath, 'app', '--module-type', 'esm');
+    const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
+    expect(execRet.status).toBe(0);
+    expect(execRet.stdout.trim()).toBe('js-file');
+  });
+
   it('app-node with bundled builtin-name dependency', async () => {
     await buildAndRunApp('app-node', 'app', '--inline', 'A', '--bundle-builtins', 'punycode');
     const indexJs = await readGeneratedCode('test/fixtures/app-node/dist/index.js');
@@ -629,6 +656,45 @@ console.log(marker);
     const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
     expect(execRet.status).toBe(0);
     expect(execRet.stdout.trim()).toBe('promises-file');
+  });
+
+  it('app-node with bundled builtin-name dependency using subpath without package exports', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/app-node-builtin-name-no-exports-subpath';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/fs-package`, { recursive: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({
+        dependencies: { fs: 'file:./fs-package' },
+        packageManager: 'yarn@4.17.0',
+        type: 'module',
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/fs-package/package.json`,
+      JSON.stringify({
+        name: 'fs',
+        type: 'module',
+        version: '1.0.0',
+      })
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/fs-package/promises.js`,
+      `export const marker = 'local-fs-promises';\n`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/index.ts`,
+      `import { marker } from 'node:fs/promises';
+console.log(marker);
+`
+    );
+
+    await buildWithPackagePath(fixtureDirPath, 'app', '--bundle-builtins', 'fs', '--module-type', 'esm');
+    const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
+    expect(execRet.status).toBe(0);
+    expect(execRet.stdout.trim()).toBe('local-fs-promises');
   });
 
   it('app-node with bundled builtin-name dependency uses most specific package export subpath pattern', async () => {

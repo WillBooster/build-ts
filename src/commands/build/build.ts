@@ -126,9 +126,9 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     plugins: setupPlugins(argv, outputOptionsList, packageDirPath),
     resolve: {
       extensionAlias: {
-        '.cjs': ['.cts', '.cjs'],
-        '.js': ['.ts', '.tsx', '.js'],
-        '.mjs': ['.mts', '.mjs'],
+        '.cjs': ['.cjs', '.cts'],
+        '.js': ['.js', '.ts', '.tsx'],
+        '.mjs': ['.mjs', '.mts'],
       },
       extensions: ['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'],
     },

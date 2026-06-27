@@ -138,7 +138,7 @@ function resolvePackageEntry(
   const packageJsonPath = findPackageJsonPath(require, packageName, packageDirPath);
   const packageJson: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
   if (!packageJson.exports) {
-    const resolvedPath = resolvePackageWithoutExports(require, packageName, subpath);
+    const resolvedPath = resolvePackageWithoutExports(require, packageName, path.dirname(packageJsonPath), subpath);
     if (resolvedPath !== packageName && !resolvedPath.startsWith('node:')) return resolvedPath;
   }
 
@@ -162,10 +162,37 @@ function getPackageExportConditions(importKind: ImportKind): Set<string> {
 function resolvePackageWithoutExports(
   require: NodeJS.Require,
   packageName: string,
+  packageDirPath: string,
   subpath: string
 ): string {
   if (subpath === '.') return require.resolve(packageName);
-  return require.resolve(`${packageName}/${subpath.slice('./'.length)}`);
+  const resolvedPath = require.resolve(`${packageName}/${subpath.slice('./'.length)}`);
+  return isNodeBuiltin(resolvedPath) ? resolvePackageSubpathFromDir(packageDirPath, subpath) : resolvedPath;
+}
+
+function resolvePackageSubpathFromDir(packageDirPath: string, subpath: string): string {
+  const subpathEntryPath = normalizePackageEntryPath(subpath);
+  if (!subpathEntryPath) throw new Error(`Failed to resolve package subpath ${subpath}`);
+
+  const entryPath = path.join(packageDirPath, subpathEntryPath);
+  const resolvedPath = resolveFilePath(entryPath) ?? resolveDirectoryPath(entryPath);
+  if (resolvedPath) return resolvedPath;
+  throw new Error(`Failed to resolve package subpath ${subpath}`);
+}
+
+function resolveFilePath(filePath: string): string | undefined {
+  const filePaths = path.extname(filePath) ? [filePath] : [filePath, `${filePath}.js`, `${filePath}.json`, `${filePath}.node`];
+  return filePaths.find((candidatePath) => fs.existsSync(candidatePath) && fs.statSync(candidatePath).isFile());
+}
+
+function resolveDirectoryPath(dirPath: string): string | undefined {
+  const packageJsonPath = path.join(dirPath, 'package.json');
+  if (fs.existsSync(packageJsonPath)) {
+    const packageJson: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    const mainPath = resolveFilePath(path.join(dirPath, packageJson.main ?? 'index.js'));
+    if (mainPath) return mainPath;
+  }
+  return resolveFilePath(path.join(dirPath, 'index'));
 }
 
 function findPackageJsonPath(require: NodeJS.Require, packageName: string, packageDirPath: string): string {
