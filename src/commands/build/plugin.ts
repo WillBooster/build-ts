@@ -135,13 +135,13 @@ function resolvePackageEntry(
   conditions: Set<string>,
   subpath: string
 ): string {
-  if (subpath === '.') {
+  const packageJsonPath = findPackageJsonPath(require, packageName, packageDirPath);
+  const packageJson: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+  if (!packageJson.exports && subpath === '.') {
     const resolvedPath = require.resolve(packageName);
     if (resolvedPath !== packageName && !resolvedPath.startsWith('node:')) return resolvedPath;
   }
 
-  const packageJsonPath = findPackageJsonPath(require, packageName, packageDirPath);
-  const packageJson: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
   const entryPath = getPackageEntryPath(packageJson, conditions, subpath);
   if (!entryPath) {
     throw new Error(`Failed to resolve package export for ${packageName}`);
@@ -174,13 +174,20 @@ function getPackageEntryPath(packageJson: PackageJson, conditions: Set<string>, 
   return normalizePackageEntryPath(subpath);
 }
 
-function getExportEntryPath(exportsField: unknown, conditions: Set<string>, subpath: string): string | undefined {
-  if (typeof exportsField === 'string') return subpath === '.' ? exportsField : undefined;
+function getExportEntryPath(
+  exportsField: unknown,
+  conditions: Set<string>,
+  subpath: string,
+  patternMatch?: string
+): string | undefined {
+  if (typeof exportsField === 'string') {
+    return subpath === '.' ? applyExportPattern(exportsField, patternMatch) : undefined;
+  }
   if (Array.isArray(exportsField)) {
     if (subpath !== '.') return undefined;
 
     for (const exportEntry of exportsField) {
-      const entryPath = getExportEntryPath(exportEntry, conditions, subpath);
+      const entryPath = getExportEntryPath(exportEntry, conditions, subpath, patternMatch);
       if (entryPath) return entryPath;
     }
     return undefined;
@@ -189,7 +196,7 @@ function getExportEntryPath(exportsField: unknown, conditions: Set<string>, subp
 
   const exportRecord = exportsField as Record<string, unknown>;
   if (hasExportSubpaths(exportRecord)) {
-    const subpathExport = exportRecord[subpath];
+    const subpathExport = exportRecord[subpath] ?? findExportSubpathPattern(exportRecord, subpath);
     return subpathExport === undefined ? undefined : getExportEntryPath(subpathExport, conditions, '.');
   }
   if (subpath !== '.') return undefined;
@@ -197,7 +204,7 @@ function getExportEntryPath(exportsField: unknown, conditions: Set<string>, subp
   for (const [condition, value] of Object.entries(exportRecord)) {
     if (!conditions.has(condition)) continue;
 
-    const entryPath = getExportEntryPath(value, conditions, subpath);
+    const entryPath = getExportEntryPath(value, conditions, subpath, patternMatch);
     if (entryPath) return entryPath;
   }
   return undefined;
@@ -205,6 +212,38 @@ function getExportEntryPath(exportsField: unknown, conditions: Set<string>, subp
 
 function hasExportSubpaths(exportRecord: Record<string, unknown>): boolean {
   return Object.keys(exportRecord).some((key) => key === '.' || key.startsWith('./'));
+}
+
+function findExportSubpathPattern(exportRecord: Record<string, unknown>, subpath: string): unknown {
+  for (const [key, value] of Object.entries(exportRecord)) {
+    const patternMatch = getExportPatternMatch(key, subpath);
+    if (patternMatch !== undefined) {
+      return replaceExportPattern(value, patternMatch);
+    }
+  }
+  return undefined;
+}
+
+function getExportPatternMatch(pattern: string, subpath: string): string | undefined {
+  if (!pattern.startsWith('./') || !pattern.includes('*')) return undefined;
+
+  const [prefix, suffix] = pattern.split('*', 2) as [string, string];
+  if (!subpath.startsWith(prefix) || !subpath.endsWith(suffix)) return undefined;
+  return subpath.slice(prefix.length, subpath.length - suffix.length);
+}
+
+function replaceExportPattern(value: unknown, patternMatch: string): unknown {
+  if (typeof value === 'string') return applyExportPattern(value, patternMatch);
+  if (Array.isArray(value)) return value.map((item) => replaceExportPattern(item, patternMatch));
+  if (!value || typeof value !== 'object') return value;
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([key, item]) => [key, replaceExportPattern(item, patternMatch)])
+  );
+}
+
+function applyExportPattern(value: string, patternMatch: string | undefined): string {
+  return patternMatch === undefined ? value : value.replaceAll('*', patternMatch);
 }
 
 function normalizePackageEntryPath(entryPath: string | undefined): string | undefined {
@@ -349,7 +388,6 @@ export function containsDecorator(code: string): boolean {
 
 const regexLiteralPrefixCharacters = new Set([
   '(',
-  ')',
   '[',
   '{',
   ':',
@@ -449,15 +487,45 @@ function stripComments(code: string): string {
 function isRegexLiteralStart(strippedCode: string): boolean {
   const previousIndex = findPreviousSignificantIndex(strippedCode);
   if (previousIndex === -1) return true;
-  if (regexLiteralPrefixCharacters.has(strippedCode[previousIndex] ?? '')) return true;
+  const previous = strippedCode[previousIndex] ?? '';
+  if (previous === ')') return isAfterControlStatementCondition(strippedCode, previousIndex);
+  if ((previous === '+' || previous === '-') && strippedCode[findPreviousSignificantIndex(strippedCode, previousIndex - 1)] === previous) {
+    return false;
+  }
+  if (regexLiteralPrefixCharacters.has(previous)) return true;
 
   const previousKeyword = strippedCode.slice(0, previousIndex + 1).match(/[\p{ID_Start}$_][\p{ID_Continue}$\u200c\u200d]*$/u)?.[0];
   return previousKeyword ? regexLiteralPrefixKeywords.has(previousKeyword) : false;
 }
 
-function findPreviousSignificantIndex(code: string): number {
-  for (let index = code.length - 1; index >= 0; index--) {
+function findPreviousSignificantIndex(code: string, startIndex = code.length - 1): number {
+  for (let index = startIndex; index >= 0; index--) {
     if (!/\s/u.test(code[index] ?? '')) return index;
+  }
+  return -1;
+}
+
+function isAfterControlStatementCondition(code: string, closeParenIndex: number): boolean {
+  const openParenIndex = findMatchingOpenParenIndex(code, closeParenIndex);
+  if (openParenIndex === -1) return false;
+
+  const keywordEndIndex = findPreviousSignificantIndex(code, openParenIndex - 1);
+  if (keywordEndIndex === -1) return false;
+
+  const keyword = code.slice(0, keywordEndIndex + 1).match(/[\p{ID_Start}$_][\p{ID_Continue}$\u200c\u200d]*$/u)?.[0];
+  return keyword ? ['for', 'if', 'while', 'with'].includes(keyword) : false;
+}
+
+function findMatchingOpenParenIndex(code: string, closeParenIndex: number): number {
+  let depth = 0;
+  for (let index = closeParenIndex; index >= 0; index--) {
+    const current = code[index];
+    if (current === ')') {
+      depth++;
+    } else if (current === '(') {
+      depth--;
+      if (depth === 0) return index;
+    }
   }
   return -1;
 }

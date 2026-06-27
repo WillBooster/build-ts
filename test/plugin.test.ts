@@ -20,5 +20,7 @@ describe('build plugins', () => {
     expect(containsDecorator('do /[\\/*]/.test(value); while (false);\n@logged class A {}')).toBe(true);
     expect(containsDecorator('if (condition) value(); else /[\\/*]/.test(value);\n@logged class A {}')).toBe(true);
     expect(containsDecorator('const regex = new /[\\/*]/;\n@logged class A {}')).toBe(true);
+    expect(containsDecorator('const x = (1 + 2) / 3; @logged class A {}')).toBe(true);
+    expect(containsDecorator('const value = count++ / total; @logged class A {}')).toBe(true);
   });
 });
