@@ -536,6 +536,45 @@ console.log(marker);
     expect(execRet.stdout.trim()).toBe('promises-file');
   });
 
+  it('app-node with bundled ESM dependency using extension-resolved subpath without package exports', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/app-node-builtin-no-exports-esm-subpath';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/undici-package`, { recursive: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({
+        dependencies: { undici: 'file:./undici-package' },
+        packageManager: 'yarn@4.17.0',
+        type: 'module',
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/undici-package/package.json`,
+      JSON.stringify({
+        name: 'undici',
+        type: 'module',
+        version: '1.0.0',
+      })
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/undici-package/promises.js`,
+      `export const marker = 'promises-file';\n`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/index.ts`,
+      `import { marker } from 'undici/promises.js';
+console.log(marker);
+`
+    );
+
+    await buildWithPackagePath(fixtureDirPath, 'app', '--bundle-builtins', 'undici', '--module-type', 'esm');
+    const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
+    expect(execRet.status).toBe(0);
+    expect(execRet.stdout.trim()).toBe('promises-file');
+  });
+
   it('app-node with bundled builtin-name dependency uses most specific package export subpath pattern', async () => {
     const fixtureDirPath = '.tmp/test-fixtures/app-node-builtin-export-subpath-specificity';
     await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
@@ -618,6 +657,84 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/features/private-internal/secret.js';
+console.log(marker);
+`
+    );
+
+    await expectBuildWithPackagePathToFail(fixtureDirPath, 'app', '--bundle-builtins', 'fs', '--module-type', 'esm');
+  });
+
+  it('app-node with bundled builtin-name dependency rejects exact private package export subpath', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/app-node-builtin-export-exact-private-subpath';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/fs-package`, { recursive: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({
+        dependencies: { fs: 'file:./fs-package' },
+        packageManager: 'yarn@4.17.0',
+        type: 'module',
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/fs-package/package.json`,
+      JSON.stringify({
+        exports: {
+          './*.js': './*.js',
+          // oxlint-disable-next-line no-null -- Node package exports use null to deny private subpaths.
+          './private.js': null,
+        },
+        name: 'fs',
+        type: 'module',
+        version: '1.0.0',
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/fs-package/private.js`, `export const marker = 'private';\n`);
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/index.ts`,
+      `import { marker } from 'node:fs/private.js';
+console.log(marker);
+`
+    );
+
+    await expectBuildWithPackagePathToFail(fixtureDirPath, 'app', '--bundle-builtins', 'fs', '--module-type', 'esm');
+  });
+
+  it('app-node with bundled builtin-name dependency rejects null package export condition', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/app-node-builtin-export-null-condition';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/fs-package`, { recursive: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({
+        dependencies: { fs: 'file:./fs-package' },
+        packageManager: 'yarn@4.17.0',
+        type: 'module',
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/fs-package/package.json`,
+      JSON.stringify({
+        exports: {
+          '.': {
+            // oxlint-disable-next-line no-null -- Node package exports use null to deny a matched condition.
+            node: null,
+            default: './default.js',
+          },
+        },
+        name: 'fs',
+        type: 'module',
+        version: '1.0.0',
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/fs-package/default.js`, `export const marker = 'default-branch';\n`);
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/index.ts`,
+      `import { marker } from 'node:fs';
 console.log(marker);
 `
     );

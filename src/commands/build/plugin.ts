@@ -122,8 +122,7 @@ function bundleBuiltinsPlugin(argv: ArgumentsType<typeof builder>, packageDirPat
         packageName,
         packageDirPath,
         getPackageExportConditions(extraOptions.kind),
-        getPackageSubpath(source, packageName),
-        extraOptions.kind
+        getPackageSubpath(source, packageName)
       );
     },
   };
@@ -134,13 +133,12 @@ function resolvePackageEntry(
   packageName: string,
   packageDirPath: string,
   conditions: Set<string>,
-  subpath: string,
-  importKind: ImportKind
+  subpath: string
 ): string {
   const packageJsonPath = findPackageJsonPath(require, packageName, packageDirPath);
   const packageJson: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
   if (!packageJson.exports) {
-    const resolvedPath = resolvePackageWithoutExports(require, packageName, subpath, importKind, packageJson);
+    const resolvedPath = resolvePackageWithoutExports(require, packageName, subpath);
     if (resolvedPath !== packageName && !resolvedPath.startsWith('node:')) return resolvedPath;
   }
 
@@ -164,13 +162,10 @@ function getPackageExportConditions(importKind: ImportKind): Set<string> {
 function resolvePackageWithoutExports(
   require: NodeJS.Require,
   packageName: string,
-  subpath: string,
-  importKind: ImportKind,
-  packageJson: PackageJson
+  subpath: string
 ): string {
   if (subpath === '.') return require.resolve(packageName);
-  if (importKind === 'require-call') return require.resolve(`${packageName}/${subpath.slice('./'.length)}`);
-  return normalizePackageEntryPath(subpath) ?? packageJson.main ?? 'index.js';
+  return require.resolve(`${packageName}/${subpath.slice('./'.length)}`);
 }
 
 function findPackageJsonPath(require: NodeJS.Require, packageName: string, packageDirPath: string): string {
@@ -183,7 +178,10 @@ function findPackageJsonPath(require: NodeJS.Require, packageName: string, packa
 }
 
 function getPackageEntryPath(packageJson: PackageJson, conditions: Set<string>, subpath: string): string | undefined {
-  if (packageJson.exports) return normalizePackageEntryPath(getExportEntryPath(packageJson.exports, conditions, subpath));
+  if (packageJson.exports) {
+    const entryPath = getExportEntryPath(packageJson.exports, conditions, subpath);
+    return entryPath === null ? undefined : normalizePackageEntryPath(entryPath);
+  }
   if (subpath === '.') return packageJson.main ?? 'index.js';
   return normalizePackageEntryPath(subpath);
 }
@@ -193,25 +191,28 @@ function getExportEntryPath(
   conditions: Set<string>,
   subpath: string,
   patternMatch?: string
-): string | undefined {
+): string | undefined | null {
   if (typeof exportsField === 'string') {
     return subpath === '.' ? resolveExportTarget(exportsField, patternMatch) : undefined;
   }
+  if (exportsField === null) return null;
   if (Array.isArray(exportsField)) {
     if (subpath !== '.') return undefined;
 
     for (const exportEntry of exportsField) {
       const entryPath = getExportEntryPath(exportEntry, conditions, subpath, patternMatch);
-      if (entryPath) return entryPath;
+      if (entryPath !== undefined) return entryPath;
     }
     return undefined;
   }
-  if (!exportsField || typeof exportsField !== 'object') return undefined;
+  if (typeof exportsField !== 'object') return undefined;
 
   const exportRecord = exportsField as Record<string, unknown>;
   if (hasExportSubpaths(exportRecord)) {
-    const subpathExport = exportRecord[subpath] ?? findExportSubpathPattern(exportRecord, subpath);
-    return subpathExport === undefined ? undefined : getExportEntryPath(subpathExport, conditions, '.');
+    if (Object.hasOwn(exportRecord, subpath)) return getExportEntryPath(exportRecord[subpath], conditions, '.');
+
+    const subpathExport = findExportSubpathPattern(exportRecord, subpath);
+    return subpathExport === undefined ? undefined : getExportEntryPath(subpathExport.value, conditions, '.');
   }
   if (subpath !== '.') return undefined;
 
@@ -219,7 +220,7 @@ function getExportEntryPath(
     if (!conditions.has(condition)) continue;
 
     const entryPath = getExportEntryPath(value, conditions, subpath, patternMatch);
-    if (entryPath) return entryPath;
+    if (entryPath !== undefined) return entryPath;
   }
   return undefined;
 }
@@ -228,11 +229,11 @@ function hasExportSubpaths(exportRecord: Record<string, unknown>): boolean {
   return Object.keys(exportRecord).some((key) => key === '.' || key.startsWith('./'));
 }
 
-function findExportSubpathPattern(exportRecord: Record<string, unknown>, subpath: string): unknown {
+function findExportSubpathPattern(exportRecord: Record<string, unknown>, subpath: string): { value: unknown } | undefined {
   for (const [key, value] of Object.entries(exportRecord).sort(([keyA], [keyB]) => compareExportPatternKeys(keyA, keyB))) {
     const patternMatch = getExportPatternMatch(key, subpath);
     if (patternMatch !== undefined) {
-      return replaceExportPattern(value, patternMatch);
+      return { value: replaceExportPattern(value, patternMatch) };
     }
   }
   return undefined;
