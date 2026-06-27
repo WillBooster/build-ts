@@ -1,11 +1,12 @@
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 
 import chalk from 'chalk';
 import dateTime from 'date-time';
 import ms from 'pretty-ms';
-import type { OutputOptions, RollupBuild, RollupOptions } from 'rollup';
-import { rollup, watch } from 'rollup';
+import { rolldown, watch } from 'rolldown';
+import type { OutputOptions, RolldownBuild, RolldownOptions } from 'rolldown';
 import type { Handler } from 'signal-exit';
 import { onExit } from 'signal-exit';
 import type { PackageJson } from 'type-fest';
@@ -18,8 +19,8 @@ import { getNamespaceAndName, readPackageJson } from '../../utils.js';
 
 import type { AnyBuilderType, builder } from './builder.js';
 import { appBuilder, functionsBuilder, libBuilder } from './builder.js';
+import { handleError } from './bundlerLogger.js';
 import { setupPlugins } from './plugin.js';
-import { handleError } from './rollupLogger.js';
 import { generateDeclarationFiles } from './typeScript.js';
 
 export const app: CommandModule<unknown, ArgumentsType<typeof appBuilder>> = {
@@ -114,7 +115,8 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     await generatePackageJsonForFunctions(packageDirPath, packageJson, argv.moduleType);
   }
 
-  const options: RollupOptions = {
+  const options: RolldownOptions = {
+    checks: { preferBuiltinFeature: false },
     input:
       targetDetail === 'functions'
         ? Object.fromEntries(
@@ -122,6 +124,15 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
           )
         : inputs,
     plugins: setupPlugins(argv, targetDetail, packageJson, namespace, packageDirPath, outputOptionsList),
+    resolve: {
+      alias: getBundleBuiltinAliases(argv, packageDirPath),
+      extensionAlias: {
+        '.cjs': ['.cts', '.cjs'],
+        '.js': ['.ts', '.tsx', '.js'],
+        '.mjs': ['.mts', '.mjs'],
+      },
+      extensions: ['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'],
+    },
     watch: argv.watch ? { clearScreen: false } : undefined,
   };
 
@@ -140,11 +151,11 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
       );
     }
 
-    let bundle: RollupBuild | undefined;
+    let bundle: RolldownBuild | undefined;
     let buildFailed = false;
     try {
       const startTime = Date.now();
-      const _bundle = await rollup(options);
+      const _bundle = await rolldown(options);
       bundle = _bundle;
       await Promise.all(outputOptionsList.map((opts) => _bundle.write(opts)));
 
@@ -178,7 +189,7 @@ function watchRollup(
   argv: ArgumentsType<AnyBuilderType>,
   targetDetail: string,
   packageDirPath: string,
-  options: RollupOptions,
+  options: RolldownOptions,
   outputOptionsList: OutputOptions[],
   pathToRelativePath: (paths: string | Readonly<string[]>) => string[]
 ): void {
@@ -206,19 +217,10 @@ function watchRollup(
       case 'BUNDLE_START': {
         if (argv.silent) break;
 
-        const eventInput = event.input;
-        const inputFiles: string[] = [];
-        if (typeof eventInput === 'string') {
-          inputFiles.push(eventInput);
-        } else {
-          inputFiles.push(
-            ...(Array.isArray(eventInput) ? eventInput : Object.values(eventInput as Record<string, string>))
-          );
-        }
         console.info(
           chalk.cyan(
-            `Bundles ${chalk.bold(pathToRelativePath(inputFiles).join(', '))} → ${chalk.bold(
-              pathToRelativePath(event.output).join(', ')
+            `Bundles ${chalk.bold(pathToRelativePath(getInputFiles(options.input)).join(', '))} → ${chalk.bold(
+              pathToRelativePath(outputOptionsList.map((opts) => opts.file || opts.dir || '')).join(', ')
             )}\non ${packageDirPath} ...`
           )
         );
@@ -250,6 +252,27 @@ function watchRollup(
       void event.result.close();
     }
   });
+}
+
+function getInputFiles(input: RolldownOptions['input']): string[] {
+  if (!input) return [];
+  if (typeof input === 'string') return [input];
+  return Array.isArray(input) ? input : Object.values(input);
+}
+
+function getBundleBuiltinAliases(
+  argv: ArgumentsType<AnyBuilderType>,
+  packageDirPath: string
+): Record<string, string> | undefined {
+  if (!argv.bundleBuiltins?.length) return undefined;
+
+  const require = createRequire(path.join(packageDirPath, 'package.json'));
+  return Object.fromEntries(
+    argv.bundleBuiltins.map((item) => {
+      const packageName = item.toString();
+      return [packageName, require.resolve(packageName)];
+    })
+  );
 }
 
 function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDirPath: string): string[] {
@@ -335,6 +358,7 @@ function getOutputOptionsList(
       {
         dir: outDirPath,
         format: isEsmOutput(isEsmPackage, argv.moduleType) ? 'module' : 'commonjs',
+        minify: false,
         sourcemap: argv.sourcemap && 'inline',
       },
     ];
@@ -356,6 +380,7 @@ function getOutputOptionsList(
       dir: outDirPath,
       entryFileNames: jsExt === 'both' || (jsExt === 'either' && !isEsmPackage) ? '[name].js' : '[name].cjs',
       format: 'commonjs',
+      minify: argv.minify,
       preserveModules: true,
       preserveModulesRoot: path.join(packageDirPath, 'src'),
       sourcemap: argv.sourcemap,
@@ -366,6 +391,7 @@ function getOutputOptionsList(
       dir: outDirPath,
       entryFileNames: jsExt === 'both' || (jsExt === 'either' && isEsmPackage) ? '[name].js' : '[name].mjs',
       format: 'module',
+      minify: argv.minify,
       preserveModules: true,
       preserveModulesRoot: path.join(packageDirPath, 'src'),
       sourcemap: argv.sourcemap,

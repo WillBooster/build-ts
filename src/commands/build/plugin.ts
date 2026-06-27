@@ -2,12 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { babel } from '@rollup/plugin-babel';
-import * as commonjs from '@rollup/plugin-commonjs';
-import * as json from '@rollup/plugin-json';
-import * as resolve from '@rollup/plugin-node-resolve';
 import * as replace from '@rollup/plugin-replace';
 import * as terser from '@rollup/plugin-terser';
-import type { OutputOptions, Plugin } from 'rollup';
+import type { OutputOptions, RolldownPluginOption } from 'rolldown';
 import * as analyze from 'rollup-plugin-analyzer';
 import { keepImport } from 'rollup-plugin-keep-import';
 import { nodeExternals } from 'rollup-plugin-node-externals';
@@ -28,7 +25,7 @@ export function setupPlugins(
   namespace: string | undefined,
   packageDirPath: string,
   outputOptionsList: OutputOptions[]
-): Plugin[] {
+): RolldownPluginOption[] {
   const externalDeps = [...(argv.external ?? [])].map((item) => item.toString());
   if (packageJson.dependencies?.['@prisma/client']) {
     externalDeps.push('prisma-client');
@@ -62,53 +59,51 @@ export function setupPlugins(
   const extensions = ['.cjs', '.mjs', '.js', '.jsx', '.json', '.cts', '.mts', '.ts', '.tsx'];
   const babelConfigPath = path.join(getBuildTsRootPath(), 'babel.config.mjs');
   const replacePlugin = getDefaultPluginFactory(replace);
-  const jsonPlugin = getDefaultPluginFactory(json);
-  const resolvePlugin = getDefaultPluginFactory(resolve);
-  const commonjsPlugin = getDefaultPluginFactory(commonjs);
   const terserPlugin = getDefaultPluginFactory(terser);
   const analyzePlugin = getDefaultPluginFactory(analyze);
-  const plugins: Plugin[] = [
-    replacePlugin({
-      // Ignore word boundaries and replace every instance of the string.
-      // cf. https://github.com/rollup/plugins/tree/master/packages/replace#word-boundaries
-      delimiters: ['', ''],
-      preventAssignment: true,
-      values: createEnvironmentVariablesDefinition(argv, packageDirPath),
-    }),
-    jsonPlugin(),
-    nodeExternals({
-      deps: true,
-      devDeps: false,
-      peerDeps: true,
-      optDeps: true,
-      include: externalDeps.map((name) => new RegExp(`^${name}(?:\\/.+)?`)),
-      exclude: shouldBundleSameNamespaceDependencies(targetDetail) && namespace && new RegExp(`^@?${namespace}(?:\\/.+)?`),
-    }),
-    resolvePlugin({
-      extensions,
-      preferBuiltins: (id: string) => !argv.bundleBuiltins?.includes(id),
-    }),
-    commonjsPlugin(),
-    keepImport({ moduleNames: argv.keepImport?.map((item) => item.toString()) ?? [] }),
+  const plugins: RolldownPluginOption[] = [
+    asRolldownPlugin(
+      replacePlugin({
+        // Ignore word boundaries and replace every instance of the string.
+        // cf. https://github.com/rollup/plugins/tree/master/packages/replace#word-boundaries
+        delimiters: ['', ''],
+        preventAssignment: true,
+        values: createEnvironmentVariablesDefinition(argv, packageDirPath),
+      })
+    ),
+    asRolldownPlugin(
+      nodeExternals({
+        deps: true,
+        devDeps: false,
+        peerDeps: true,
+        optDeps: true,
+        include: externalDeps.map((name) => new RegExp(`^${name}(?:\\/.+)?`)),
+        exclude:
+          shouldBundleSameNamespaceDependencies(targetDetail) && namespace && new RegExp(`^@?${namespace}(?:\\/.+)?`),
+      })
+    ),
+    asRolldownPlugin(keepImport({ moduleNames: argv.keepImport?.map((item) => item.toString()) ?? [] })),
   ];
   const isBabelHelpersBundled =
     targetDetail === 'app-node' || targetDetail === 'functions' || !externalDeps.includes('@babel/runtime');
   process.env.BUILDTS_USE_BABLE_RUNTIME = isBabelHelpersBundled ? '' : '1';
   plugins.push(
-    babel({
-      configFile: babelConfigPath,
-      extensions,
-      // We need `runtime since `bundled` may break directory structure by creating _virtual directory.
-      babelHelpers: isBabelHelpersBundled ? 'bundled' : 'runtime',
-      exclude: /^(.+\/)?node_modules\/.+$/,
-    }),
-    ...(outputOptionsList.some((opts) => opts.preserveModules) ? [preserveDirectives()] : []),
-    string({ include: ['**/*.csv', '**/*.txt'] })
+    asRolldownPlugin(
+      babel({
+        configFile: babelConfigPath,
+        extensions,
+        // We need `runtime since `bundled` may break directory structure by creating _virtual directory.
+        babelHelpers: isBabelHelpersBundled ? 'bundled' : 'runtime',
+        exclude: /^(.+\/)?node_modules\/.+$/,
+      })
+    ),
+    ...(outputOptionsList.some((opts) => opts.preserveModules) ? [asRolldownPlugin(preserveDirectives())] : []),
+    asRolldownPlugin(string({ include: ['**/*.csv', '**/*.txt'] }))
   );
-  if (argv.minify) {
-    plugins.push(terserPlugin({ compress: { directives: false } }));
+  if (argv.minify && !outputOptionsList.some((opts) => opts.preserveModules)) {
+    plugins.push(asRolldownPlugin(terserPlugin({ compress: { directives: false } })));
   }
-  plugins.push(analyzePlugin({ summaryOnly: true }));
+  plugins.push(asRolldownPlugin(analyzePlugin({ summaryOnly: true })));
   return plugins;
 }
 
@@ -116,8 +111,12 @@ function shouldBundleSameNamespaceDependencies(targetDetail: TargetDetail): bool
   return targetDetail === 'app-node' || targetDetail === 'functions';
 }
 
-type PluginFactory = (options?: unknown) => Plugin;
+type PluginFactory = (options?: unknown) => unknown;
 
 function getDefaultPluginFactory(module: { default: unknown }): PluginFactory {
   return module.default as PluginFactory;
+}
+
+function asRolldownPlugin(plugin: unknown): RolldownPluginOption {
+  return plugin as RolldownPluginOption;
 }
