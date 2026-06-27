@@ -352,7 +352,11 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/buffer-package/package.json`,
       JSON.stringify({
-        exports: ['./array.js'],
+        exports: [
+          // oxlint-disable-next-line no-null -- Node package export arrays skip null fallback entries.
+          null,
+          './array.js',
+        ],
         name: 'buffer',
         type: 'module',
         version: '1.0.0',

@@ -201,7 +201,7 @@ function getExportEntryPath(
 
     for (const exportEntry of exportsField) {
       const entryPath = getExportEntryPath(exportEntry, conditions, subpath, patternMatch);
-      if (entryPath !== undefined) return entryPath;
+      if (entryPath) return entryPath;
     }
     return undefined;
   }
