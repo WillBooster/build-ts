@@ -20,7 +20,7 @@ import { getNamespaceAndName, readPackageJson } from '../../utils.js';
 import type { AnyBuilderType, builder } from './builder.js';
 import { appBuilder, functionsBuilder, libBuilder } from './builder.js';
 import { handleError } from './bundlerLogger.js';
-import { setupPlugins } from './plugin.js';
+import { createExternalMatcher, setupPlugins } from './plugin.js';
 import { generateDeclarationFiles } from './typeScript.js';
 
 export const app: CommandModule<unknown, ArgumentsType<typeof appBuilder>> = {
@@ -117,6 +117,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
   const options: RolldownOptions = {
     checks: { preferBuiltinFeature: false },
+    external: createExternalMatcher(argv, targetDetail, packageJson, namespace),
     input:
       targetDetail === 'functions'
         ? Object.fromEntries(
@@ -139,7 +140,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   const pathToRelativePath = (paths: string | Readonly<string[]>): string[] =>
     (Array.isArray(paths) ? paths : [paths]).map((p) => path.relative(packageDirPath, p));
   if (argv.watch) {
-    watchRollup(argv, targetDetail, packageDirPath, options, outputOptionsList, pathToRelativePath);
+    watchRolldown(argv, targetDetail, packageDirPath, options, outputOptionsList, pathToRelativePath);
   } else {
     if (!argv.silent) {
       console.info(
@@ -185,7 +186,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   }
 }
 
-function watchRollup(
+function watchRolldown(
   argv: ArgumentsType<AnyBuilderType>,
   targetDetail: string,
   packageDirPath: string,
