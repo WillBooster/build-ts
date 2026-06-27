@@ -150,7 +150,7 @@ function resolvePackageEntry(
 }
 
 function getPackageExportConditions(importKind: ImportKind): Set<string> {
-  const conditions = new Set(['node-addons', 'node', 'default']);
+  const conditions = new Set(['node-addons', 'node', 'module-sync', 'default']);
   if (importKind === 'require-call') {
     conditions.add('require');
   } else {
@@ -200,7 +200,12 @@ function getExportEntryPath(
     if (subpath !== '.') return undefined;
 
     for (const exportEntry of exportsField) {
-      const entryPath = getExportEntryPath(exportEntry, conditions, subpath, patternMatch);
+      let entryPath: string | undefined | null;
+      try {
+        entryPath = getExportEntryPath(exportEntry, conditions, subpath, patternMatch);
+      } catch {
+        continue;
+      }
       if (entryPath) return entryPath;
     }
     return undefined;

@@ -355,6 +355,7 @@ console.log(marker);
         exports: [
           // oxlint-disable-next-line no-null -- Node package export arrays skip null fallback entries.
           null,
+          '../bad.js',
           './array.js',
         ],
         name: 'buffer',
@@ -504,6 +505,57 @@ console.log(marker);
     const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
     expect(execRet.status).toBe(0);
     expect(execRet.stdout.trim()).toBe('addons-branch');
+  });
+
+  it('app-node with bundled dependency using module-sync package export condition', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/app-node-builtin-module-sync-exports';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/undici-package`, { recursive: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({
+        dependencies: { undici: 'file:./undici-package' },
+        packageManager: 'yarn@4.17.0',
+        type: 'module',
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/undici-package/package.json`,
+      JSON.stringify({
+        exports: {
+          '.': {
+            'module-sync': './sync.js',
+            import: './import.js',
+            default: './default.js',
+          },
+        },
+        name: 'undici',
+        type: 'module',
+        version: '1.0.0',
+      })
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/undici-package/default.js`,
+      `export const marker = 'default-branch';\n`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/undici-package/import.js`,
+      `export const marker = 'import-branch';\n`
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/undici-package/sync.js`, `export const marker = 'sync-branch';\n`);
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/index.ts`,
+      `import { marker } from 'undici';
+console.log(marker);
+`
+    );
+
+    await buildWithPackagePath(fixtureDirPath, 'app', '--bundle-builtins', 'undici', '--module-type', 'esm');
+    const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
+    expect(execRet.status).toBe(0);
+    expect(execRet.stdout.trim()).toBe('sync-branch');
   });
 
   it('app-node with bundled dependency using extension-resolved subpath without package exports', async () => {
