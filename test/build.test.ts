@@ -1239,9 +1239,7 @@ async function buildWithPackagePathAndGetStatus(
   subCommand: string,
   ...options: string[]
 ): Promise<Awaited<ReturnType<typeof spawnAsync>>> {
-  const fixtureEnv = { ...process.env, YARN_ENABLE_HARDENED_MODE: '0' };
-  removeNpmAndYarnEnvironmentVariables(fixtureEnv);
-  fixtureEnv.YARN_ENABLE_HARDENED_MODE = '0';
+  const fixtureEnv = createFixtureCommandEnv();
   await fs.promises.rm(`${packagePath}/node_modules`, { recursive: true, force: true });
   const installRet = await spawnAsync('yarn', [], { cwd: packagePath, env: fixtureEnv, stdio: 'inherit' });
   expect(installRet.status).toBe(0);
@@ -1249,6 +1247,16 @@ async function buildWithPackagePathAndGetStatus(
     env: fixtureEnv,
     stdio: 'inherit',
   });
+}
+
+function createFixtureCommandEnv(): NodeJS.ProcessEnv {
+  const fixtureEnv = { ...process.env };
+  removeNpmAndYarnEnvironmentVariables(fixtureEnv);
+  fixtureEnv.YARN_ENABLE_HARDENED_MODE = '0';
+  delete fixtureEnv.GITHUB_ACTIONS;
+  delete fixtureEnv.GITHUB_EVENT_NAME;
+  delete fixtureEnv.GITHUB_EVENT_PATH;
+  return fixtureEnv;
 }
 
 async function readGeneratedCode(filePath: string): Promise<string> {
