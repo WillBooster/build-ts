@@ -326,6 +326,97 @@ console.log(marker);
     expect(execRet.stdout.trim()).toBe('array-branch');
   });
 
+  it('app-node with bundled builtin-name dependency rejects package exports without root', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/app-node-builtin-exports-without-root';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/buffer-package`, { recursive: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({
+        dependencies: { buffer: 'file:./buffer-package' },
+        packageManager: 'yarn@4.17.0',
+        type: 'module',
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/buffer-package/package.json`,
+      JSON.stringify({
+        exports: { './sub': './sub.js' },
+        main: './main.js',
+        name: 'buffer',
+        type: 'module',
+        version: '1.0.0',
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/buffer-package/main.js`, `export const marker = 'main-fallback';\n`);
+    await fs.promises.writeFile(`${fixtureDirPath}/buffer-package/sub.js`, `export const marker = 'sub-export';\n`);
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/index.ts`,
+      `import { marker } from 'node:buffer';
+console.log(marker);
+`
+    );
+
+    await expectBuildWithPackagePathToFail(
+      fixtureDirPath,
+      'app',
+      '--bundle-builtins',
+      'buffer',
+      '--module-type',
+      'esm'
+    );
+  });
+
+  it('app-node with bundled builtin-name dependency rejects package exports without matching condition', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/app-node-builtin-exports-without-condition';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/buffer-package`, { recursive: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({
+        dependencies: { buffer: 'file:./buffer-package' },
+        packageManager: 'yarn@4.17.0',
+        type: 'module',
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/buffer-package/package.json`,
+      JSON.stringify({
+        exports: {
+          '.': { browser: './browser.js' },
+        },
+        main: './main.js',
+        name: 'buffer',
+        type: 'module',
+        version: '1.0.0',
+      })
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/buffer-package/browser.js`,
+      `export const marker = 'browser-branch';\n`
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/buffer-package/main.js`, `export const marker = 'main-fallback';\n`);
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/index.ts`,
+      `import { marker } from 'node:buffer';
+console.log(marker);
+`
+    );
+
+    await expectBuildWithPackagePathToFail(
+      fixtureDirPath,
+      'app',
+      '--bundle-builtins',
+      'buffer',
+      '--module-type',
+      'esm'
+    );
+  });
+
   it('app-node with bundled hoisted builtin-name dependency', async () => {
     const workspaceDirPath = '.tmp/test-fixtures/app-node-builtin-hoisted';
     const fixtureDirPath = `${workspaceDirPath}/packages/app`;
@@ -483,14 +574,31 @@ async function buildWithCommand(dirName: string, subCommand: string, ...options:
 }
 
 async function buildWithPackagePath(packagePath: string, subCommand: string, ...options: string[]): Promise<void> {
+  const buildRet = await buildWithPackagePathAndGetStatus(packagePath, subCommand, ...options);
+  expect(buildRet.status).toBe(0);
+}
+
+async function expectBuildWithPackagePathToFail(
+  packagePath: string,
+  subCommand: string,
+  ...options: string[]
+): Promise<void> {
+  const buildRet = await buildWithPackagePathAndGetStatus(packagePath, subCommand, ...options);
+  expect(buildRet.status).not.toBe(0);
+}
+
+async function buildWithPackagePathAndGetStatus(
+  packagePath: string,
+  subCommand: string,
+  ...options: string[]
+): Promise<Awaited<ReturnType<typeof spawnAsync>>> {
   removeNpmAndYarnEnvironmentVariables(process.env);
   await fs.promises.rm(`${packagePath}/node_modules`, { recursive: true, force: true });
   const installRet = await spawnAsync('yarn', [], { cwd: packagePath, stdio: 'inherit' });
   expect(installRet.status).toBe(0);
-  const buildRet = await spawnAsync('yarn', ['start', subCommand, packagePath, ...options], {
+  return spawnAsync('yarn', ['start', subCommand, packagePath, ...options], {
     stdio: 'inherit',
   });
-  expect(buildRet.status).toBe(0);
 }
 
 async function readGeneratedCode(filePath: string): Promise<string> {

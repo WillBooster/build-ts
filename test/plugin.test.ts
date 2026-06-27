@@ -16,5 +16,9 @@ describe('build plugins', () => {
     expect(containsDecorator('const regex = /[\\/*]/;\n@logged class A {}')).toBe(true);
     expect(containsDecorator('const regex = /[//]/; class A { @logged method() {} }')).toBe(true);
     expect(containsDecorator('if (condition) /[\\/*]/.test(value);\n@logged class A {}')).toBe(true);
+    expect(containsDecorator('export default /[\\/*]/;\n@logged class A {}')).toBe(true);
+    expect(containsDecorator('do /[\\/*]/.test(value); while (false);\n@logged class A {}')).toBe(true);
+    expect(containsDecorator('if (condition) value(); else /[\\/*]/.test(value);\n@logged class A {}')).toBe(true);
+    expect(containsDecorator('const regex = new /[\\/*]/;\n@logged class A {}')).toBe(true);
   });
 });

@@ -133,7 +133,10 @@ function resolvePackageEntry(
 
   const packageJsonPath = findPackageJsonPath(require, packageName, packageDirPath);
   const packageJson: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-  const entryPath = getPackageEntryPath(packageJson, conditions) ?? 'index.js';
+  const entryPath = getPackageEntryPath(packageJson, conditions);
+  if (!entryPath) {
+    throw new Error(`Failed to resolve package export for ${packageName}`);
+  }
   return path.join(path.dirname(packageJsonPath), entryPath);
 }
 
@@ -157,7 +160,8 @@ function findPackageJsonPath(require: NodeJS.Require, packageName: string, packa
 }
 
 function getPackageEntryPath(packageJson: PackageJson, conditions: Set<string>): string | undefined {
-  return normalizePackageEntryPath(getExportEntryPath(packageJson.exports, conditions)) ?? packageJson.main;
+  if (packageJson.exports) return normalizePackageEntryPath(getExportEntryPath(packageJson.exports, conditions));
+  return packageJson.main ?? 'index.js';
 }
 
 function getExportEntryPath(exportsField: unknown, conditions: Set<string>): string | undefined {
@@ -333,7 +337,23 @@ const regexLiteralPrefixCharacters = new Set([
   '<',
   '>',
 ]);
-const regexLiteralPrefixKeywords = new Set(['await', 'case', 'delete', 'in', 'instanceof', 'of', 'return', 'throw', 'typeof', 'void', 'yield']);
+const regexLiteralPrefixKeywords = new Set([
+  'await',
+  'case',
+  'default',
+  'delete',
+  'do',
+  'else',
+  'in',
+  'instanceof',
+  'new',
+  'of',
+  'return',
+  'throw',
+  'typeof',
+  'void',
+  'yield',
+]);
 
 function stripComments(code: string): string {
   let strippedCode = '';

@@ -99,7 +99,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   process.env.BUILD_TS_TARGET_CATEGORY = targetCategory;
   process.env.BUILD_TS_TARGET_DETAIL = targetDetail;
 
-  const outputOptionsList = getOutputOptionsList(argv, targetDetail, packageDirPath, isEsmPackage, inputs);
+  const outputOptionsList = getOutputOptionsList(argv, targetDetail, packageDirPath, isEsmPackage);
   if (verbose) {
     console.info('OutputOptions:', outputOptionsList);
   }
@@ -344,8 +344,7 @@ function getOutputOptionsList(
   argv: ArgumentsType<AnyBuilderType>,
   targetDetail: TargetDetail,
   packageDirPath: string,
-  isEsmPackage: boolean,
-  inputs: string[]
+  isEsmPackage: boolean
 ): OutputOptions[] {
   const outDirPath = path.join(packageDirPath, 'dist');
   if (targetDetail === 'app-node') {

@@ -91,7 +91,8 @@ async function createTypeScriptNativeConfig(
     rootDir: 'src',
   };
   if (await usesNodeProtocolImport(path.join(projectDirPath, 'src'))) {
-    const types = await collectTypePackages(path.join(projectDirPath, 'node_modules', '@types'));
+    const typesDirPath = findTypesDirPath(projectDirPath);
+    const types = typesDirPath ? await collectTypePackages(typesDirPath) : [];
     if (types.includes('node')) {
       compilerOptions.types = types;
     }
@@ -135,6 +136,18 @@ async function usesNodeProtocolImport(dirPath: string): Promise<boolean> {
     return false;
   }
   return false;
+}
+
+function findTypesDirPath(dirPath: string): string | undefined {
+  let currentDirPath = path.resolve(dirPath);
+  while (true) {
+    const typesDirPath = path.join(currentDirPath, 'node_modules', '@types');
+    if (fs.existsSync(typesDirPath)) return typesDirPath;
+
+    const parentDirPath = path.dirname(currentDirPath);
+    if (parentDirPath === currentDirPath) return undefined;
+    currentDirPath = parentDirPath;
+  }
 }
 
 async function collectTypePackages(typeRootsDirPath: string): Promise<string[]> {
