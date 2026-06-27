@@ -3,6 +3,7 @@ import { builtinModules } from 'node:module';
 import path from 'node:path';
 
 import type { TransformOptions } from '@babel/core';
+import MagicString from 'magic-string';
 import type { OutputOptions, Plugin, RolldownPluginOption, SourceMapInput } from 'rolldown';
 import { minify } from 'terser';
 import type { MinifyOptions, SourceMapOptions } from 'terser';
@@ -20,8 +21,13 @@ export function createExternalMatcher(
   namespace: string | undefined
 ): (id: string) => boolean {
   const externalDeps = collectExternalDependencies(argv, targetDetail, packageJson, namespace);
-  return (id) =>
-    isNodeBuiltin(id) || externalDeps.some((dependencyName) => id === dependencyName || id.startsWith(`${dependencyName}/`));
+  const bundledBuiltinNames = getBundledBuiltinNames(argv);
+  return (id) => {
+    if (bundledBuiltinNames.has(id)) return false;
+    return (
+      isNodeBuiltin(id) || externalDeps.some((dependencyName) => id === dependencyName || id.startsWith(`${dependencyName}/`))
+    );
+  };
 }
 
 export function setupPlugins(
@@ -80,10 +86,27 @@ function collectExternalDependencies(
     }
   }
 
-  if (shouldBundleSameNamespaceDependencies(targetDetail) && namespace) {
-    return externalDeps.filter((dependencyName) => !dependencyName.match(new RegExp(`^@?${namespace}(?:/.+)?`)));
+  const bundledBuiltinNames = getBundledBuiltinNames(argv);
+  const bundledNamespacePattern =
+    shouldBundleSameNamespaceDependencies(targetDetail) && namespace ? new RegExp(`^@?${namespace}(?:/.+)?`) : undefined;
+  return externalDeps.filter((dependencyName) => {
+    if (bundledBuiltinNames.has(dependencyName)) return false;
+    return !bundledNamespacePattern?.test(dependencyName);
+  });
+}
+
+function getBundledBuiltinNames(argv: ArgumentsType<typeof builder>): Set<string> {
+  return new Set(argv.bundleBuiltins?.map((item) => item.toString()) ?? []);
+}
+
+function getCodeWithPrependedDirectives(code: string, directives: string[]): { code: string; map: SourceMapInput } {
+  const directiveText = `${directives.map((directive) => JSON.stringify(directive)).join(';\n')};\n`;
+  const magicString = new MagicString(code);
+  magicString.prepend(directiveText);
+  return {
+    code: magicString.toString(),
+    map: magicString.generateMap({ hires: true }) as SourceMapInput,
   }
-  return externalDeps;
 }
 
 function shouldBundleSameNamespaceDependencies(targetDetail: TargetDetail): boolean {
@@ -140,7 +163,10 @@ function preserveDirectivesPlugin(): Plugin {
     name: 'preserve-directives',
     transform(code, id) {
       const directives = getDirectives(code);
-      if (directives.length === 0) return undefined;
+      if (directives.length === 0) {
+        directiveByModuleId.delete(id);
+        return undefined;
+      }
 
       directiveByModuleId.set(id, directives);
       return undefined;
@@ -151,18 +177,14 @@ function preserveDirectivesPlugin(): Plugin {
       const directives = Object.keys(chunk.modules).flatMap((moduleId) => directiveByModuleId.get(moduleId) ?? []);
       if (directives.length === 0) return undefined;
 
-      const directiveText = directives.map((directive) => JSON.stringify(directive)).join(';\n');
-      return {
-        code: `${directiveText};\n${code}`,
-        map: { mappings: '' },
-      };
+      return getCodeWithPrependedDirectives(code, directives);
     },
   };
 }
 
 function getDirectives(code: string): string[] {
   const directives: string[] = [];
-  const directivePattern = /^\s*(['"])([^'"]+)\1\s*;?/y;
+  const directivePattern = /\s*(['"])([^'"]+)\1\s*;?/y;
   let offset = 0;
   while (true) {
     directivePattern.lastIndex = offset;

@@ -2,7 +2,7 @@ import { spawnAsync } from '@willbooster/shared-lib-node';
 import { describe, expect, it } from 'vitest';
 
 describe('run env.ts', { timeout: 60_000 }, () => {
-  it.concurrent.each([
+  it.each([
     ['yarn start-prod run test/fixtures/env.ts --no-auto-cascade-env', '0'],
     ['yarn start-prod run test/fixtures/env.ts', '1'],
     ['yarn start-prod run test/fixtures/env.ts --env .env', '1'],
@@ -28,13 +28,13 @@ describe('run env.ts', { timeout: 60_000 }, () => {
 });
 
 describe('run hello.(c|m)ts', { timeout: 60_000 }, () => {
-  it.concurrent.each([
-    ['yarn start-prod run test/fixtures/hello.cts'],
-    ['yarn start-prod run test/fixtures/hello.mts'],
-  ])('%s', async (commandWithArgs) => {
-    const [command, ...args] = commandWithArgs.split(' ') as [string, ...string[]];
-    const execRet = await spawnAsync(command, args);
-    expect(execRet.stdout.trim().split('\n').at(-1)?.trim()).toBe('hello');
-    expect(execRet.status).toBe(0);
-  });
+  it.each([['yarn start-prod run test/fixtures/hello.cts'], ['yarn start-prod run test/fixtures/hello.mts']])(
+    '%s',
+    async (commandWithArgs) => {
+      const [command, ...args] = commandWithArgs.split(' ') as [string, ...string[]];
+      const execRet = await spawnAsync(command, args);
+      expect(execRet.stdout.trim().split('\n').at(-1)?.trim()).toBe('hello');
+      expect(execRet.status).toBe(0);
+    }
+  );
 });

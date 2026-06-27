@@ -1,4 +1,5 @@
 'use client';
+'use strict';
 import chunk from 'lodash.chunk';
 
 export function Component() {

@@ -22,6 +22,12 @@ describe('build', { timeout: 60_000 }, () => {
     expect(indexJs).to.not.includes('process.env.A');
   });
 
+  it('app-node with bundled builtin-name dependency', async () => {
+    await buildAndRunApp('app-node', 'app', '--inline', 'A', '--bundle-builtins', 'punycode');
+    const indexJs = await readGeneratedCode('test/fixtures/app-node/dist/index.js');
+    expect(indexJs).to.not.includes('require("punycode")');
+  });
+
   it('functions', async () => {
     await buildAndRunApp('functions', 'functions');
     const packageJson = await fs.promises.readFile('test/fixtures/functions/dist/package.json', 'utf8');
@@ -59,9 +65,13 @@ describe('build', { timeout: 60_000 }, () => {
       fs.promises.readFile(`test/fixtures/${dirName}/dist/index.js`, 'utf8'),
     ]);
     expect(cjsCode).to.includes('use client');
+    expect(cjsCode).to.includes('use strict');
     expect(esmCode).to.includes('use client');
+    expect(esmCode).to.includes('use strict');
     expect(cjsCode).to.includes('lodash.chunk');
     expect(esmCode).to.includes('lodash.chunk');
+    const sourceMap = JSON.parse(await fs.promises.readFile(`test/fixtures/${dirName}/dist/index.js.map`, 'utf8'));
+    expect(sourceMap.mappings).not.toBe('');
     await expectDeclarationFiles(dirName, {
       'index.d.ts': 'export declare function Component(): import("react/jsx-runtime").JSX.Element;',
     });

@@ -281,7 +281,7 @@ function getBundleBuiltinAliases(
   return Object.fromEntries(
     argv.bundleBuiltins.map((item) => {
       const packageName = item.toString();
-      return [packageName, require.resolve(packageName)];
+      return [packageName, require.resolve(`${packageName}/`)];
     })
   );
 }
