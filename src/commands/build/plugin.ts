@@ -319,18 +319,18 @@ function validateExportPatternMatch(patternMatch: string): void {
 }
 
 function validatePathSegments(pathValue: string, sourceValue: string): void {
+  const decodedPath = decodePathValue(pathValue, sourceValue);
   const invalidSegments = new Set(['', '.', '..', 'node_modules']);
-  for (const segment of pathValue.split(/[\\/]/u)) {
-    const decodedSegment = decodePathSegment(segment, sourceValue);
-    if (invalidSegments.has(decodedSegment)) {
+  for (const segment of decodedPath.split(/[\\/]/u)) {
+    if (invalidSegments.has(segment)) {
       throw new Error(`Invalid package export path segment in ${sourceValue}`);
     }
   }
 }
 
-function decodePathSegment(segment: string, sourceValue: string): string {
+function decodePathValue(pathValue: string, sourceValue: string): string {
   try {
-    return decodeURIComponent(segment).toLowerCase();
+    return decodeURIComponent(pathValue).toLowerCase();
   } catch {
     throw new Error(`Invalid package export path segment in ${sourceValue}`);
   }
