@@ -21,7 +21,7 @@ describe('run env.ts', { timeout: 60_000 }, () => {
     // ['yarn start-prod --cascade-env "" run test/fixtures/env.ts', '1'],
   ])('%s', async (commandWithArgs, expectedStdout) => {
     const [command, ...args] = commandWithArgs.split(' ') as [string, ...string[]];
-    const execRet = await spawnAsync(command, args);
+    const execRet = await spawnAsync(command, args, { env: getTestEnvironment() });
     expect(execRet.stdout.trim().split('\n').at(-1)?.trim()).toBe(expectedStdout);
     expect(execRet.status).toBe(0);
   });
@@ -32,9 +32,15 @@ describe('run hello.(c|m)ts', { timeout: 60_000 }, () => {
     '%s',
     async (commandWithArgs) => {
       const [command, ...args] = commandWithArgs.split(' ') as [string, ...string[]];
-      const execRet = await spawnAsync(command, args);
+      const execRet = await spawnAsync(command, args, { env: getTestEnvironment() });
       expect(execRet.stdout.trim().split('\n').at(-1)?.trim()).toBe('hello');
       expect(execRet.status).toBe(0);
     }
   );
 });
+
+function getTestEnvironment(): NodeJS.ProcessEnv {
+  const env = { ...process.env };
+  delete env.A;
+  return env;
+}

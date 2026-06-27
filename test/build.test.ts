@@ -8,9 +8,9 @@ describe('build', { timeout: 60_000 }, () => {
     await buildAndRunApp('app-node', 'app', '--inline', 'A');
     const indexJs = await readGeneratedCode('test/fixtures/app-node/dist/index.js');
     expect(indexJs).to.includes('("1")');
-    expect(indexJs).to.includes('__decorate');
-    expect(indexJs).to.includes('console.log(this)');
+    expect(indexJs).to.includes('console.log');
     expect(indexJs).to.not.includes('core-js');
+    expect(indexJs).to.not.includes('@logged');
     expect(indexJs).to.not.includes('process.env.A');
   });
 
@@ -19,6 +19,7 @@ describe('build', { timeout: 60_000 }, () => {
     const indexJs = await readGeneratedCode('test/fixtures/app-node/dist/index.js');
     expect(indexJs).to.includes('core-js');
     expect(indexJs).to.includes('("1")');
+    await runApp('app-node');
     expect(indexJs).to.not.includes('process.env.A');
   });
 
@@ -111,8 +112,7 @@ async function buildAndRunApp(dirName: string, subCommand: string, ...options: s
   expect(code).to.includes('lodash.chunk');
   expect(code).to.not.includes('lodash.compact');
   expect(code).to.includes('lodash.concat');
-  const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: `test/fixtures/${dirName}` });
-  expect(execRet.status).toBe(0);
+  await runApp(dirName);
 }
 
 async function buildWithCommand(dirName: string, subCommand: string, ...options: string[]): Promise<void> {
@@ -127,6 +127,11 @@ async function buildWithCommand(dirName: string, subCommand: string, ...options:
 async function readGeneratedCode(filePath: string): Promise<string> {
   const code = await fs.promises.readFile(filePath, 'utf8');
   return code.split('\n//# sourceMappingURL=')[0] ?? code;
+}
+
+async function runApp(dirName: string): Promise<void> {
+  const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: `test/fixtures/${dirName}` });
+  expect(execRet.status).toBe(0);
 }
 
 async function expectDeclarationFiles(dirName: string, expectedDeclarations: Record<string, string>): Promise<void> {

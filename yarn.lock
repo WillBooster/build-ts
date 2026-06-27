@@ -3403,7 +3403,6 @@ __metadata:
     core-js-pure: "npm:3.49.0"
     date-time: "npm:4.0.0"
     lefthook: "npm:2.1.9"
-    magic-string: "npm:0.30.21"
     oxfmt: "npm:0.56.0"
     oxlint: "npm:1.71.0"
     oxlint-tsgolint: "npm:0.23.0"
@@ -5374,7 +5373,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"magic-string@npm:0.30.21, magic-string@npm:^0.30.21":
+"magic-string@npm:^0.30.21":
   version: 0.30.21
   resolution: "magic-string@npm:0.30.21"
   dependencies:

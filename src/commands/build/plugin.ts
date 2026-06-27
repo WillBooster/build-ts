@@ -3,7 +3,6 @@ import { builtinModules } from 'node:module';
 import path from 'node:path';
 
 import type { TransformOptions } from '@babel/core';
-import MagicString from 'magic-string';
 import type { OutputOptions, Plugin, RolldownPluginOption, SourceMapInput } from 'rolldown';
 import { minify } from 'terser';
 import type { MinifyOptions, SourceMapOptions } from 'terser';
@@ -24,6 +23,7 @@ export function createExternalMatcher(
   const bundledBuiltinNames = getBundledBuiltinNames(argv);
   return (id) => {
     if (bundledBuiltinNames.has(id)) return false;
+    if (isCoreJsModule(id)) return true;
     return (
       isNodeBuiltin(id) || externalDeps.some((dependencyName) => id === dependencyName || id.startsWith(`${dependencyName}/`))
     );
@@ -39,11 +39,10 @@ export function setupPlugins(
   ];
   if (argv['core-js'] || argv['core-js-proposals']) {
     plugins.push(babelCoreJsPlugin());
+  } else {
+    plugins.push(babelDecoratorsPlugin());
   }
-  plugins.push(
-    ...(outputOptionsList.some((opts) => opts.preserveModules) ? [preserveDirectivesPlugin()] : []),
-    textPlugin()
-  );
+  plugins.push(textPlugin());
   if (argv.minify && !outputOptionsList.some((opts) => opts.preserveModules)) {
     plugins.push(terserPlugin());
   }
@@ -99,22 +98,16 @@ function getBundledBuiltinNames(argv: ArgumentsType<typeof builder>): Set<string
   return new Set(argv.bundleBuiltins?.map((item) => item.toString()) ?? []);
 }
 
-function getCodeWithPrependedDirectives(code: string, directives: string[]): { code: string; map: SourceMapInput } {
-  const directiveText = `${directives.map((directive) => JSON.stringify(directive)).join(';\n')};\n`;
-  const magicString = new MagicString(code);
-  magicString.prepend(directiveText);
-  return {
-    code: magicString.toString(),
-    map: magicString.generateMap({ hires: true }) as SourceMapInput,
-  }
-}
-
 function shouldBundleSameNamespaceDependencies(targetDetail: TargetDetail): boolean {
   return targetDetail === 'app-node' || targetDetail === 'functions';
 }
 
 function isNodeBuiltin(id: string): boolean {
   return id.startsWith('node:') || builtinModules.includes(id);
+}
+
+function isCoreJsModule(id: string): boolean {
+  return id === 'core-js' || id.startsWith('core-js/');
 }
 
 function keepImportPlugin(moduleNames: string[]): Plugin {
@@ -127,12 +120,22 @@ function keepImportPlugin(moduleNames: string[]): Plugin {
 }
 
 function babelCoreJsPlugin(): Plugin {
-  const extensions = ['.cjs', '.mjs', '.js', '.jsx', '.json', '.cts', '.mts', '.ts', '.tsx'];
+  return babelPlugin('babel-core-js', () => true);
+}
+
+function babelDecoratorsPlugin(): Plugin {
+  return babelPlugin('babel-decorators', containsDecorator);
+}
+
+function babelPlugin(name: string, shouldTransform: (code: string) => boolean): Plugin {
+  const extensions = ['.cjs', '.mjs', '.js', '.jsx', '.cts', '.mts', '.ts', '.tsx'];
   const babelConfigPath = path.join(getBuildTsRootPath(), 'babel.config.mjs');
   return {
-    name: 'babel-core-js',
+    name,
     async transform(code, id) {
-      if (!extensions.some((extension) => id.endsWith(extension)) || id.includes('/node_modules/')) return undefined;
+      if (!shouldTransform(code) || !extensions.some((extension) => id.endsWith(extension)) || id.includes('/node_modules/')) {
+        return undefined;
+      }
 
       const { transformAsync } = await import('@babel/core');
       const options: TransformOptions = {
@@ -157,43 +160,8 @@ function babelCoreJsPlugin(): Plugin {
   };
 }
 
-function preserveDirectivesPlugin(): Plugin {
-  const directiveByModuleId = new Map<string, string[]>();
-  return {
-    name: 'preserve-directives',
-    transform(code, id) {
-      const directives = getDirectives(code);
-      if (directives.length === 0) {
-        directiveByModuleId.delete(id);
-        return undefined;
-      }
-
-      directiveByModuleId.set(id, directives);
-      return undefined;
-    },
-    renderChunk(code, chunk, options) {
-      if (!options.preserveModules) return undefined;
-
-      const directives = Object.keys(chunk.modules).flatMap((moduleId) => directiveByModuleId.get(moduleId) ?? []);
-      if (directives.length === 0) return undefined;
-
-      return getCodeWithPrependedDirectives(code, directives);
-    },
-  };
-}
-
-function getDirectives(code: string): string[] {
-  const directives: string[] = [];
-  const directivePattern = /\s*(['"])([^'"]+)\1\s*;?/y;
-  let offset = 0;
-  while (true) {
-    directivePattern.lastIndex = offset;
-    const match = directivePattern.exec(code);
-    if (!match) return directives;
-
-    directives.push(match[2] ?? '');
-    offset = directivePattern.lastIndex;
-  }
+function containsDecorator(code: string): boolean {
+  return /^\s*@/m.test(code);
 }
 
 function textPlugin(): Plugin {

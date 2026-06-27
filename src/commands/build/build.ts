@@ -364,7 +364,18 @@ function getOutputOptionsList(
   isEsmPackage: boolean
 ): OutputOptions[] {
   const outDirPath = path.join(packageDirPath, 'dist');
-  if (targetDetail === 'app-node' || targetDetail === 'functions') {
+  if (targetDetail === 'app-node') {
+    return [
+      {
+        dir: outDirPath,
+        format: isEsmOutput(isEsmPackage, argv.moduleType) ? 'module' : 'commonjs',
+        minify: false,
+        sourcemap: argv.sourcemap && 'inline',
+      },
+    ];
+  }
+
+  if (targetDetail === 'functions') {
     return [
       {
         dir: outDirPath,
