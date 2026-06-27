@@ -1253,6 +1253,7 @@ function createFixtureCommandEnv(): NodeJS.ProcessEnv {
   const fixtureEnv = { ...process.env };
   removeNpmAndYarnEnvironmentVariables(fixtureEnv);
   fixtureEnv.YARN_ENABLE_HARDENED_MODE = '0';
+  delete fixtureEnv.CI;
   delete fixtureEnv.GITHUB_ACTIONS;
   delete fixtureEnv.GITHUB_EVENT_NAME;
   delete fixtureEnv.GITHUB_EVENT_PATH;
