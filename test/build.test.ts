@@ -6,7 +6,18 @@ import { describe, expect, it } from 'vitest';
 describe('build', { timeout: 60_000 }, () => {
   it('app-node', async () => {
     await buildAndRunApp('app-node', 'app', '--inline', 'A');
-    const indexJs = await fs.promises.readFile('test/fixtures/app-node/dist/index.js', 'utf8');
+    const indexJs = await readGeneratedCode('test/fixtures/app-node/dist/index.js');
+    expect(indexJs).to.includes('("1")');
+    expect(indexJs).to.includes('__decorate');
+    expect(indexJs).to.includes('console.log(this)');
+    expect(indexJs).to.not.includes('core-js');
+    expect(indexJs).to.not.includes('process.env.A');
+  });
+
+  it('app-node with core-js', async () => {
+    await buildWithCommand('app-node', 'app', '--inline', 'A', '--core-js');
+    const indexJs = await readGeneratedCode('test/fixtures/app-node/dist/index.js');
+    expect(indexJs).to.includes('core-js');
     expect(indexJs).to.includes('("1")');
     expect(indexJs).to.not.includes('process.env.A');
   });
@@ -101,6 +112,11 @@ async function buildWithCommand(dirName: string, subCommand: string, ...options:
     stdio: 'inherit',
   });
   expect(buildRet.status).toBe(0);
+}
+
+async function readGeneratedCode(filePath: string): Promise<string> {
+  const code = await fs.promises.readFile(filePath, 'utf8');
+  return code.split('\n//# sourceMappingURL=')[0] ?? code;
 }
 
 async function expectDeclarationFiles(dirName: string, expectedDeclarations: Record<string, string>): Promise<void> {
