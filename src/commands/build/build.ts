@@ -12,7 +12,7 @@ import { onExit } from 'signal-exit';
 import type { PackageJson } from 'type-fest';
 import type { CommandModule } from 'yargs';
 
-import { loadEnvironmentVariablesWithCache } from '../../env.js';
+import { createEnvironmentVariablesDefinition, loadEnvironmentVariablesWithCache } from '../../env.js';
 import type { ArgumentsType, TargetCategory, TargetDetail } from '../../types.js';
 import { allTargetCategories } from '../../types.js';
 import { getNamespaceAndName, readPackageJson } from '../../utils.js';
@@ -124,7 +124,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
             inputs.map((input, index) => [index === 0 ? 'index' : path.basename(input, path.extname(input)), input])
           )
         : inputs,
-    plugins: setupPlugins(argv, targetDetail, packageJson, namespace, packageDirPath, outputOptionsList),
+    plugins: setupPlugins(argv, outputOptionsList),
     resolve: {
       alias: getBundleBuiltinAliases(argv, packageDirPath),
       extensionAlias: {
@@ -134,6 +134,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
       },
       extensions: ['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'],
     },
+    transform: getTransformOptions(argv, packageDirPath),
     watch: argv.watch ? { clearScreen: false } : undefined,
   };
 
@@ -184,6 +185,15 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
       process.exit(1);
     }
   }
+}
+
+function getTransformOptions(argv: ArgumentsType<AnyBuilderType>, packageDirPath: string): RolldownOptions['transform'] {
+  return {
+    decorator: { legacy: true },
+    define: createEnvironmentVariablesDefinition(argv, packageDirPath),
+    jsx: 'react-jsx',
+    target: 'es2022',
+  };
 }
 
 function watchRolldown(

@@ -2,14 +2,12 @@ import fs from 'node:fs';
 import { builtinModules } from 'node:module';
 import path from 'node:path';
 
-import { transformAsync } from '@babel/core';
+import type { TransformOptions } from '@babel/core';
 import type { OutputOptions, Plugin, RolldownPluginOption, SourceMapInput } from 'rolldown';
-import { replacePlugin } from 'rolldown/plugins';
 import { minify } from 'terser';
 import type { MinifyOptions, SourceMapOptions } from 'terser';
 import type { PackageJson } from 'type-fest';
 
-import { createEnvironmentVariablesDefinition } from '../../env.js';
 import type { ArgumentsType, TargetDetail } from '../../types.js';
 import { getBuildTsRootPath } from '../../utils.js';
 
@@ -28,25 +26,15 @@ export function createExternalMatcher(
 
 export function setupPlugins(
   argv: ArgumentsType<typeof builder>,
-  targetDetail: TargetDetail,
-  packageJson: PackageJson,
-  namespace: string | undefined,
-  packageDirPath: string,
   outputOptionsList: OutputOptions[]
 ): RolldownPluginOption[] {
   const plugins: RolldownPluginOption[] = [
-    replacePlugin(createEnvironmentVariablesDefinition(argv, packageDirPath), {
-      preventAssignment: true,
-    }),
     keepImportPlugin(argv.keepImport?.map((item) => item.toString()) ?? []),
   ];
-  const isBabelHelpersBundled =
-    targetDetail === 'app-node' ||
-    targetDetail === 'functions' ||
-    !collectExternalDependencies(argv, targetDetail, packageJson, namespace).includes('@babel/runtime');
-  process.env.BUILDTS_USE_BABLE_RUNTIME = isBabelHelpersBundled ? '' : '1';
+  if (argv['core-js'] || argv['core-js-proposals']) {
+    plugins.push(babelCoreJsPlugin());
+  }
   plugins.push(
-    babelPlugin(),
     ...(outputOptionsList.some((opts) => opts.preserveModules) ? [preserveDirectivesPlugin()] : []),
     textPlugin()
   );
@@ -115,15 +103,16 @@ function keepImportPlugin(moduleNames: string[]): Plugin {
   };
 }
 
-function babelPlugin(): Plugin {
+function babelCoreJsPlugin(): Plugin {
   const extensions = ['.cjs', '.mjs', '.js', '.jsx', '.json', '.cts', '.mts', '.ts', '.tsx'];
   const babelConfigPath = path.join(getBuildTsRootPath(), 'babel.config.mjs');
   return {
-    name: 'babel',
+    name: 'babel-core-js',
     async transform(code, id) {
       if (!extensions.some((extension) => id.endsWith(extension)) || id.includes('/node_modules/')) return undefined;
 
-      const result = await transformAsync(code, {
+      const { transformAsync } = await import('@babel/core');
+      const options: TransformOptions = {
         caller: {
           name: 'build-ts',
           supportsDynamicImport: true,
@@ -133,7 +122,8 @@ function babelPlugin(): Plugin {
         configFile: babelConfigPath,
         filename: id,
         sourceMaps: true,
-      });
+      };
+      const result = await transformAsync(code, options);
       if (!result?.code) return undefined;
 
       return {
