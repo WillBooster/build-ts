@@ -24,7 +24,7 @@ export function createExternalMatcher(
   const externalDeps = collectExternalDependencies(argv, targetDetail, packageJson, namespace);
   const bundledBuiltinNames = getBundledBuiltinNames(argv);
   return (id) => {
-    if (bundledBuiltinNames.has(normalizeNodeBuiltinName(id))) return false;
+    if (getBundledBuiltinPackageName(id, bundledBuiltinNames)) return false;
     return (
       isNodeBuiltin(id) || externalDeps.some((dependencyName) => id === dependencyName || id.startsWith(`${dependencyName}/`))
     );
@@ -114,10 +114,16 @@ function bundleBuiltinsPlugin(argv: ArgumentsType<typeof builder>, packageDirPat
   return {
     name: 'bundle-builtins',
     resolveId(source, _importer, extraOptions) {
-      const packageName = normalizeNodeBuiltinName(source);
-      if (!bundledBuiltinNames.has(packageName)) return undefined;
+      const packageName = getBundledBuiltinPackageName(source, bundledBuiltinNames);
+      if (!packageName) return undefined;
 
-      return resolvePackageEntry(require, packageName, packageDirPath, getPackageExportConditions(extraOptions.kind));
+      return resolvePackageEntry(
+        require,
+        packageName,
+        packageDirPath,
+        getPackageExportConditions(extraOptions.kind),
+        getPackageSubpath(source, packageName)
+      );
     },
   };
 }
@@ -126,14 +132,17 @@ function resolvePackageEntry(
   require: NodeJS.Require,
   packageName: string,
   packageDirPath: string,
-  conditions: Set<string>
+  conditions: Set<string>,
+  subpath: string
 ): string {
-  const resolvedPath = require.resolve(packageName);
-  if (resolvedPath !== packageName && !resolvedPath.startsWith('node:')) return resolvedPath;
+  if (subpath === '.') {
+    const resolvedPath = require.resolve(packageName);
+    if (resolvedPath !== packageName && !resolvedPath.startsWith('node:')) return resolvedPath;
+  }
 
   const packageJsonPath = findPackageJsonPath(require, packageName, packageDirPath);
   const packageJson: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-  const entryPath = getPackageEntryPath(packageJson, conditions);
+  const entryPath = getPackageEntryPath(packageJson, conditions, subpath);
   if (!entryPath) {
     throw new Error(`Failed to resolve package export for ${packageName}`);
   }
@@ -159,16 +168,19 @@ function findPackageJsonPath(require: NodeJS.Require, packageName: string, packa
   throw new Error(`Failed to resolve package.json for ${packageName}`);
 }
 
-function getPackageEntryPath(packageJson: PackageJson, conditions: Set<string>): string | undefined {
-  if (packageJson.exports) return normalizePackageEntryPath(getExportEntryPath(packageJson.exports, conditions));
-  return packageJson.main ?? 'index.js';
+function getPackageEntryPath(packageJson: PackageJson, conditions: Set<string>, subpath: string): string | undefined {
+  if (packageJson.exports) return normalizePackageEntryPath(getExportEntryPath(packageJson.exports, conditions, subpath));
+  if (subpath === '.') return packageJson.main ?? 'index.js';
+  return normalizePackageEntryPath(subpath);
 }
 
-function getExportEntryPath(exportsField: unknown, conditions: Set<string>): string | undefined {
-  if (typeof exportsField === 'string') return exportsField;
+function getExportEntryPath(exportsField: unknown, conditions: Set<string>, subpath: string): string | undefined {
+  if (typeof exportsField === 'string') return subpath === '.' ? exportsField : undefined;
   if (Array.isArray(exportsField)) {
+    if (subpath !== '.') return undefined;
+
     for (const exportEntry of exportsField) {
-      const entryPath = getExportEntryPath(exportEntry, conditions);
+      const entryPath = getExportEntryPath(exportEntry, conditions, subpath);
       if (entryPath) return entryPath;
     }
     return undefined;
@@ -176,20 +188,40 @@ function getExportEntryPath(exportsField: unknown, conditions: Set<string>): str
   if (!exportsField || typeof exportsField !== 'object') return undefined;
 
   const exportRecord = exportsField as Record<string, unknown>;
-  const rootExport = exportRecord['.'] ?? exportRecord;
-  if (rootExport !== exportsField) return getExportEntryPath(rootExport, conditions);
+  if (hasExportSubpaths(exportRecord)) {
+    const subpathExport = exportRecord[subpath];
+    return subpathExport === undefined ? undefined : getExportEntryPath(subpathExport, conditions, '.');
+  }
+  if (subpath !== '.') return undefined;
 
   for (const [condition, value] of Object.entries(exportRecord)) {
     if (!conditions.has(condition)) continue;
 
-    const entryPath = getExportEntryPath(value, conditions);
+    const entryPath = getExportEntryPath(value, conditions, subpath);
     if (entryPath) return entryPath;
   }
   return undefined;
 }
 
+function hasExportSubpaths(exportRecord: Record<string, unknown>): boolean {
+  return Object.keys(exportRecord).some((key) => key === '.' || key.startsWith('./'));
+}
+
 function normalizePackageEntryPath(entryPath: string | undefined): string | undefined {
   return entryPath?.replace(/^\.\//, '');
+}
+
+function getBundledBuiltinPackageName(id: string, bundledBuiltinNames: Set<string>): string | undefined {
+  const normalizedId = normalizeNodeBuiltinName(id);
+  for (const packageName of bundledBuiltinNames) {
+    if (normalizedId === packageName || normalizedId.startsWith(`${packageName}/`)) return packageName;
+  }
+  return undefined;
+}
+
+function getPackageSubpath(id: string, packageName: string): string {
+  const normalizedId = normalizeNodeBuiltinName(id);
+  return normalizedId === packageName ? '.' : `./${normalizedId.slice(packageName.length + 1)}`;
 }
 
 function normalizeNodeBuiltinName(id: string): string {
