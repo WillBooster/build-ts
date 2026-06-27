@@ -1,9 +1,11 @@
 import fs from 'node:fs';
 import { builtinModules } from 'node:module';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 
 import type { TransformOptions } from '@babel/core';
-import type { OutputOptions, Plugin, RolldownPluginOption, SourceMapInput } from 'rolldown';
+import MagicString from 'magic-string';
+import type { ImportKind, OutputOptions, Plugin, RolldownPluginOption, SourceMapInput } from 'rolldown';
 import { minify } from 'terser';
 import type { MinifyOptions, SourceMapOptions } from 'terser';
 import type { PackageJson } from 'type-fest';
@@ -22,8 +24,7 @@ export function createExternalMatcher(
   const externalDeps = collectExternalDependencies(argv, targetDetail, packageJson, namespace);
   const bundledBuiltinNames = getBundledBuiltinNames(argv);
   return (id) => {
-    if (bundledBuiltinNames.has(id)) return false;
-    if (isCoreJsModule(id)) return true;
+    if (bundledBuiltinNames.has(normalizeNodeBuiltinName(id))) return false;
     return (
       isNodeBuiltin(id) || externalDeps.some((dependencyName) => id === dependencyName || id.startsWith(`${dependencyName}/`))
     );
@@ -32,13 +33,18 @@ export function createExternalMatcher(
 
 export function setupPlugins(
   argv: ArgumentsType<typeof builder>,
-  outputOptionsList: OutputOptions[]
+  outputOptionsList: OutputOptions[],
+  packageDirPath: string
 ): RolldownPluginOption[] {
   const plugins: RolldownPluginOption[] = [
+    bundleBuiltinsPlugin(argv, packageDirPath),
     keepImportPlugin(argv.keepImport?.map((item) => item.toString()) ?? []),
   ];
   if (argv['core-js'] || argv['core-js-proposals']) {
     plugins.push(babelCoreJsPlugin());
+    if (!outputOptionsList.some((opts) => opts.preserveModules)) {
+      plugins.push(commonJsRuntimePreludePlugin());
+    }
   } else {
     plugins.push(babelDecoratorsPlugin());
   }
@@ -89,25 +95,105 @@ function collectExternalDependencies(
   const bundledNamespacePattern =
     shouldBundleSameNamespaceDependencies(targetDetail) && namespace ? new RegExp(`^@?${namespace}(?:/.+)?`) : undefined;
   return externalDeps.filter((dependencyName) => {
-    if (bundledBuiltinNames.has(dependencyName)) return false;
+    if (bundledBuiltinNames.has(normalizeNodeBuiltinName(dependencyName))) return false;
     return !bundledNamespacePattern?.test(dependencyName);
   });
 }
 
 function getBundledBuiltinNames(argv: ArgumentsType<typeof builder>): Set<string> {
-  return new Set(argv.bundleBuiltins?.map((item) => item.toString()) ?? []);
+  return new Set(argv.bundleBuiltins?.map((item) => normalizeNodeBuiltinName(item.toString())) ?? []);
 }
 
 function shouldBundleSameNamespaceDependencies(targetDetail: TargetDetail): boolean {
   return targetDetail === 'app-node' || targetDetail === 'functions';
 }
 
-function isNodeBuiltin(id: string): boolean {
-  return id.startsWith('node:') || builtinModules.includes(id);
+function bundleBuiltinsPlugin(argv: ArgumentsType<typeof builder>, packageDirPath: string): Plugin {
+  const bundledBuiltinNames = getBundledBuiltinNames(argv);
+  const require = createRequire(path.join(packageDirPath, 'package.json'));
+  return {
+    name: 'bundle-builtins',
+    resolveId(source, _importer, extraOptions) {
+      const packageName = normalizeNodeBuiltinName(source);
+      if (!bundledBuiltinNames.has(packageName)) return undefined;
+
+      return resolvePackageEntry(require, packageName, packageDirPath, getPackageExportConditions(extraOptions.kind));
+    },
+  };
 }
 
-function isCoreJsModule(id: string): boolean {
-  return id === 'core-js' || id.startsWith('core-js/');
+function resolvePackageEntry(
+  require: NodeJS.Require,
+  packageName: string,
+  packageDirPath: string,
+  conditions: Set<string>
+): string {
+  const resolvedPath = require.resolve(packageName);
+  if (resolvedPath !== packageName && !resolvedPath.startsWith('node:')) return resolvedPath;
+
+  const packageJsonPath = findPackageJsonPath(require, packageName, packageDirPath);
+  const packageJson: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+  const entryPath = getPackageEntryPath(packageJson, conditions) ?? 'index.js';
+  return path.join(path.dirname(packageJsonPath), entryPath);
+}
+
+function getPackageExportConditions(importKind: ImportKind): Set<string> {
+  const conditions = new Set(['node', 'default']);
+  if (importKind === 'require-call') {
+    conditions.add('require');
+  } else {
+    conditions.add('import');
+  }
+  return conditions;
+}
+
+function findPackageJsonPath(require: NodeJS.Require, packageName: string, packageDirPath: string): string {
+  const modulePaths = require.resolve.paths(packageName) ?? require.resolve.paths('__build_ts_package_lookup__') ?? [];
+  for (const modulePath of [path.join(packageDirPath, 'node_modules'), ...modulePaths]) {
+    const packageJsonPath = path.join(modulePath, packageName, 'package.json');
+    if (fs.existsSync(packageJsonPath)) return fs.realpathSync(packageJsonPath);
+  }
+  throw new Error(`Failed to resolve package.json for ${packageName}`);
+}
+
+function getPackageEntryPath(packageJson: PackageJson, conditions: Set<string>): string | undefined {
+  return normalizePackageEntryPath(getExportEntryPath(packageJson.exports, conditions)) ?? packageJson.main;
+}
+
+function getExportEntryPath(exportsField: unknown, conditions: Set<string>): string | undefined {
+  if (typeof exportsField === 'string') return exportsField;
+  if (Array.isArray(exportsField)) {
+    for (const exportEntry of exportsField) {
+      const entryPath = getExportEntryPath(exportEntry, conditions);
+      if (entryPath) return entryPath;
+    }
+    return undefined;
+  }
+  if (!exportsField || typeof exportsField !== 'object') return undefined;
+
+  const exportRecord = exportsField as Record<string, unknown>;
+  const rootExport = exportRecord['.'] ?? exportRecord;
+  if (rootExport !== exportsField) return getExportEntryPath(rootExport, conditions);
+
+  for (const [condition, value] of Object.entries(exportRecord)) {
+    if (!conditions.has(condition)) continue;
+
+    const entryPath = getExportEntryPath(value, conditions);
+    if (entryPath) return entryPath;
+  }
+  return undefined;
+}
+
+function normalizePackageEntryPath(entryPath: string | undefined): string | undefined {
+  return entryPath?.replace(/^\.\//, '');
+}
+
+function normalizeNodeBuiltinName(id: string): string {
+  return id.startsWith('node:') ? id.slice('node:'.length) : id;
+}
+
+function isNodeBuiltin(id: string): boolean {
+  return id.startsWith('node:') || builtinModules.includes(id);
 }
 
 function keepImportPlugin(moduleNames: string[]): Plugin {
@@ -133,7 +219,7 @@ function babelPlugin(name: string, shouldTransform: (code: string) => boolean): 
   return {
     name,
     async transform(code, id) {
-      if (!shouldTransform(code) || !extensions.some((extension) => id.endsWith(extension)) || id.includes('/node_modules/')) {
+      if (!shouldTransform(code) || !extensions.some((extension) => id.endsWith(extension)) || isBabelExcludedPath(id)) {
         return undefined;
       }
 
@@ -160,8 +246,195 @@ function babelPlugin(name: string, shouldTransform: (code: string) => boolean): 
   };
 }
 
-function containsDecorator(code: string): boolean {
-  return /^\s*@/m.test(code);
+function isBabelExcludedPath(id: string): boolean {
+  return id.startsWith('\0') || isNodeModulesPath(id);
+}
+
+function isNodeModulesPath(id: string): boolean {
+  return id.includes('/node_modules/') || id.includes('\\node_modules\\');
+}
+
+function commonJsRuntimePreludePlugin(): Plugin {
+  return {
+    name: 'commonjs-runtime-prelude',
+    renderChunk(code, _chunk, options) {
+      const prelude = getCommonJsRuntimePrelude(code, options.format);
+      if (!prelude) return undefined;
+
+      const magicString = new MagicString(code);
+      insertPrelude(magicString, code, prelude);
+      return {
+        code: magicString.toString(),
+        map: magicString.generateMap({ hires: true }) as SourceMapInput,
+      };
+    },
+  };
+}
+
+const commonJsRuntimePrelude = `var __create=Object.create,__defProp=Object.defineProperty,__getOwnPropDesc=Object.getOwnPropertyDescriptor,__getOwnPropNames=Object.getOwnPropertyNames,__getProtoOf=Object.getPrototypeOf,__hasOwnProp=Object.prototype.hasOwnProperty,__commonJSMin=(moduleFactory,module)=>()=>(module||(module={exports:{}},moduleFactory(module.exports,module)),module.exports),__copyProps=(to,from,except,descriptor)=>{if(from&&"object"==typeof from||"function"==typeof from)for(var key,names=__getOwnPropNames(from),index=0,length=names.length;index<length;index++)key=names[index],__hasOwnProp.call(to,key)||key===except||__defProp(to,key,{get:(key=>from[key]).bind(null,key),enumerable:!(descriptor=__getOwnPropDesc(from,key))||descriptor.enumerable});return to},__toESM=(mod,isNodeMode,target)=>(target=null!=mod?__create(__getProtoOf(mod)):{},__copyProps(!isNodeMode&&mod&&mod.__esModule?target:__defProp(target,"default",{value:mod,enumerable:!0}),mod));`;
+
+function getCommonJsRuntimePrelude(code: string, format: string): string | undefined {
+  if (!code.includes('__commonJSMin')) return undefined;
+
+  // Rolldown 1.1.2 can emit helpers after core-js wrappers that already call them.
+  // Seeding the helpers before Terser prevents minified output from calling uninitialized aliases.
+  if (isCommonJsFormat(format)) return code.includes('__toESM') ? commonJsRuntimePrelude : undefined;
+  return `var __commonJSMin=(moduleFactory,module)=>()=>(module||(module={exports:{}},moduleFactory(module.exports,module)),module.exports);`;
+}
+
+function isCommonJsFormat(format: string): boolean {
+  return format === 'cjs' || format === 'commonjs';
+}
+
+function insertPrelude(magicString: MagicString, code: string, prelude: string): void {
+  magicString.appendLeft(getPreludeInsertionIndex(code), `${prelude}\n`);
+}
+
+function getPreludeInsertionIndex(code: string): number {
+  let index = 0;
+  if (code.startsWith('#!')) {
+    const firstLineEnd = code.indexOf('\n');
+    if (firstLineEnd === -1) return code.length;
+    index = firstLineEnd + 1;
+  }
+
+  const directivePattern = /(?:(?:"[^"\n]*"|'[^'\n]*');?\s*)/y;
+  while (true) {
+    directivePattern.lastIndex = index;
+    const match = directivePattern.exec(code);
+    if (!match?.[0]) return index;
+    index = directivePattern.lastIndex;
+  }
+}
+
+export function containsDecorator(code: string): boolean {
+  return /(^|[^\p{ID_Continue}*])@\s*[(\p{ID_Start}$_]/u.test(stripComments(code));
+}
+
+const regexLiteralPrefixCharacters = new Set([
+  '(',
+  ')',
+  '[',
+  '{',
+  ':',
+  ',',
+  ';',
+  '=',
+  '!',
+  '?',
+  '&',
+  '|',
+  '^',
+  '~',
+  '+',
+  '-',
+  '*',
+  '%',
+  '<',
+  '>',
+]);
+const regexLiteralPrefixKeywords = new Set(['await', 'case', 'delete', 'in', 'instanceof', 'of', 'return', 'throw', 'typeof', 'void', 'yield']);
+
+function stripComments(code: string): string {
+  let strippedCode = '';
+  let index = 0;
+  let quote: '"' | "'" | '`' | undefined;
+
+  while (index < code.length) {
+    const current = code[index];
+    const next = code[index + 1];
+
+    if (quote) {
+      if (current === '\\') {
+        strippedCode += ' ';
+        if (next) strippedCode += next === '\n' ? '\n' : ' ';
+        index += 2;
+        continue;
+      }
+      if (current === quote) quote = undefined;
+      strippedCode += current === '\n' ? '\n' : ' ';
+      index++;
+      continue;
+    }
+
+    if (current === '"' || current === "'" || current === '`') {
+      quote = current;
+      strippedCode += ' ';
+      index++;
+      continue;
+    }
+
+    if (current === '/' && next !== '/' && next !== '*' && isRegexLiteralStart(strippedCode)) {
+      const regexEndIndex = getRegexLiteralEndIndex(code, index);
+      strippedCode += replaceWithWhitespace(code.slice(index, regexEndIndex));
+      index = regexEndIndex;
+      continue;
+    }
+
+    if (current === '/' && next === '/') {
+      index += 2;
+      while (index < code.length && code[index] !== '\n') index++;
+      strippedCode += '\n';
+      continue;
+    }
+
+    if (current === '/' && next === '*') {
+      index += 2;
+      while (index < code.length && !(code[index] === '*' && code[index + 1] === '/')) {
+        strippedCode += code[index] === '\n' ? '\n' : ' ';
+        index++;
+      }
+      index += 2;
+      continue;
+    }
+
+    strippedCode += current;
+    index++;
+  }
+  return strippedCode;
+}
+
+function isRegexLiteralStart(strippedCode: string): boolean {
+  const previousIndex = findPreviousSignificantIndex(strippedCode);
+  if (previousIndex === -1) return true;
+  if (regexLiteralPrefixCharacters.has(strippedCode[previousIndex] ?? '')) return true;
+
+  const previousKeyword = strippedCode.slice(0, previousIndex + 1).match(/[\p{ID_Start}$_][\p{ID_Continue}$\u200c\u200d]*$/u)?.[0];
+  return previousKeyword ? regexLiteralPrefixKeywords.has(previousKeyword) : false;
+}
+
+function findPreviousSignificantIndex(code: string): number {
+  for (let index = code.length - 1; index >= 0; index--) {
+    if (!/\s/u.test(code[index] ?? '')) return index;
+  }
+  return -1;
+}
+
+function getRegexLiteralEndIndex(code: string, startIndex: number): number {
+  let index = startIndex + 1;
+  let inCharacterClass = false;
+
+  while (index < code.length) {
+    const current = code[index];
+    if (current === '\\') {
+      index += 2;
+      continue;
+    }
+    if (current === '[') inCharacterClass = true;
+    if (current === ']') inCharacterClass = false;
+    if (current === '/' && !inCharacterClass) {
+      index++;
+      while (/[\p{ID_Continue}$\u200c\u200d]/u.test(code[index] ?? '')) index++;
+      return index;
+    }
+    if (current === '\n') return index;
+    index++;
+  }
+  return index;
+}
+
+function replaceWithWhitespace(value: string): string {
+  return value.replace(/[^\n]/gu, ' ');
 }
 
 function textPlugin(): Plugin {

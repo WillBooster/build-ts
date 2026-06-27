@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import { createRequire } from 'node:module';
 import path from 'node:path';
 
 import chalk from 'chalk';
@@ -100,7 +99,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   process.env.BUILD_TS_TARGET_CATEGORY = targetCategory;
   process.env.BUILD_TS_TARGET_DETAIL = targetDetail;
 
-  const outputOptionsList = getOutputOptionsList(argv, targetDetail, packageDirPath, isEsmPackage);
+  const outputOptionsList = getOutputOptionsList(argv, targetDetail, packageDirPath, isEsmPackage, inputs);
   if (verbose) {
     console.info('OutputOptions:', outputOptionsList);
   }
@@ -124,9 +123,8 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
             inputs.map((input, index) => [index === 0 ? 'index' : path.basename(input, path.extname(input)), input])
           )
         : inputs,
-    plugins: setupPlugins(argv, outputOptionsList),
+    plugins: setupPlugins(argv, outputOptionsList, packageDirPath),
     resolve: {
-      alias: getBundleBuiltinAliases(argv, packageDirPath),
       extensionAlias: {
         '.cjs': ['.cts', '.cjs'],
         '.js': ['.ts', '.tsx', '.js'],
@@ -134,6 +132,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
       },
       extensions: ['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'],
     },
+    treeshake: argv['core-js'] || argv['core-js-proposals'] ? false : undefined,
     transform: getTransformOptions(argv, packageDirPath),
     watch: argv.watch ? { clearScreen: false } : undefined,
   };
@@ -189,7 +188,6 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
 function getTransformOptions(argv: ArgumentsType<AnyBuilderType>, packageDirPath: string): RolldownOptions['transform'] {
   return {
-    decorator: { legacy: true },
     define: createEnvironmentVariablesDefinition(argv, packageDirPath),
     jsx: 'react-jsx',
     target: 'es2022',
@@ -271,21 +269,6 @@ function getInputFiles(input: RolldownOptions['input']): string[] {
   return Array.isArray(input) ? input : Object.values(input);
 }
 
-function getBundleBuiltinAliases(
-  argv: ArgumentsType<AnyBuilderType>,
-  packageDirPath: string
-): Record<string, string> | undefined {
-  if (!argv.bundleBuiltins?.length) return undefined;
-
-  const require = createRequire(path.join(packageDirPath, 'package.json'));
-  return Object.fromEntries(
-    argv.bundleBuiltins.map((item) => {
-      const packageName = item.toString();
-      return [packageName, require.resolve(`${packageName}/`)];
-    })
-  );
-}
-
 function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDirPath: string): string[] {
   if (argv.input && argv.input.length > 0) return argv.input.map((p) => path.resolve(cwd, p.toString()));
 
@@ -361,27 +344,32 @@ function getOutputOptionsList(
   argv: ArgumentsType<AnyBuilderType>,
   targetDetail: TargetDetail,
   packageDirPath: string,
-  isEsmPackage: boolean
+  isEsmPackage: boolean,
+  inputs: string[]
 ): OutputOptions[] {
   const outDirPath = path.join(packageDirPath, 'dist');
   if (targetDetail === 'app-node') {
+    const esmOutput = isEsmOutput(isEsmPackage, argv.moduleType);
     return [
       {
         dir: outDirPath,
-        format: isEsmOutput(isEsmPackage, argv.moduleType) ? 'module' : 'commonjs',
+        format: esmOutput ? 'module' : 'commonjs',
         minify: false,
         sourcemap: argv.sourcemap && 'inline',
+        strict: !esmOutput,
       },
     ];
   }
 
   if (targetDetail === 'functions') {
+    const esmOutput = isEsmOutput(isEsmPackage, argv.moduleType);
     return [
       {
         dir: outDirPath,
-        format: isEsmOutput(isEsmPackage, argv.moduleType) ? 'module' : 'commonjs',
+        format: esmOutput ? 'module' : 'commonjs',
         minify: false,
         sourcemap: argv.sourcemap && 'inline',
+        strict: !esmOutput,
       },
     ];
   }
@@ -406,6 +394,7 @@ function getOutputOptionsList(
       preserveModules: true,
       preserveModulesRoot: path.join(packageDirPath, 'src'),
       sourcemap: argv.sourcemap,
+      strict: true,
     });
   }
   if (moduleType === 'esm' || moduleType === 'both' || (moduleType === 'either' && isEsmPackage)) {

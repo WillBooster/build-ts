@@ -54,7 +54,6 @@ if (process.env.BUILD_TS_COREJS || process.env.BUILD_TS_COREJS_WITH_PROPOSALS) {
     const presetEnvConfig = config.presets[0][1];
     presetEnvConfig.useBuiltIns = 'usage';
     presetEnvConfig.corejs = { version: `${major}.${minor}`, ...proposals };
-    presetEnvConfig.modules = 'commonjs';
   } else if (process.env.BUILD_TS_TARGET_CATEGORY === 'lib') {
     // cf. https://github.com/babel/babel-polyfills#injection-methods
     config.plugins.push(['polyfill-corejs3', { method: 'usage-pure', version: `${major}.${minor}`, ...proposals }]);
