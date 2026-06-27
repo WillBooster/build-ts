@@ -49,6 +49,7 @@ __metadata:
     lodash.chunk: "npm:4.2.0"
     lodash.compact: "npm:3.0.1"
     lodash.concat: "npm:4.5.0"
+    punycode: "npm:2.3.1"
   peerDependencies:
     lodash.concat: 4.5.0
   languageName: unknown
@@ -72,5 +73,12 @@ __metadata:
   version: 4.5.0
   resolution: "lodash.concat@npm:4.5.0"
   checksum: 10c0/13a0e3e96fb0285a76a423df8d6dc83fc4fd5163fb2f783fd37d1d18b542f23aba149c35dcdab5c4f25e2518c3c8bbd138b0564d688d13528b34eb918bfb5500
+  languageName: node
+  linkType: hard
+
+"punycode@npm:2.3.1":
+  version: 2.3.1
+  resolution: "punycode@npm:2.3.1"
+  checksum: 10c0/14f76a8206bc3464f794fb2e3d3cc665ae416c01893ad7a02b23766eb07159144ee612ad67af5e84fa4479ccfe67678c4feb126b0485651b302babf66f04f9e9
   languageName: node
   linkType: hard

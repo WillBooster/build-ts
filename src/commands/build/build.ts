@@ -4,22 +4,22 @@ import path from 'node:path';
 import chalk from 'chalk';
 import dateTime from 'date-time';
 import ms from 'pretty-ms';
-import type { OutputOptions, RollupBuild, RollupOptions } from 'rollup';
-import { rollup, watch } from 'rollup';
+import { rolldown, watch } from 'rolldown';
+import type { OutputOptions, RolldownBuild, RolldownOptions } from 'rolldown';
 import type { Handler } from 'signal-exit';
 import { onExit } from 'signal-exit';
 import type { PackageJson } from 'type-fest';
 import type { CommandModule } from 'yargs';
 
-import { loadEnvironmentVariablesWithCache } from '../../env.js';
+import { createEnvironmentVariablesDefinition, loadEnvironmentVariablesWithCache } from '../../env.js';
 import type { ArgumentsType, TargetCategory, TargetDetail } from '../../types.js';
 import { allTargetCategories } from '../../types.js';
 import { getNamespaceAndName, readPackageJson } from '../../utils.js';
 
 import type { AnyBuilderType, builder } from './builder.js';
 import { appBuilder, functionsBuilder, libBuilder } from './builder.js';
-import { setupPlugins } from './plugin.js';
-import { handleError } from './rollupLogger.js';
+import { handleError } from './bundlerLogger.js';
+import { createExternalMatcher, setupPlugins } from './plugin.js';
 import { generateDeclarationFiles } from './typeScript.js';
 
 export const app: CommandModule<unknown, ArgumentsType<typeof appBuilder>> = {
@@ -114,21 +114,33 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     await generatePackageJsonForFunctions(packageDirPath, packageJson, argv.moduleType);
   }
 
-  const options: RollupOptions = {
+  const options: RolldownOptions = {
+    checks: { preferBuiltinFeature: false },
+    external: createExternalMatcher(argv, targetDetail, packageJson, namespace),
     input:
       targetDetail === 'functions'
         ? Object.fromEntries(
             inputs.map((input, index) => [index === 0 ? 'index' : path.basename(input, path.extname(input)), input])
           )
         : inputs,
-    plugins: setupPlugins(argv, targetDetail, packageJson, namespace, packageDirPath, outputOptionsList),
+    plugins: setupPlugins(argv, outputOptionsList, packageDirPath),
+    resolve: {
+      extensionAlias: {
+        '.cjs': ['.cjs', '.cts'],
+        '.js': ['.js', '.ts', '.tsx'],
+        '.mjs': ['.mjs', '.mts'],
+      },
+      extensions: ['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'],
+    },
+    treeshake: argv['core-js'] || argv['core-js-proposals'] ? false : undefined,
+    transform: getTransformOptions(argv, packageDirPath),
     watch: argv.watch ? { clearScreen: false } : undefined,
   };
 
   const pathToRelativePath = (paths: string | Readonly<string[]>): string[] =>
     (Array.isArray(paths) ? paths : [paths]).map((p) => path.relative(packageDirPath, p));
   if (argv.watch) {
-    watchRollup(argv, targetDetail, packageDirPath, options, outputOptionsList, pathToRelativePath);
+    watchRolldown(argv, targetDetail, packageDirPath, options, outputOptionsList, pathToRelativePath);
   } else {
     if (!argv.silent) {
       console.info(
@@ -140,11 +152,11 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
       );
     }
 
-    let bundle: RollupBuild | undefined;
+    let bundle: RolldownBuild | undefined;
     let buildFailed = false;
     try {
       const startTime = Date.now();
-      const _bundle = await rollup(options);
+      const _bundle = await rolldown(options);
       bundle = _bundle;
       await Promise.all(outputOptionsList.map((opts) => _bundle.write(opts)));
 
@@ -174,11 +186,19 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   }
 }
 
-function watchRollup(
+function getTransformOptions(argv: ArgumentsType<AnyBuilderType>, packageDirPath: string): RolldownOptions['transform'] {
+  return {
+    define: createEnvironmentVariablesDefinition(argv, packageDirPath),
+    jsx: 'react-jsx',
+    target: 'es2022',
+  };
+}
+
+function watchRolldown(
   argv: ArgumentsType<AnyBuilderType>,
   targetDetail: string,
   packageDirPath: string,
-  options: RollupOptions,
+  options: RolldownOptions,
   outputOptionsList: OutputOptions[],
   pathToRelativePath: (paths: string | Readonly<string[]>) => string[]
 ): void {
@@ -206,19 +226,10 @@ function watchRollup(
       case 'BUNDLE_START': {
         if (argv.silent) break;
 
-        const eventInput = event.input;
-        const inputFiles: string[] = [];
-        if (typeof eventInput === 'string') {
-          inputFiles.push(eventInput);
-        } else {
-          inputFiles.push(
-            ...(Array.isArray(eventInput) ? eventInput : Object.values(eventInput as Record<string, string>))
-          );
-        }
         console.info(
           chalk.cyan(
-            `Bundles ${chalk.bold(pathToRelativePath(inputFiles).join(', '))} → ${chalk.bold(
-              pathToRelativePath(event.output).join(', ')
+            `Bundles ${chalk.bold(pathToRelativePath(getInputFiles(options.input)).join(', '))} → ${chalk.bold(
+              pathToRelativePath(outputOptionsList.map((opts) => opts.file || opts.dir || '')).join(', ')
             )}\non ${packageDirPath} ...`
           )
         );
@@ -250,6 +261,12 @@ function watchRollup(
       void event.result.close();
     }
   });
+}
+
+function getInputFiles(input: RolldownOptions['input']): string[] {
+  if (!input) return [];
+  if (typeof input === 'string') return [input];
+  return Array.isArray(input) ? input : Object.values(input);
 }
 
 function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDirPath: string): string[] {
@@ -331,11 +348,14 @@ function getOutputOptionsList(
 ): OutputOptions[] {
   const outDirPath = path.join(packageDirPath, 'dist');
   if (targetDetail === 'app-node' || targetDetail === 'functions') {
+    const esmOutput = isEsmOutput(isEsmPackage, argv.moduleType);
     return [
       {
         dir: outDirPath,
-        format: isEsmOutput(isEsmPackage, argv.moduleType) ? 'module' : 'commonjs',
+        format: esmOutput ? 'module' : 'commonjs',
+        minify: false,
         sourcemap: argv.sourcemap && 'inline',
+        strict: !esmOutput,
       },
     ];
   }
@@ -356,9 +376,11 @@ function getOutputOptionsList(
       dir: outDirPath,
       entryFileNames: jsExt === 'both' || (jsExt === 'either' && !isEsmPackage) ? '[name].js' : '[name].cjs',
       format: 'commonjs',
+      minify: argv.minify,
       preserveModules: true,
       preserveModulesRoot: path.join(packageDirPath, 'src'),
       sourcemap: argv.sourcemap,
+      strict: true,
     });
   }
   if (moduleType === 'esm' || moduleType === 'both' || (moduleType === 'either' && isEsmPackage)) {
@@ -366,6 +388,7 @@ function getOutputOptionsList(
       dir: outDirPath,
       entryFileNames: jsExt === 'both' || (jsExt === 'either' && isEsmPackage) ? '[name].js' : '[name].mjs',
       format: 'module',
+      minify: argv.minify,
       preserveModules: true,
       preserveModulesRoot: path.join(packageDirPath, 'src'),
       sourcemap: argv.sourcemap,

@@ -40,38 +40,7 @@ const config = {
         version: '2023-11',
       },
     ],
-    ...(process.env.BUILDTS_USE_BABLE_RUNTIME ? ['@babel/plugin-transform-runtime'] : []),
   ],
-  env: {
-    production: {
-      plugins: [
-        [
-          'transform-remove-console',
-          {
-            exclude: ['error', 'info', 'warn'],
-          },
-        ],
-      ],
-    },
-    test: {
-      plugins: [
-        [
-          'transform-remove-console',
-          {
-            exclude: ['error', 'info', 'warn', 'debug'],
-          },
-        ],
-      ],
-      presets: [
-        [
-          '@babel/preset-env',
-          {
-            modules: 'auto',
-          },
-        ],
-      ],
-    },
-  },
 };
 
 if (process.env.BUILD_TS_COREJS || process.env.BUILD_TS_COREJS_WITH_PROPOSALS) {

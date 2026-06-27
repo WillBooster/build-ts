@@ -44,19 +44,19 @@ export async function generateDeclarationFiles(
 
   let allSucceeded = true;
   for (const [projectDirPath, configFile, outDir] of projects) {
-    allSucceeded &&= await runTypeScriptNative(argv, projectDirPath, configFile, path.join(coreProjectDirPath, outDir));
+    allSucceeded &&= await runTsgo(argv, projectDirPath, configFile, path.join(coreProjectDirPath, outDir));
   }
   return allSucceeded;
 }
 
-async function runTypeScriptNative(
+async function runTsgo(
   argv: ArgumentsType<AnyBuilderType>,
   projectDirPath: string,
   configFile: string,
   outDir: string
 ): Promise<boolean> {
   if (argv.verbose) {
-    console.info('runTypeScriptNative()', projectDirPath, configFile, outDir);
+    console.info('runTsgo()', projectDirPath, configFile, outDir);
   }
 
   const configFileDirPath = path.dirname(configFile);
@@ -66,7 +66,7 @@ async function runTypeScriptNative(
       tempConfigFile,
       JSON.stringify(await createTypeScriptNativeConfig(projectDirPath, configFile, outDir), undefined, 2)
     );
-    const ret = child_process.spawnSync(process.execPath, [getTypeScriptNativePath(), '-p', tempConfigFile], {
+    const ret = child_process.spawnSync(process.execPath, [getTsgoPath(), '-p', tempConfigFile], {
       cwd: projectDirPath,
       stdio: 'inherit',
     });
@@ -91,7 +91,8 @@ async function createTypeScriptNativeConfig(
     rootDir: 'src',
   };
   if (await usesNodeProtocolImport(path.join(projectDirPath, 'src'))) {
-    const types = await collectTypePackages(path.join(projectDirPath, 'node_modules', '@types'));
+    const typesDirPath = findTypesDirPath(projectDirPath);
+    const types = typesDirPath ? await collectTypePackages(typesDirPath) : [];
     if (types.includes('node')) {
       compilerOptions.types = types;
     }
@@ -115,7 +116,7 @@ function findConfigFile(dirPath: string): string | undefined {
   }
 }
 
-function getTypeScriptNativePath(): string {
+function getTsgoPath(): string {
   const packageJsonPath = require.resolve('@typescript/native-preview/package.json');
   return path.join(path.dirname(packageJsonPath), 'bin', 'tsgo.js');
 }
@@ -135,6 +136,18 @@ async function usesNodeProtocolImport(dirPath: string): Promise<boolean> {
     return false;
   }
   return false;
+}
+
+function findTypesDirPath(dirPath: string): string | undefined {
+  let currentDirPath = path.resolve(dirPath);
+  while (true) {
+    const typesDirPath = path.join(currentDirPath, 'node_modules', '@types');
+    if (fs.existsSync(typesDirPath)) return typesDirPath;
+
+    const parentDirPath = path.dirname(currentDirPath);
+    if (parentDirPath === currentDirPath) return undefined;
+    currentDirPath = parentDirPath;
+  }
 }
 
 async function collectTypePackages(typeRootsDirPath: string): Promise<string[]> {

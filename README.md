@@ -7,7 +7,7 @@ An opinionated tool for building a Node.js app and library written in TypeScript
 
 ## Features
 
-- Builder / Bundler (`rollup` wrapper)
+- Builder / Bundler (`rolldown` wrapper)
   - [x] `build-ts app`
     - [x] Bundle TypeScript code as Node.js application
   - [x] `build-ts functions`
@@ -15,7 +15,6 @@ An opinionated tool for building a Node.js app and library written in TypeScript
     - [x] Generate optimized `package.json` for Functions
   - [x] `build-ts lib`
     - [x] Bundle TypeScript code as Node.js / Pure JavaScript / React Library
-  - [x] Remove `console.log` automatically
 - Executor (`ts-node` wrapper)
   - [x] `build-ts run <TypeScript file>`
     - [x] Run TypeScript code as Node.js script
