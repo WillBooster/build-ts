@@ -8,7 +8,11 @@ describe('build', { timeout: 60_000 }, () => {
     await buildAndRunApp('app-node', 'app', '--inline', 'A');
     const indexJs = await readGeneratedCode('test/fixtures/app-node/dist/index.js');
     expect(indexJs).to.includes('("1")');
-    expect(indexJs).to.includes('console.log');
+    expect(indexJs).to.not.includes('console.log');
+    expect(indexJs).to.includes('console.info');
+    expect(indexJs).to.includes('console.warn');
+    expect(indexJs).to.includes('console.error');
+    expect(indexJs).to.includes('console.debug');
     expect(indexJs).to.not.includes('core-js');
     expect(indexJs).to.not.includes('@logged');
     expect(indexJs).to.not.includes('process.env.A');
@@ -41,7 +45,7 @@ describe('build', { timeout: 60_000 }, () => {
       `${fixtureDirPath}/src/index.ts`,
       `#!/usr/bin/env node
 const values = [1, 2, 3].toReversed();
-console.log(values.join(','));
+process.stdout.write(values.join(','));
 `
     );
 
@@ -87,7 +91,7 @@ console.log(values.join(','));
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `const mod = await import('./lazy.js');
-console.log(mod.marker);
+process.stdout.write(mod.marker);
 `
     );
     await fs.promises.writeFile(`${fixtureDirPath}/src/lazy.ts`, `export const marker = 'lazy-loaded';\n`);
@@ -115,7 +119,7 @@ console.log(mod.marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from './mod.js';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
     await fs.promises.writeFile(`${fixtureDirPath}/src/mod.js`, `export const marker = 'js-file';\n`);
@@ -160,7 +164,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:buffer';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -205,7 +209,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:buffer';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -256,7 +260,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:buffer';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -302,7 +306,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'undici';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -352,7 +356,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.cts`,
       `const { marker } = require('node:buffer');
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -394,7 +398,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:buffer';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -436,7 +440,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/promises';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -478,7 +482,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/promises';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -524,7 +528,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'undici';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -575,7 +579,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'undici';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -609,7 +613,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.cts`,
       `const { marker } = require('undici/promises');
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -648,7 +652,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'undici/promises.js';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -687,7 +691,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/promises';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -735,7 +739,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/features/thing';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -779,7 +783,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/features/private-internal/secret.js';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -817,7 +821,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/private.js';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -857,7 +861,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -894,7 +898,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/promises';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -929,7 +933,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/promises';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -966,7 +970,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/promises';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -1002,7 +1006,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:buffer';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -1050,7 +1054,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:buffer';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -1086,7 +1090,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:buffer';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 

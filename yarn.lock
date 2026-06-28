@@ -3284,6 +3284,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"babel-plugin-transform-remove-console@npm:6.9.4":
+  version: 6.9.4
+  resolution: "babel-plugin-transform-remove-console@npm:6.9.4"
+  checksum: 10c0/8bb152eed6685b92c371d72be3d9107d879f64b507f3e255edd6a1fb4806e9bcf39011d6f32ce1d8d745fb3533d1da4d5c706eefa633fae25151866c986f2e24
+  languageName: node
+  linkType: hard
+
 "balanced-match@npm:^4.0.2":
   version: 4.0.4
   resolution: "balanced-match@npm:4.0.4"
@@ -3397,6 +3404,7 @@ __metadata:
     "@willbooster/shared-lib-node": "npm:8.5.23"
     "@willbooster/wb": "npm:13.22.18"
     babel-plugin-polyfill-corejs3: "npm:0.14.2"
+    babel-plugin-transform-remove-console: "npm:6.9.4"
     chalk: "npm:5.6.2"
     conventional-changelog-conventionalcommits: "npm:9.3.1"
     core-js: "npm:3.49.0"

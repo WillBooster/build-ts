@@ -375,7 +375,7 @@ function babelCoreJsPlugin(): Plugin {
 }
 
 function babelDecoratorsPlugin(): Plugin {
-  return babelPlugin('babel-decorators', containsDecorator);
+  return babelPlugin('babel-decorators', (code) => containsRemovableConsole(code) || containsDecorator(code));
 }
 
 function babelPlugin(name: string, shouldTransform: (code: string) => boolean): Plugin {
@@ -409,6 +409,15 @@ function babelPlugin(name: string, shouldTransform: (code: string) => boolean): 
       };
     },
   };
+}
+
+function containsRemovableConsole(code: string): boolean {
+  const methods = process.env.NODE_ENV === 'test' ? ['log'] : process.env.NODE_ENV === 'production' ? ['debug', 'log'] : [];
+  if (!methods.length) return false;
+
+  const methodPattern = methods.join('|');
+  const consolePattern = new RegExp(`\\bconsole\\s*(?:\\.\\s*(?:${methodPattern})\\b|\\[\\s*['"](?:${methodPattern})['"]\\s*\\])`);
+  return consolePattern.test(stripComments(code));
 }
 
 function isBabelExcludedPath(id: string): boolean {

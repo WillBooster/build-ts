@@ -13,6 +13,13 @@ assert(toASCII('mañana.com') === 'xn--maana-pta.com');
 assert(data.ok);
 assert(process.env.A);
 assert(Math.random() ? process.env.A : '0');
+if (process.env.__BUILD_TS_KEEP_CONSOLE_TEST__) {
+  console.log('removed');
+  console.info('info');
+  console.warn('warn');
+  console.error('error');
+  console.debug('debug');
+}
 
 // cf. https://babeljs.io/blog/2023/05/26/7.22.0#decorators-updates-15570
 function logged(value: unknown, context: ClassDecoratorContext) {
