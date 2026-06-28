@@ -635,7 +635,7 @@ function hasDeclarationConsoleBinding(node: ConsoleNode, includeVar: boolean): b
     return declaration.importKind !== 'type' && hasConsoleBindingPattern(declaration.id);
   }
   if (declaration.type === 'TSEnumDeclaration' || declaration.type === 'TSModuleDeclaration') {
-    return hasModuleIdConsoleBinding(getConsoleNodeProperty(declaration, 'id'));
+    return hasLeftmostModuleIdConsoleBinding(getConsoleNodeProperty(declaration, 'id'));
   }
   return (
     declaration.type === 'VariableDeclaration' &&
@@ -646,6 +646,12 @@ function hasDeclarationConsoleBinding(node: ConsoleNode, includeVar: boolean): b
 
 function hasNamespaceConsoleBinding(node: ConsoleNode | undefined): boolean {
   return node?.type === 'TSModuleDeclaration' && node.declare !== true && hasModuleIdConsoleBinding(getConsoleNodeProperty(node, 'id'));
+}
+
+function hasLeftmostModuleIdConsoleBinding(id: ConsoleNode | undefined): boolean {
+  if (!id) return false;
+  if (id.type === 'Identifier') return id.name === 'console';
+  return id.type === 'TSQualifiedName' && hasLeftmostModuleIdConsoleBinding(getConsoleNodeProperty(id, 'left'));
 }
 
 function hasModuleIdConsoleBinding(id: ConsoleNode | undefined): boolean {
@@ -703,6 +709,7 @@ function collectConsoleCallReplacement(
   excludedMethods: Set<string>
 ): void {
   const callee = getConsoleNodeProperty(node, 'callee');
+  if (node.optional === true) return;
   if (!callee || !isIncludedConsoleMember(callee, excludedMethods)) {
     if (callee && isIncludedConsoleBindMember(callee, excludedMethods)) {
       replacements.push({ kind: 'replace', start: node.start, end: node.end, value: noopFunctionExpression });
@@ -733,7 +740,7 @@ function collectConsoleMemberReplacement(
   excludedMethods: Set<string>
 ): void {
   if (!isIncludedConsoleMember(node, excludedMethods) || parent?.type === 'MemberExpression') return;
-  if (parent?.type === 'CallExpression' && parent.callee === node) return;
+  if (parent?.type === 'CallExpression' && parent.callee === node && parent.optional !== true) return;
   if (isConsoleAssignmentTarget(node, parent, grandparent)) return;
 
   if (parent?.type === 'AssignmentExpression' && parent.left === node) {
@@ -764,6 +771,7 @@ function isIncludedConsoleMember(node: ConsoleNode, excludedMethods: Set<string>
 
   const object = getConsoleNodeProperty(node, 'object');
   const property = getConsoleNodeProperty(node, 'property');
+  if (node.optional === true) return false;
   if (!object || !property || isExcludedConsoleProperty(node, property, excludedMethods)) return false;
   if (isGlobalConsoleIdentifier(object)) return true;
 

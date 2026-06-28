@@ -34,6 +34,7 @@ describe('build', { timeout: 60_000 }, () => {
       `${fixtureDirPath}/src/index.ts`,
       `import './class-expression.js';
 import './declare.js';
+import './dotted-global.js';
 import './enum.js';
 import './exported.js';
 import './import-equals.js';
@@ -47,6 +48,9 @@ for (let i = 0; i < 0; i++) console.log('global-for');
 \\u0063onsole.log('escaped-global');
 console.log || process.stdout.write(':fallback');
 console.log.bind(console)();
+if (Math.random() < 0) console?.log('optional-member');
+console.log?.(process.stdout.write(':optional-call'));
+if (Math.random() < 0) console.error?.('kept-error');
 if (Math.random() < 0) {
   console.log++;
   for (console.log in { done: 1 }) {}
@@ -100,6 +104,17 @@ ClassWithLocalName.run();
       `declare const console: { log: (value: string) => void };
 
 console.log('declare-global');
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/dotted-global.ts`,
+      `namespace DottedRight.console {
+  export function log(value: string) {
+    process.stdout.write(value);
+  }
+}
+
+console.log('dotted-global');
 `
     );
     await fs.promises.writeFile(
@@ -197,8 +212,12 @@ console.log('type-only-global');
     expect(code).to.not.includes('global-for');
     expect(code).to.not.includes('escaped-global');
     expect(code).to.not.includes('declare-global');
+    expect(code).to.not.includes('dotted-global');
     expect(code).to.not.includes('static-global');
     expect(code).to.not.includes('type-only-global');
+    expect(code).to.includes('optional-member');
+    expect(code).to.includes('optional-call');
+    expect(code).to.includes('kept-error');
     expect(code).to.includes(':block');
     expect(code).to.includes(':var');
     expect(code).to.includes(':function');
@@ -216,7 +235,7 @@ console.log('type-only-global');
     const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
     expect(execRet.status).toBe(0);
     expect(execRet.stdout.toString()).toBe(
-      ':class:enum:export:import-equals:namespace:namespace-local:namespace-export:namespace-dotted-left:namespace-dotted-right:staticelse:switch:block:var:function'
+      ':class:enum:export:import-equals:namespace:namespace-local:namespace-export:namespace-dotted-left:namespace-dotted-right:staticelse:optional-call:switch:block:var:function'
     );
   });
 
