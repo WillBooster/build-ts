@@ -565,8 +565,8 @@ function getConsoleScope(node: ConsoleNode, parent: ConsoleNode | undefined): Co
       start: node.start,
     };
   }
-  if (node.type === 'SwitchCase') {
-    return { end: node.end, shadowsConsole: hasSwitchCaseConsoleBinding(node), start: getSwitchCaseScopeStart(node) };
+  if (node.type === 'SwitchStatement') {
+    return { end: node.end, shadowsConsole: hasSwitchConsoleBinding(node), start: getSwitchScopeStart(node) };
   }
   if (node.type === 'ForStatement' || node.type === 'ForInStatement' || node.type === 'ForOfStatement') {
     return { end: node.end, shadowsConsole: hasLoopConsoleBinding(node), start: node.start };
@@ -596,15 +596,21 @@ function hasBlockConsoleBinding(node: ConsoleNode, includeVar: boolean): boolean
   return false;
 }
 
-function hasSwitchCaseConsoleBinding(node: ConsoleNode): boolean {
-  for (const statement of getConsoleArrayProperty(node, 'consequent')) {
-    if (hasDeclarationConsoleBinding(statement, false)) return true;
+function hasSwitchConsoleBinding(node: ConsoleNode): boolean {
+  for (const switchCase of getConsoleArrayProperty(node, 'cases')) {
+    for (const statement of getConsoleArrayProperty(switchCase, 'consequent')) {
+      if (hasDeclarationConsoleBinding(statement, false)) return true;
+    }
   }
   return false;
 }
 
-function getSwitchCaseScopeStart(node: ConsoleNode): number {
-  return getConsoleArrayProperty(node, 'consequent')[0]?.start ?? node.end;
+function getSwitchScopeStart(node: ConsoleNode): number {
+  for (const switchCase of getConsoleArrayProperty(node, 'cases')) {
+    const firstStatement = getConsoleArrayProperty(switchCase, 'consequent')[0];
+    if (firstStatement) return firstStatement.start;
+  }
+  return node.end;
 }
 
 function hasLoopConsoleBinding(node: ConsoleNode): boolean {
