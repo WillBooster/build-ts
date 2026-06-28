@@ -59,6 +59,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/compat-data@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@babel/compat-data@npm:8.0.0"
+  checksum: 10c0/8d934415a308cf6c893d815b1dbb79faf7678c1e489934e81025c61673bf98ef88770b42297492bbd4c014978688012aa635e855bf8553b96ec8287bddfbae89
+  languageName: node
+  linkType: hard
+
 "@babel/core@npm:7.29.7":
   version: 7.29.7
   resolution: "@babel/core@npm:7.29.7"
@@ -117,6 +124,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/helper-compilation-targets@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@babel/helper-compilation-targets@npm:8.0.0"
+  dependencies:
+    "@babel/compat-data": "npm:^8.0.0"
+    "@babel/helper-validator-option": "npm:^8.0.0"
+    browserslist: "npm:^4.24.0"
+    lru-cache: "npm:^11.0.0"
+    semver: "npm:^7.7.3"
+  checksum: 10c0/871876b4a9de1a2be68f2ec6c7576933dd9a8452bfb3c02ebcc16939791b8f2ab7467686e40060c6abfbb44bd76f898972e53034c3e7626a686a656f3a8d3bc9
+  languageName: node
+  linkType: hard
+
 "@babel/helper-create-class-features-plugin@npm:^7.29.7":
   version: 7.29.7
   resolution: "@babel/helper-create-class-features-plugin@npm:7.29.7"
@@ -159,6 +179,19 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.4.0 || ^8.0.0-0 <8.0.0
   checksum: 10c0/306a169f2cb285f368578219ef18ea9702860d3d02d64334f8d45ea38648be0b9e1edad8c8f732fa34bb4206ccbb9883c395570fd57ab7bbcf293bc5964c5b3a
+  languageName: node
+  linkType: hard
+
+"@babel/helper-define-polyfill-provider@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@babel/helper-define-polyfill-provider@npm:1.0.0"
+  dependencies:
+    "@babel/helper-compilation-targets": "npm:^8.0.0"
+    "@babel/helper-plugin-utils": "npm:^8.0.0"
+    lodash.debounce: "npm:^4.0.8"
+  peerDependencies:
+    "@babel/core": ^7.4.0 || ^8.0.0
+  checksum: 10c0/9a422f6b8c5f3fb2cb862d189c19b521f4bae6f555e196e6635f6b7f870178f5dee14e2b8e51695bd5351ae2f6073f4ff1161dc873d45e9462534ce7240c6ad3
   languageName: node
   linkType: hard
 
@@ -218,6 +251,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/helper-plugin-utils@npm:^8.0.0":
+  version: 8.0.1
+  resolution: "@babel/helper-plugin-utils@npm:8.0.1"
+  peerDependencies:
+    "@babel/core": ^8.0.0
+  checksum: 10c0/ec56d98187a58dfbc2ce9d75fd5f880d6acacefb314e32fe40c57293c6c65c659fa116c665e430aff8b153b7d0ea63f16ca290e9d2283196e3c7a3dd61bffa94
+  languageName: node
+  linkType: hard
+
 "@babel/helper-remap-async-to-generator@npm:^7.29.7":
   version: 7.29.7
   resolution: "@babel/helper-remap-async-to-generator@npm:7.29.7"
@@ -272,6 +314,13 @@ __metadata:
   version: 7.29.7
   resolution: "@babel/helper-validator-option@npm:7.29.7"
   checksum: 10c0/d2a06c6d0ac40ba4a2f219fc2cab249c7a94bacdb2686273b7f9598571c908809b48468ff588915a346e6cc7296f60b581023d1d498b747fed06f779d335c2cc
+  languageName: node
+  linkType: hard
+
+"@babel/helper-validator-option@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@babel/helper-validator-option@npm:8.0.0"
+  checksum: 10c0/eb466b464479f75c15ba06f6c53862f10d90740350c9203b3d81c6f33d4193bf0a7b7b89de901f256fb639a1346475b48616734af89906d6b4fcf9a856d9f1f1
   languageName: node
   linkType: hard
 
@@ -3273,6 +3322,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"babel-plugin-polyfill-corejs3@npm:1.0.0":
+  version: 1.0.0
+  resolution: "babel-plugin-polyfill-corejs3@npm:1.0.0"
+  dependencies:
+    "@babel/helper-define-polyfill-provider": "npm:^1.0.0"
+    core-js-compat: "npm:^3.48.0"
+  peerDependencies:
+    "@babel/core": ^7.4.0 || ^8.0.0
+  checksum: 10c0/265a1bd798dfde9fd900b341476d5e436667735ded7ef7f70375ff30620dad6634acc81d969ac20bd11ddc27c921ef26aa2aa5f563ad8e998e3d1ef6b665f5f1
+  languageName: node
+  linkType: hard
+
 "babel-plugin-polyfill-regenerator@npm:^0.6.6":
   version: 0.6.8
   resolution: "babel-plugin-polyfill-regenerator@npm:0.6.8"
@@ -3428,7 +3489,7 @@ __metadata:
     "@willbooster/oxlint-config": "npm:1.4.8"
     "@willbooster/shared-lib-node": "npm:8.5.23"
     "@willbooster/wb": "npm:13.22.18"
-    babel-plugin-polyfill-corejs3: "npm:0.14.2"
+    babel-plugin-polyfill-corejs3: "npm:1.0.0"
     build-ts: "npm:17.1.29"
     chalk: "npm:5.6.2"
     conventional-changelog-conventionalcommits: "npm:9.3.1"
