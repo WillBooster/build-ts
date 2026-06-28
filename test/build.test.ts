@@ -33,15 +33,24 @@ describe('build', { timeout: 60_000 }, () => {
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import './class-expression.js';
+import './declare.js';
 import './enum.js';
 import './exported.js';
+import './import-equals.js';
 import './namespace.js';
+import './static-block.js';
+import './type-only.js';
 
 if (Math.random() < 0) console.log('global-if');
 else process.stdout.write('else');
 for (let i = 0; i < 0; i++) console.log('global-for');
 console.log || process.stdout.write(':fallback');
 console.log.bind(console)();
+switch (1) {
+  case 1:
+    const console = { log: (value: string) => process.stdout.write(value) };
+    console.log(':switch');
+}
 
 {
   const console = { log: (value: string) => process.stdout.write(value) };
@@ -81,6 +90,13 @@ ClassWithLocalName.run();
 `
     );
     await fs.promises.writeFile(
+      `${fixtureDirPath}/src/declare.ts`,
+      `declare const console: { log: (value: string) => void };
+
+console.log('declare-global');
+`
+    );
+    await fs.promises.writeFile(
       `${fixtureDirPath}/src/enum.ts`,
       `enum console {
   log = ':enum',
@@ -97,6 +113,20 @@ console.log(':export');
 `
     );
     await fs.promises.writeFile(
+      `${fixtureDirPath}/src/import-equals.ts`,
+      `import console = require('./local-console.js');
+
+console.log(':import-equals');
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/local-console.ts`,
+      `const localConsole = { log: (value: string) => process.stdout.write(value) };
+
+export = localConsole;
+`
+    );
+    await fs.promises.writeFile(
       `${fixtureDirPath}/src/namespace.ts`,
       `namespace console {
   export function log(value: string) {
@@ -105,6 +135,41 @@ console.log(':export');
 }
 
 console.log(':namespace');
+
+namespace LocalNamespace {
+  const console = { log: (value: string) => process.stdout.write(value) };
+  console.log(':namespace-local');
+}
+
+namespace ExportNamespace {
+  export const console = { log: (value: string) => process.stdout.write(value) };
+  console.log(':namespace-export');
+}
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/static-block.ts`,
+      `class StaticBlock {
+  static {
+    var console = { log: (value: string) => process.stdout.write(value) };
+    console.log(':static');
+  }
+}
+
+console.log('static-global');
+void StaticBlock;
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/type-only.ts`,
+      `import type { console } from './types.js';
+
+console.log('type-only-global');
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/types.ts`,
+      `export type console = { log: (value: string) => void };
 `
     );
 
@@ -112,6 +177,9 @@ console.log(':namespace');
     const code = await readGeneratedCode(`${fixtureDirPath}/dist/index.js`);
     expect(code).to.not.includes('global-if');
     expect(code).to.not.includes('global-for');
+    expect(code).to.not.includes('declare-global');
+    expect(code).to.not.includes('static-global');
+    expect(code).to.not.includes('type-only-global');
     expect(code).to.includes(':block');
     expect(code).to.includes(':var');
     expect(code).to.includes(':function');
@@ -119,9 +187,16 @@ console.log(':namespace');
     expect(code).to.includes(':enum');
     expect(code).to.includes(':export');
     expect(code).to.includes(':namespace');
+    expect(code).to.includes(':import-equals');
+    expect(code).to.includes(':namespace-local');
+    expect(code).to.includes(':namespace-export');
+    expect(code).to.includes(':static');
+    expect(code).to.includes(':switch');
     const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
     expect(execRet.status).toBe(0);
-    expect(execRet.stdout.toString()).toBe(':class:enum:export:namespaceelse:block:var:function');
+    expect(execRet.stdout.toString()).toBe(
+      ':class:enum:export:import-equals:namespace:namespace-local:namespace-export:staticelse:switch:block:var:function'
+    );
   });
 
   it('app-node with core-js', async () => {

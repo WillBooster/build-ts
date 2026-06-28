@@ -535,7 +535,7 @@ function getConsoleScope(node: ConsoleNode, parent: ConsoleNode | undefined): Co
     return { end: node.end, shadowsConsole: hasFunctionConsoleBinding(node), start: node.start };
   }
   if (node.type === 'BlockStatement') {
-    return { end: node.end, shadowsConsole: hasBlockConsoleBinding(node), start: node.start };
+    return { end: node.end, shadowsConsole: hasBlockConsoleBinding(node, false), start: node.start };
   }
   if (node.type === 'CatchClause') {
     return { end: node.end, shadowsConsole: hasConsoleBindingPattern(node.param), start: node.start };
@@ -543,8 +543,11 @@ function getConsoleScope(node: ConsoleNode, parent: ConsoleNode | undefined): Co
   if (node.type === 'ClassExpression') {
     return { end: node.end, shadowsConsole: hasConsoleBindingPattern(node.id), start: node.start };
   }
-  if (node.type === 'StaticBlock') {
-    return { end: node.end, shadowsConsole: hasBlockConsoleBinding(node), start: node.start };
+  if (node.type === 'StaticBlock' || node.type === 'TSModuleBlock') {
+    return { end: node.end, shadowsConsole: hasBlockConsoleBinding(node, true), start: node.start };
+  }
+  if (node.type === 'SwitchStatement') {
+    return { end: node.end, shadowsConsole: hasSwitchConsoleBinding(node), start: node.start };
   }
   if (node.type === 'ForStatement' || node.type === 'ForInStatement' || node.type === 'ForOfStatement') {
     return { end: node.end, shadowsConsole: hasLoopConsoleBinding(node), start: node.start };
@@ -554,7 +557,7 @@ function getConsoleScope(node: ConsoleNode, parent: ConsoleNode | undefined): Co
 
 function hasProgramConsoleBinding(node: ConsoleNode): boolean {
   for (const statement of getConsoleArrayProperty(node, 'body')) {
-    if (hasDeclarationConsoleBinding(getExportDeclaration(statement) ?? statement, true)) return true;
+    if (hasDeclarationConsoleBinding(statement, true)) return true;
   }
   return hasHoistedVarConsoleBinding(node);
 }
@@ -571,9 +574,18 @@ function hasFunctionConsoleBinding(node: ConsoleNode): boolean {
   return hasHoistedVarConsoleBinding(getConsoleNodeProperty(node, 'body'));
 }
 
-function hasBlockConsoleBinding(node: ConsoleNode): boolean {
+function hasBlockConsoleBinding(node: ConsoleNode, includeVar: boolean): boolean {
   for (const statement of getConsoleArrayProperty(node, 'body')) {
-    if (hasDeclarationConsoleBinding(statement, false)) return true;
+    if (hasDeclarationConsoleBinding(statement, includeVar)) return true;
+  }
+  return false;
+}
+
+function hasSwitchConsoleBinding(node: ConsoleNode): boolean {
+  for (const switchCase of getConsoleArrayProperty(node, 'cases')) {
+    for (const statement of getConsoleArrayProperty(switchCase, 'consequent')) {
+      if (hasDeclarationConsoleBinding(statement, false)) return true;
+    }
   }
   return false;
 }
@@ -587,7 +599,9 @@ function hasHoistedVarConsoleBinding(root: ConsoleNode | undefined): boolean {
   if (!root) return false;
 
   for (const child of getConsoleNodeChildren(root)) {
-    if (child !== root && isConsoleFunctionScopeNode(child)) continue;
+    if (child !== root && (isConsoleFunctionScopeNode(child) || child.type === 'StaticBlock' || child.type === 'TSModuleBlock')) {
+      continue;
+    }
     if (
       child.type === 'VariableDeclaration' &&
       child.kind === 'var' &&
@@ -601,16 +615,30 @@ function hasHoistedVarConsoleBinding(root: ConsoleNode | undefined): boolean {
 }
 
 function hasImportConsoleBinding(node: ConsoleNode): boolean {
-  return getConsoleArrayProperty(node, 'specifiers').some((specifier) => hasConsoleBindingPattern(specifier.local));
+  if (node.importKind === 'type') return false;
+  return getConsoleArrayProperty(node, 'specifiers').some(
+    (specifier) => specifier.importKind !== 'type' && hasConsoleBindingPattern(specifier.local)
+  );
 }
 
 function hasDeclarationConsoleBinding(node: ConsoleNode, includeVar: boolean): boolean {
-  if (node.type === 'ImportDeclaration') return hasImportConsoleBinding(node);
-  if (node.type === 'FunctionDeclaration' || node.type === 'ClassDeclaration') return hasConsoleBindingPattern(node.id);
-  if (node.type === 'TSEnumDeclaration' || node.type === 'TSModuleDeclaration') {
-    return node.declare !== true && hasConsoleBindingPattern(node.id);
+  const declaration = getExportDeclaration(node) ?? node;
+  if (declaration.declare === true) return false;
+  if (declaration.type === 'ImportDeclaration') return hasImportConsoleBinding(declaration);
+  if (declaration.type === 'FunctionDeclaration' || declaration.type === 'ClassDeclaration') {
+    return hasConsoleBindingPattern(declaration.id);
   }
-  return node.type === 'VariableDeclaration' && (includeVar || node.kind !== 'var') && hasVariableDeclarationConsoleBinding(node);
+  if (declaration.type === 'TSImportEqualsDeclaration') {
+    return declaration.importKind !== 'type' && hasConsoleBindingPattern(declaration.id);
+  }
+  if (declaration.type === 'TSEnumDeclaration' || declaration.type === 'TSModuleDeclaration') {
+    return hasConsoleBindingPattern(declaration.id);
+  }
+  return (
+    declaration.type === 'VariableDeclaration' &&
+    (includeVar || declaration.kind !== 'var') &&
+    hasVariableDeclarationConsoleBinding(declaration)
+  );
 }
 
 function hasVariableDeclarationConsoleBinding(node: ConsoleNode): boolean {
@@ -625,6 +653,9 @@ function hasConsoleBindingPattern(value: unknown): boolean {
   if (value.type === 'Identifier' && value.name === 'console') return true;
   if (value.type === 'AssignmentPattern' || value.type === 'RestElement') {
     return hasConsoleBindingPattern(value.left ?? value.argument);
+  }
+  if (value.type === 'TSParameterProperty') {
+    return hasConsoleBindingPattern(value.parameter);
   }
   if (value.type === 'ArrayPattern') {
     return getConsoleArrayProperty(value, 'elements').some((element) => hasConsoleBindingPattern(element));
