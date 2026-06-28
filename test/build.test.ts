@@ -44,6 +44,10 @@ import './type-only.js';
 
 if (Math.random() < 0) console.log('global-if');
 else process.stdout.write('else');
+if (Math.random() < 0) console.log;
+else process.stdout.write(':member-else');
+if (Math.random() < 0) console.log.bind(console)();
+else process.stdout.write(':bind-else');
 for (let i = 0; i < 0; i++) console.log('global-for');
 \\u0063onsole.log('escaped-global');
 console.log || process.stdout.write(':fallback');
@@ -60,6 +64,11 @@ switch (1) {
   case 1:
     const console = { log: (value: string) => process.stdout.write(value) };
     console.log(':switch');
+}
+switch (console.log('switch-discriminant-global')) {
+  case undefined:
+    const console = { log: (value: string) => process.stdout.write(value) };
+    console.log(':switch-discriminant');
 }
 
 {
@@ -100,6 +109,8 @@ console.log('asi-global');
 (function () {
   process.stdout.write(':iife');
 })();
+foo()
+console.log?.(process.stdout.write(':optional-asi'));
 
 function asiFunction(value: unknown) {
   process.stdout.write(':bad-asi');
@@ -267,6 +278,7 @@ console.log('type-only-global');
     expect(code).to.not.includes('asi-global');
     expect(code).to.not.includes('call-expression-asi-global');
     expect(code).to.not.includes('extends-global');
+    expect(code).to.not.includes('switch-discriminant-global');
     expect(code).to.not.includes('declare-global');
     expect(code).to.not.includes('dotted-global');
     expect(code).to.not.includes('param-default-global');
@@ -291,11 +303,12 @@ console.log('type-only-global');
     expect(code).to.includes(':namespace-dotted-right');
     expect(code).to.includes(':static');
     expect(code).to.includes(':switch');
+    expect(code).to.includes(':switch-discriminant');
     expect(code).to.includes(':param-body');
     const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
     expect(execRet.status).toBe(0);
     expect(execRet.stdout.toString()).toBe(
-      ':class:enum:export:import-equals:namespace:namespace-local:namespace-export:namespace-var:namespace-dotted-left:namespace-dotted-right:staticelse:optional-call:switch:block:var:function:foo:iife:logger:logger:param-body'
+      ':class:enum:export:import-equals:namespace:namespace-local:namespace-export:namespace-var:namespace-dotted-left:namespace-dotted-right:staticelse:member-else:bind-else:optional-call:switch:switch-discriminant:block:var:function:foo:iife:foo:optional-asi:logger:logger:param-body'
     );
   });
 

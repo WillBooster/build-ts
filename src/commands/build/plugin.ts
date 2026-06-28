@@ -442,7 +442,7 @@ function removeConsole(code: string, id: string): { code: string; map: SourceMap
   const magicString = new MagicString(code);
   const replacements: ConsoleReplacement[] = [];
   const scopes: ConsoleScope[] = [];
-  collectConsoleReplacements(ast.program as unknown as ConsoleNode, undefined, undefined, scopes, replacements, excludedMethods);
+  collectConsoleReplacements(ast.program as unknown as ConsoleNode, [], scopes, replacements, excludedMethods);
   for (const replacement of selectConsoleReplacements(replacements)) {
     magicString.overwrite(replacement.start, replacement.end, replacement.value);
   }
@@ -513,24 +513,26 @@ const undefinedExpression = '(void 0)';
 
 function collectConsoleReplacements(
   node: ConsoleNode,
-  parent: ConsoleNode | undefined,
-  grandparent: ConsoleNode | undefined,
+  ancestors: ConsoleNode[],
   scopes: ConsoleScope[],
   replacements: ConsoleReplacement[],
   excludedMethods: Set<string>
 ): void {
+  const parent = ancestors.at(-1);
+  const grandparent = ancestors.at(-2);
   const scope = getConsoleScope(node, parent);
   if (scope) scopes.push(scope);
 
   if (!isConsoleShadowed(scopes, node) && node.type === 'CallExpression') {
-    collectConsoleCallReplacement(node, parent, grandparent, replacements, excludedMethods);
+    collectConsoleCallReplacement(node, ancestors, replacements, excludedMethods);
   }
   if (!isConsoleShadowed(scopes, node) && node.type === 'MemberExpression') {
-    collectConsoleMemberReplacement(node, parent, grandparent, replacements, excludedMethods);
+    collectConsoleMemberReplacement(node, ancestors, replacements, excludedMethods);
   }
 
+  const childAncestors = [...ancestors, node];
   for (const child of getConsoleNodeChildren(node)) {
-    collectConsoleReplacements(child, node, parent, scopes, replacements, excludedMethods);
+    collectConsoleReplacements(child, childAncestors, scopes, replacements, excludedMethods);
   }
 
   if (scope) scopes.pop();
@@ -563,8 +565,8 @@ function getConsoleScope(node: ConsoleNode, parent: ConsoleNode | undefined): Co
       start: node.start,
     };
   }
-  if (node.type === 'SwitchStatement') {
-    return { end: node.end, shadowsConsole: hasSwitchConsoleBinding(node), start: node.start };
+  if (node.type === 'SwitchCase') {
+    return { end: node.end, shadowsConsole: hasSwitchCaseConsoleBinding(node), start: getSwitchCaseScopeStart(node) };
   }
   if (node.type === 'ForStatement' || node.type === 'ForInStatement' || node.type === 'ForOfStatement') {
     return { end: node.end, shadowsConsole: hasLoopConsoleBinding(node), start: node.start };
@@ -594,13 +596,15 @@ function hasBlockConsoleBinding(node: ConsoleNode, includeVar: boolean): boolean
   return false;
 }
 
-function hasSwitchConsoleBinding(node: ConsoleNode): boolean {
-  for (const switchCase of getConsoleArrayProperty(node, 'cases')) {
-    for (const statement of getConsoleArrayProperty(switchCase, 'consequent')) {
-      if (hasDeclarationConsoleBinding(statement, false)) return true;
-    }
+function hasSwitchCaseConsoleBinding(node: ConsoleNode): boolean {
+  for (const statement of getConsoleArrayProperty(node, 'consequent')) {
+    if (hasDeclarationConsoleBinding(statement, false)) return true;
   }
   return false;
+}
+
+function getSwitchCaseScopeStart(node: ConsoleNode): number {
+  return getConsoleArrayProperty(node, 'consequent')[0]?.start ?? node.end;
 }
 
 function hasLoopConsoleBinding(node: ConsoleNode): boolean {
@@ -713,16 +717,16 @@ function isConsoleShadowed(scopes: ConsoleScope[], node: ConsoleNode): boolean {
 
 function collectConsoleCallReplacement(
   node: ConsoleNode,
-  parent: ConsoleNode | undefined,
-  grandparent: ConsoleNode | undefined,
+  ancestors: ConsoleNode[],
   replacements: ConsoleReplacement[],
   excludedMethods: Set<string>
 ): void {
+  const parent = ancestors.at(-1);
   const callee = getConsoleNodeProperty(node, 'callee');
   if (node.optional === true) return;
   if (!callee || !isIncludedConsoleMember(callee, excludedMethods)) {
     if (callee && isIncludedConsoleBindMember(callee, excludedMethods)) {
-      replacements.push({ kind: 'replace', start: node.start, end: node.end, value: getNoopFunctionReplacement(node, parent, grandparent) });
+      replacements.push({ kind: 'replace', start: node.start, end: node.end, value: getNoopFunctionReplacement(node, ancestors) });
     }
     return;
   }
@@ -730,17 +734,18 @@ function collectConsoleCallReplacement(
   if (parent?.type === 'ExpressionStatement') {
     replacements.push({ kind: 'replace', start: parent.start, end: parent.end, value: ';' });
   } else {
-    replacements.push({ kind: 'replace', start: node.start, end: node.end, value: getUndefinedExpressionReplacement(node, parent, grandparent) });
+    replacements.push({ kind: 'replace', start: node.start, end: node.end, value: getUndefinedExpressionReplacement(node, ancestors) });
   }
 }
 
 function collectConsoleMemberReplacement(
   node: ConsoleNode,
-  parent: ConsoleNode | undefined,
-  grandparent: ConsoleNode | undefined,
+  ancestors: ConsoleNode[],
   replacements: ConsoleReplacement[],
   excludedMethods: Set<string>
 ): void {
+  const parent = ancestors.at(-1);
+  const grandparent = ancestors.at(-2);
   if (!isIncludedConsoleMember(node, excludedMethods) || parent?.type === 'MemberExpression') return;
   if (parent?.type === 'CallExpression' && parent.callee === node && parent.optional !== true) return;
   if (isConsoleAssignmentTarget(node, parent, grandparent)) return;
@@ -748,37 +753,39 @@ function collectConsoleMemberReplacement(
   if (parent?.type === 'AssignmentExpression' && parent.left === node) {
     const right = getConsoleNodeProperty(parent, 'right');
     if (right) {
-      replacements.push({ kind: 'replace', start: right.start, end: right.end, value: getNoopFunctionReplacement(right, parent, grandparent) });
+      replacements.push({ kind: 'replace', start: right.start, end: right.end, value: getNoopFunctionReplacement(right, ancestors) });
     }
     return;
   }
 
-  replacements.push({ kind: 'replace', start: node.start, end: node.end, value: getNoopFunctionReplacement(node, parent, grandparent) });
+  replacements.push({ kind: 'replace', start: node.start, end: node.end, value: getNoopFunctionReplacement(node, ancestors) });
 }
 
-function getUndefinedExpressionReplacement(
-  node: ConsoleNode,
-  parent: ConsoleNode | undefined,
-  grandparent: ConsoleNode | undefined
-): string {
-  return startsExpressionStatement(node, parent, grandparent) ? `;${undefinedExpression}` : undefinedExpression;
+function getUndefinedExpressionReplacement(node: ConsoleNode, ancestors: ConsoleNode[]): string {
+  return needsLeadingStatementSemicolon(node, ancestors) ? `;${undefinedExpression}` : undefinedExpression;
 }
 
-function getNoopFunctionReplacement(
-  node: ConsoleNode,
-  parent: ConsoleNode | undefined,
-  grandparent: ConsoleNode | undefined
-): string {
-  return startsExpressionStatement(node, parent, grandparent) ? `;${noopFunctionExpression}` : noopFunctionExpression;
+function getNoopFunctionReplacement(node: ConsoleNode, ancestors: ConsoleNode[]): string {
+  return needsLeadingStatementSemicolon(node, ancestors) ? `;${noopFunctionExpression}` : noopFunctionExpression;
 }
 
-function startsExpressionStatement(
-  node: ConsoleNode,
-  parent: ConsoleNode | undefined,
-  grandparent: ConsoleNode | undefined
-): boolean {
-  const statement = parent?.type === 'ExpressionStatement' ? parent : grandparent?.type === 'ExpressionStatement' ? grandparent : undefined;
-  return statement?.start === node.start;
+function needsLeadingStatementSemicolon(node: ConsoleNode, ancestors: ConsoleNode[]): boolean {
+  const statementIndex = ancestors.findLastIndex((ancestor) => ancestor.type === 'ExpressionStatement');
+  if (statementIndex < 0) return false;
+  const statement = ancestors[statementIndex];
+  if (!statement) return false;
+  const statementParent = ancestors[statementIndex - 1];
+  return statement.start === node.start && isStatementListNode(statementParent);
+}
+
+function isStatementListNode(node: ConsoleNode | undefined): boolean {
+  return (
+    node?.type === 'Program' ||
+    node?.type === 'BlockStatement' ||
+    node?.type === 'StaticBlock' ||
+    node?.type === 'TSModuleBlock' ||
+    node?.type === 'SwitchCase'
+  );
 }
 
 function isConsoleAssignmentTarget(
