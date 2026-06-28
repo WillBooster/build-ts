@@ -435,6 +435,7 @@ function removeConsole(code: string, id: string): { code: string; map: SourceMap
   const excludedMethods = getConsoleRemovalExcludedMethods();
   if (!excludedMethods) return undefined;
 
+  // Escaped identifiers such as `\u0063onsole` must still be handled, so do not guard parsing with a raw `console` substring check.
   const ast = parseConsoleRemovalAst(code, id);
   if (!ast) return undefined;
 
@@ -729,7 +730,7 @@ function collectConsoleCallReplacement(
   if (parent?.type === 'ExpressionStatement') {
     replacements.push({ kind: 'replace', start: parent.start, end: parent.end, value: ';' });
   } else {
-    replacements.push({ kind: 'replace', start: node.start, end: node.end, value: undefinedExpression });
+    replacements.push({ kind: 'replace', start: node.start, end: node.end, value: getUndefinedExpressionReplacement(node, parent, grandparent) });
   }
 }
 
@@ -753,6 +754,14 @@ function collectConsoleMemberReplacement(
   }
 
   replacements.push({ kind: 'replace', start: node.start, end: node.end, value: getNoopFunctionReplacement(node, parent, grandparent) });
+}
+
+function getUndefinedExpressionReplacement(
+  node: ConsoleNode,
+  parent: ConsoleNode | undefined,
+  grandparent: ConsoleNode | undefined
+): string {
+  return startsExpressionStatement(node, parent, grandparent) ? `;${undefinedExpression}` : undefinedExpression;
 }
 
 function getNoopFunctionReplacement(

@@ -101,6 +101,14 @@ console.log('asi-global');
   process.stdout.write(':iife');
 })();
 
+function asiFunction(value: unknown) {
+  process.stdout.write(':bad-asi');
+  return value;
+}
+
+asiFunction
+console.log('call-expression-asi-global') + 2;
+
 function createLogger() {
   process.stdout.write(':logger');
   return 5;
@@ -257,6 +265,7 @@ console.log('type-only-global');
     expect(code).to.not.includes('global-for');
     expect(code).to.not.includes('escaped-global');
     expect(code).to.not.includes('asi-global');
+    expect(code).to.not.includes('call-expression-asi-global');
     expect(code).to.not.includes('extends-global');
     expect(code).to.not.includes('declare-global');
     expect(code).to.not.includes('dotted-global');
