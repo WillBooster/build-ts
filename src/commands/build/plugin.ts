@@ -445,7 +445,7 @@ function removeConsole(code: string, id: string): { code: string; map: SourceMap
   const magicString = new MagicString(code);
   const replacements: ConsoleReplacement[] = [];
   const scopes: ConsoleScope[] = [];
-  collectConsoleReplacements(ast.program as unknown as ConsoleNode, undefined, scopes, replacements, excludedMethods);
+  collectConsoleReplacements(ast.program as unknown as ConsoleNode, undefined, undefined, scopes, replacements, excludedMethods);
   for (const replacement of selectConsoleReplacements(replacements)) {
     if (replacement.kind === 'remove') {
       magicString.remove(replacement.start, replacement.end);
@@ -503,84 +503,136 @@ type ConsoleScope = {
 function collectConsoleReplacements(
   node: ConsoleNode,
   parent: ConsoleNode | undefined,
+  grandparent: ConsoleNode | undefined,
   scopes: ConsoleScope[],
   replacements: ConsoleReplacement[],
   excludedMethods: Set<string>
 ): void {
-  const scope = getConsoleScope(node);
+  const scope = getConsoleScope(node, parent);
   if (scope) scopes.push(scope);
-  registerConsoleBindings(node, scopes);
 
   if (!isConsoleShadowed(scopes, node) && node.type === 'CallExpression') {
-    collectConsoleCallReplacement(node, parent, replacements, excludedMethods);
+    collectConsoleCallReplacement(node, parent, grandparent, replacements, excludedMethods);
   }
   if (!isConsoleShadowed(scopes, node) && node.type === 'MemberExpression') {
     collectConsoleMemberReplacement(node, parent, replacements, excludedMethods);
   }
 
   for (const child of getConsoleNodeChildren(node)) {
-    collectConsoleReplacements(child, node, scopes, replacements, excludedMethods);
+    collectConsoleReplacements(child, node, parent, scopes, replacements, excludedMethods);
   }
 
   if (scope) scopes.pop();
 }
 
-function getConsoleScope(node: ConsoleNode): ConsoleScope | undefined {
-  if (
-    node.type === 'Program' ||
-    node.type === 'BlockStatement' ||
-    node.type === 'FunctionDeclaration' ||
-    node.type === 'FunctionExpression' ||
-    node.type === 'ArrowFunctionExpression' ||
-    node.type === 'CatchClause'
-  ) {
-    return { end: node.end, shadowsConsole: false, start: node.start };
+function getConsoleScope(node: ConsoleNode, parent: ConsoleNode | undefined): ConsoleScope | undefined {
+  if (node.type === 'Program') {
+    return { end: node.end, shadowsConsole: hasProgramConsoleBinding(node), start: node.start };
+  }
+  if (isConsoleFunctionScopeNode(node)) {
+    return { end: node.end, shadowsConsole: hasFunctionConsoleBinding(node), start: node.start };
+  }
+  if (node.type === 'BlockStatement') {
+    return { end: node.end, shadowsConsole: hasBlockConsoleBinding(node), start: node.start };
+  }
+  if (node.type === 'CatchClause') {
+    return { end: node.end, shadowsConsole: hasConsoleBindingPattern(node.param), start: node.start };
+  }
+  if (node.type === 'ForStatement' || node.type === 'ForInStatement' || node.type === 'ForOfStatement') {
+    return { end: node.end, shadowsConsole: hasLoopConsoleBinding(node), start: node.start };
   }
   return undefined;
 }
 
-function registerConsoleBindings(node: ConsoleNode, scopes: ConsoleScope[]): void {
-  if (node.type === 'ImportDeclaration') {
-    for (const specifier of getConsoleArrayProperty(node, 'specifiers')) {
-      registerConsoleBindingPattern(specifier.local, scopes.at(-1));
-    }
-  } else if (node.type === 'VariableDeclarator') {
-    registerConsoleBindingPattern(node.id, scopes.at(-1));
-  } else if (node.type === 'FunctionDeclaration') {
-    registerConsoleBindingPattern(node.id, scopes.at(-2));
-    registerConsoleFunctionParams(node, scopes.at(-1));
-  } else if (node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression') {
-    registerConsoleBindingPattern(node.id, scopes.at(-1));
-    registerConsoleFunctionParams(node, scopes.at(-1));
-  } else if (node.type === 'ClassDeclaration') {
-    registerConsoleBindingPattern(node.id, scopes.at(-1));
-  } else if (node.type === 'CatchClause') {
-    registerConsoleBindingPattern(node.param, scopes.at(-1));
+function hasProgramConsoleBinding(node: ConsoleNode): boolean {
+  for (const statement of getConsoleArrayProperty(node, 'body')) {
+    if (statement.type === 'ImportDeclaration' && hasImportConsoleBinding(statement)) return true;
+    if (statement.type === 'FunctionDeclaration' && hasConsoleBindingPattern(statement.id)) return true;
+    if (statement.type === 'ClassDeclaration' && hasConsoleBindingPattern(statement.id)) return true;
+    if (statement.type === 'VariableDeclaration' && hasVariableDeclarationConsoleBinding(statement)) return true;
   }
+  return hasHoistedVarConsoleBinding(node);
 }
 
-function registerConsoleFunctionParams(node: ConsoleNode, scope: ConsoleScope | undefined): void {
+function hasFunctionConsoleBinding(node: ConsoleNode): boolean {
+  if (hasConsoleBindingPattern(node.id)) return true;
   for (const param of getConsoleArrayProperty(node, 'params')) {
-    registerConsoleBindingPattern(param, scope);
+    if (hasConsoleBindingPattern(param)) return true;
   }
+  const body = getConsoleNodeProperty(node, 'body');
+  for (const statement of getConsoleArrayProperty(body ?? node, 'body')) {
+    if (statement.type === 'FunctionDeclaration' && hasConsoleBindingPattern(statement.id)) return true;
+  }
+  return hasHoistedVarConsoleBinding(getConsoleNodeProperty(node, 'body'));
 }
 
-function registerConsoleBindingPattern(value: unknown, scope: ConsoleScope | undefined): void {
-  if (!scope || !isConsoleNode(value)) return;
-
-  if (value.type === 'Identifier' && value.name === 'console') {
-    scope.shadowsConsole = true;
-  } else if (value.type === 'AssignmentPattern' || value.type === 'RestElement') {
-    registerConsoleBindingPattern(value.left ?? value.argument, scope);
-  } else if (value.type === 'ArrayPattern') {
-    for (const element of getConsoleArrayProperty(value, 'elements')) {
-      registerConsoleBindingPattern(element, scope);
-    }
-  } else if (value.type === 'ObjectPattern') {
-    for (const property of getConsoleArrayProperty(value, 'properties')) {
-      registerConsoleBindingPattern(property.value ?? property.argument, scope);
+function hasBlockConsoleBinding(node: ConsoleNode): boolean {
+  for (const statement of getConsoleArrayProperty(node, 'body')) {
+    if (statement.type === 'FunctionDeclaration' && hasConsoleBindingPattern(statement.id)) return true;
+    if (statement.type === 'ClassDeclaration' && hasConsoleBindingPattern(statement.id)) return true;
+    if (
+      statement.type === 'VariableDeclaration' &&
+      statement.kind !== 'var' &&
+      hasVariableDeclarationConsoleBinding(statement)
+    ) {
+      return true;
     }
   }
+  return false;
+}
+
+function hasLoopConsoleBinding(node: ConsoleNode): boolean {
+  const declaration = getConsoleNodeProperty(node, node.type === 'ForStatement' ? 'init' : 'left');
+  return !!declaration && declaration.type === 'VariableDeclaration' && declaration.kind !== 'var' && hasVariableDeclarationConsoleBinding(declaration);
+}
+
+function hasHoistedVarConsoleBinding(root: ConsoleNode | undefined): boolean {
+  if (!root) return false;
+
+  for (const child of getConsoleNodeChildren(root)) {
+    if (child !== root && isConsoleFunctionScopeNode(child)) continue;
+    if (
+      child.type === 'VariableDeclaration' &&
+      child.kind === 'var' &&
+      hasVariableDeclarationConsoleBinding(child)
+    ) {
+      return true;
+    }
+    if (hasHoistedVarConsoleBinding(child)) return true;
+  }
+  return false;
+}
+
+function hasImportConsoleBinding(node: ConsoleNode): boolean {
+  return getConsoleArrayProperty(node, 'specifiers').some((specifier) => hasConsoleBindingPattern(specifier.local));
+}
+
+function hasVariableDeclarationConsoleBinding(node: ConsoleNode): boolean {
+  return getConsoleArrayProperty(node, 'declarations').some((declaration) =>
+    hasConsoleBindingPattern(getConsoleNodeProperty(declaration, 'id'))
+  );
+}
+
+function hasConsoleBindingPattern(value: unknown): boolean {
+  if (!isConsoleNode(value)) return false;
+
+  if (value.type === 'Identifier' && value.name === 'console') return true;
+  if (value.type === 'AssignmentPattern' || value.type === 'RestElement') {
+    return hasConsoleBindingPattern(value.left ?? value.argument);
+  }
+  if (value.type === 'ArrayPattern') {
+    return getConsoleArrayProperty(value, 'elements').some((element) => hasConsoleBindingPattern(element));
+  }
+  if (value.type === 'ObjectPattern') {
+    return getConsoleArrayProperty(value, 'properties').some((property) =>
+      hasConsoleBindingPattern(property.value ?? property.argument)
+    );
+  }
+  return false;
+}
+
+function isConsoleFunctionScopeNode(node: ConsoleNode): boolean {
+  return node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression';
 }
 
 function isConsoleShadowed(scopes: ConsoleScope[], node: ConsoleNode): boolean {
@@ -590,6 +642,7 @@ function isConsoleShadowed(scopes: ConsoleScope[], node: ConsoleNode): boolean {
 function collectConsoleCallReplacement(
   node: ConsoleNode,
   parent: ConsoleNode | undefined,
+  grandparent: ConsoleNode | undefined,
   replacements: ConsoleReplacement[],
   excludedMethods: Set<string>
 ): void {
@@ -602,10 +655,18 @@ function collectConsoleCallReplacement(
   }
 
   if (parent?.type === 'ExpressionStatement') {
-    replacements.push({ kind: 'remove', start: parent.start, end: parent.end });
+    replacements.push(
+      canRemoveConsoleExpressionStatement(grandparent)
+        ? { kind: 'remove', start: parent.start, end: parent.end }
+        : { kind: 'replace', start: parent.start, end: parent.end, value: ';' }
+    );
   } else {
     replacements.push({ kind: 'replace', start: node.start, end: node.end, value: 'void 0' });
   }
+}
+
+function canRemoveConsoleExpressionStatement(parent: ConsoleNode | undefined): boolean {
+  return !parent || parent.type === 'Program' || parent.type === 'BlockStatement' || parent.type === 'StaticBlock' || parent.type === 'SwitchCase';
 }
 
 function collectConsoleMemberReplacement(
@@ -662,6 +723,7 @@ function isExcludedConsoleProperty(
   property: ConsoleNode,
   excludedMethods: Set<string>
 ): boolean {
+  // The restored behavior matches babel-plugin-transform-remove-console, whose exclusions only apply to identifier properties.
   return memberExpression.computed !== true && property.type === 'Identifier' && excludedMethods.has(property.name as string);
 }
 

@@ -19,6 +19,58 @@ describe('build', { timeout: 60_000 }, () => {
     expect(indexJs).to.not.includes('process.env.A');
   });
 
+  it('app-node removes only global console calls in valid statements', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/app-node-console-scope';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({
+        packageManager: 'yarn@4.17.0',
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/index.ts`,
+      `if (Math.random() < 0) console.log('global-if');
+else process.stdout.write('else');
+for (let i = 0; i < 0; i++) console.log('global-for');
+
+{
+  const console = { log: (value: string) => process.stdout.write(value) };
+  console.log(':block');
+}
+
+function localVarConsole() {
+  {
+    var console = { log: (value: string) => process.stdout.write(value) };
+  }
+  console.log(':var');
+}
+
+function localFunctionConsole() {
+  function console() {}
+  console.log = (value: string) => process.stdout.write(value);
+  console.log(':function');
+}
+
+localVarConsole();
+localFunctionConsole();
+`
+    );
+
+    await buildWithPackagePath(fixtureDirPath, 'app');
+    const code = await readGeneratedCode(`${fixtureDirPath}/dist/index.js`);
+    expect(code).to.not.includes('global-if');
+    expect(code).to.not.includes('global-for');
+    expect(code).to.includes(':block');
+    expect(code).to.includes(':var');
+    expect(code).to.includes(':function');
+    const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
+    expect(execRet.status).toBe(0);
+    expect(execRet.stdout.toString()).toBe('else:block:var:function');
+  });
+
   it('app-node with core-js', async () => {
     await buildWithCommand('app-node', 'app', '--inline', 'A', '--core-js');
     const indexJs = await readGeneratedCode('test/fixtures/app-node/dist/index.js');
