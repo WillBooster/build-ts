@@ -70,6 +70,15 @@ switch (console.log('switch-discriminant-global')) {
     const console = { log: (value: string) => process.stdout.write(value) };
     console.log(':switch-discriminant');
 }
+const caseTestValue = Number(process.argv[2] ?? '1');
+switch (caseTestValue) {
+  case 1:
+    process.stdout.write(':switch-case-skip');
+    break;
+  case console.log('switch-case-test-global'):
+    const console = { log: (value: string) => process.stdout.write(value) };
+    console.log(':switch-case-test-local');
+}
 const crossCaseValue = process.argv.length > 0 ? 2 : 1;
 switch (crossCaseValue) {
   case 1:
@@ -322,13 +331,14 @@ console.log('type-only-global');
     expect(code).to.includes(':static');
     expect(code).to.includes(':switch');
     expect(code).to.includes(':switch-discriminant');
+    expect(code).to.includes('switch-case-test-global');
     expect(code).to.includes('switch-cross-before');
     expect(code).to.includes('switch-cross-after');
     expect(code).to.includes(':param-body');
     const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
     expect(execRet.status).toBe(0);
     expect(execRet.stdout.toString()).toBe(
-      ':class:enum:export:import-equals:namespace:namespace-local:namespace-export:namespace-var:namespace-dotted-left:namespace-dotted-right:staticelse:member-else:bind-else:optional-call:switch:switch-discriminant:switch-cross-local:switch-cross-declare:block:var:function:foo:iife:foo:optional-asi:logger:logger:param-body'
+      ':class:enum:export:import-equals:namespace:namespace-local:namespace-export:namespace-var:namespace-dotted-left:namespace-dotted-right:staticelse:member-else:bind-else:optional-call:switch:switch-discriminant:switch-case-skip:switch-cross-local:switch-cross-declare:block:var:function:foo:iife:foo:optional-asi:logger:logger:param-body'
     );
   });
 

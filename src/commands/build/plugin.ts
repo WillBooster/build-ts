@@ -568,6 +568,14 @@ function getConsoleScope(node: ConsoleNode, parent: ConsoleNode | undefined): Co
   if (node.type === 'SwitchStatement') {
     return { end: node.end, shadowsConsole: hasSwitchConsoleBinding(node), start: getSwitchScopeStart(node) };
   }
+  if (node.type === 'SwitchCase') {
+    const switchShadowsConsole = parent?.type === 'SwitchStatement' && hasSwitchConsoleBinding(parent);
+    return {
+      end: node.end,
+      shadowsConsole: switchShadowsConsole || hasSwitchCaseConsoleBinding(node),
+      start: getSwitchCaseScopeStart(node),
+    };
+  }
   if (node.type === 'ForStatement' || node.type === 'ForInStatement' || node.type === 'ForOfStatement') {
     return { end: node.end, shadowsConsole: hasLoopConsoleBinding(node), start: node.start };
   }
@@ -607,10 +615,23 @@ function hasSwitchConsoleBinding(node: ConsoleNode): boolean {
 
 function getSwitchScopeStart(node: ConsoleNode): number {
   for (const switchCase of getConsoleArrayProperty(node, 'cases')) {
-    const firstStatement = getConsoleArrayProperty(switchCase, 'consequent')[0];
-    if (firstStatement) return firstStatement.start;
+    const start = getSwitchCaseScopeStart(switchCase);
+    if (start < switchCase.end) return start;
   }
   return node.end;
+}
+
+function hasSwitchCaseConsoleBinding(node: ConsoleNode): boolean {
+  for (const statement of getConsoleArrayProperty(node, 'consequent')) {
+    if (hasDeclarationConsoleBinding(statement, false)) return true;
+  }
+  return false;
+}
+
+function getSwitchCaseScopeStart(node: ConsoleNode): number {
+  const test = getConsoleNodeProperty(node, 'test');
+  if (test) return test.start;
+  return getConsoleArrayProperty(node, 'consequent')[0]?.start ?? node.end;
 }
 
 function hasLoopConsoleBinding(node: ConsoleNode): boolean {
