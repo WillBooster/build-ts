@@ -46,6 +46,11 @@ else process.stdout.write('else');
 for (let i = 0; i < 0; i++) console.log('global-for');
 console.log || process.stdout.write(':fallback');
 console.log.bind(console)();
+if (Math.random() < 0) {
+  console.log++;
+  for (console.log in { done: 1 }) {}
+  ({ x: console.log } = { x: 'done' });
+}
 switch (1) {
   case 1:
     const console = { log: (value: string) => process.stdout.write(value) };
@@ -145,6 +150,18 @@ namespace ExportNamespace {
   export const console = { log: (value: string) => process.stdout.write(value) };
   console.log(':namespace-export');
 }
+
+namespace console.DottedLeft {
+  console.log(':namespace-dotted-left');
+}
+
+namespace DottedRight.console {
+  export function log(value: string) {
+    process.stdout.write(value);
+  }
+
+  console.log(':namespace-dotted-right');
+}
 `
     );
     await fs.promises.writeFile(
@@ -190,12 +207,14 @@ console.log('type-only-global');
     expect(code).to.includes(':import-equals');
     expect(code).to.includes(':namespace-local');
     expect(code).to.includes(':namespace-export');
+    expect(code).to.includes(':namespace-dotted-left');
+    expect(code).to.includes(':namespace-dotted-right');
     expect(code).to.includes(':static');
     expect(code).to.includes(':switch');
     const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
     expect(execRet.status).toBe(0);
     expect(execRet.stdout.toString()).toBe(
-      ':class:enum:export:import-equals:namespace:namespace-local:namespace-export:staticelse:switch:block:var:function'
+      ':class:enum:export:import-equals:namespace:namespace-local:namespace-export:namespace-dotted-left:namespace-dotted-right:staticelse:switch:block:var:function'
     );
   });
 

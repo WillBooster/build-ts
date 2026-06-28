@@ -517,7 +517,7 @@ function collectConsoleReplacements(
     collectConsoleCallReplacement(node, parent, grandparent, replacements, excludedMethods);
   }
   if (!isConsoleShadowed(scopes, node) && node.type === 'MemberExpression') {
-    collectConsoleMemberReplacement(node, parent, replacements, excludedMethods);
+    collectConsoleMemberReplacement(node, parent, grandparent, replacements, excludedMethods);
   }
 
   for (const child of getConsoleNodeChildren(node)) {
@@ -544,7 +544,11 @@ function getConsoleScope(node: ConsoleNode, parent: ConsoleNode | undefined): Co
     return { end: node.end, shadowsConsole: hasConsoleBindingPattern(node.id), start: node.start };
   }
   if (node.type === 'StaticBlock' || node.type === 'TSModuleBlock') {
-    return { end: node.end, shadowsConsole: hasBlockConsoleBinding(node, true), start: node.start };
+    return {
+      end: node.end,
+      shadowsConsole: hasBlockConsoleBinding(node, true) || (node.type === 'TSModuleBlock' && hasNamespaceConsoleBinding(parent)),
+      start: node.start,
+    };
   }
   if (node.type === 'SwitchStatement') {
     return { end: node.end, shadowsConsole: hasSwitchConsoleBinding(node), start: node.start };
@@ -632,12 +636,25 @@ function hasDeclarationConsoleBinding(node: ConsoleNode, includeVar: boolean): b
     return declaration.importKind !== 'type' && hasConsoleBindingPattern(declaration.id);
   }
   if (declaration.type === 'TSEnumDeclaration' || declaration.type === 'TSModuleDeclaration') {
-    return hasConsoleBindingPattern(declaration.id);
+    return hasModuleIdConsoleBinding(getConsoleNodeProperty(declaration, 'id'));
   }
   return (
     declaration.type === 'VariableDeclaration' &&
     (includeVar || declaration.kind !== 'var') &&
     hasVariableDeclarationConsoleBinding(declaration)
+  );
+}
+
+function hasNamespaceConsoleBinding(node: ConsoleNode | undefined): boolean {
+  return node?.type === 'TSModuleDeclaration' && node.declare !== true && hasModuleIdConsoleBinding(getConsoleNodeProperty(node, 'id'));
+}
+
+function hasModuleIdConsoleBinding(id: ConsoleNode | undefined): boolean {
+  if (!id) return false;
+  if (id.type === 'Identifier') return id.name === 'console';
+  return (
+    id.type === 'TSQualifiedName' &&
+    (hasModuleIdConsoleBinding(getConsoleNodeProperty(id, 'left')) || hasModuleIdConsoleBinding(getConsoleNodeProperty(id, 'right')))
   );
 }
 
@@ -656,6 +673,9 @@ function hasConsoleBindingPattern(value: unknown): boolean {
   }
   if (value.type === 'TSParameterProperty') {
     return hasConsoleBindingPattern(value.parameter);
+  }
+  if (value.type === 'TSQualifiedName') {
+    return hasConsoleBindingPattern(value.left);
   }
   if (value.type === 'ArrayPattern') {
     return getConsoleArrayProperty(value, 'elements').some((element) => hasConsoleBindingPattern(element));
@@ -709,11 +729,13 @@ function canRemoveConsoleExpressionStatement(parent: ConsoleNode | undefined): b
 function collectConsoleMemberReplacement(
   node: ConsoleNode,
   parent: ConsoleNode | undefined,
+  grandparent: ConsoleNode | undefined,
   replacements: ConsoleReplacement[],
   excludedMethods: Set<string>
 ): void {
   if (!isIncludedConsoleMember(node, excludedMethods) || parent?.type === 'MemberExpression') return;
   if (parent?.type === 'CallExpression' && parent.callee === node) return;
+  if (isConsoleAssignmentTarget(node, parent, grandparent)) return;
 
   if (parent?.type === 'AssignmentExpression' && parent.left === node) {
     const right = getConsoleNodeProperty(parent, 'right');
@@ -724,6 +746,18 @@ function collectConsoleMemberReplacement(
   }
 
   replacements.push({ kind: 'replace', start: node.start, end: node.end, value: noopFunctionExpression });
+}
+
+function isConsoleAssignmentTarget(
+  node: ConsoleNode,
+  parent: ConsoleNode | undefined,
+  grandparent: ConsoleNode | undefined
+): boolean {
+  if (parent?.type === 'UpdateExpression' && parent.argument === node) return true;
+  if ((parent?.type === 'ForInStatement' || parent?.type === 'ForOfStatement') && parent.left === node) return true;
+  if (parent?.type === 'ArrayPattern') return true;
+  if (parent?.type === 'AssignmentPattern' && parent.left === node) return true;
+  return parent?.type === 'Property' && parent.value === node && grandparent?.type === 'ObjectPattern';
 }
 
 function isIncludedConsoleMember(node: ConsoleNode, excludedMethods: Set<string>): boolean {
