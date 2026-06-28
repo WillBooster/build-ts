@@ -443,11 +443,7 @@ function removeConsole(code: string, id: string): { code: string; map: SourceMap
   const scopes: ConsoleScope[] = [];
   collectConsoleReplacements(ast.program as unknown as ConsoleNode, undefined, undefined, scopes, replacements, excludedMethods);
   for (const replacement of selectConsoleReplacements(replacements)) {
-    if (replacement.kind === 'remove') {
-      magicString.remove(replacement.start, replacement.end);
-    } else {
-      magicString.overwrite(replacement.start, replacement.end, replacement.value);
-    }
+    magicString.overwrite(replacement.start, replacement.end, replacement.value);
   }
 
   if (!magicString.hasChanged()) return undefined;
@@ -498,18 +494,12 @@ type ConsoleNode = {
   [key: string]: unknown;
 };
 
-type ConsoleReplacement =
-  | {
-      kind: 'remove';
-      start: number;
-      end: number;
-    }
-  | {
-      kind: 'replace';
-      start: number;
-      end: number;
-      value: string;
-    };
+type ConsoleReplacement = {
+  kind: 'replace';
+  start: number;
+  end: number;
+  value: string;
+};
 
 type ConsoleScope = {
   end: number;
