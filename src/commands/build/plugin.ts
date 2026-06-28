@@ -500,6 +500,8 @@ type ConsoleScope = {
   start: number;
 };
 
+const noopFunctionExpression = '(function () {})';
+
 function collectConsoleReplacements(
   node: ConsoleNode,
   parent: ConsoleNode | undefined,
@@ -538,6 +540,12 @@ function getConsoleScope(node: ConsoleNode, parent: ConsoleNode | undefined): Co
   if (node.type === 'CatchClause') {
     return { end: node.end, shadowsConsole: hasConsoleBindingPattern(node.param), start: node.start };
   }
+  if (node.type === 'ClassExpression') {
+    return { end: node.end, shadowsConsole: hasConsoleBindingPattern(node.id), start: node.start };
+  }
+  if (node.type === 'StaticBlock') {
+    return { end: node.end, shadowsConsole: hasBlockConsoleBinding(node), start: node.start };
+  }
   if (node.type === 'ForStatement' || node.type === 'ForInStatement' || node.type === 'ForOfStatement') {
     return { end: node.end, shadowsConsole: hasLoopConsoleBinding(node), start: node.start };
   }
@@ -546,10 +554,7 @@ function getConsoleScope(node: ConsoleNode, parent: ConsoleNode | undefined): Co
 
 function hasProgramConsoleBinding(node: ConsoleNode): boolean {
   for (const statement of getConsoleArrayProperty(node, 'body')) {
-    if (statement.type === 'ImportDeclaration' && hasImportConsoleBinding(statement)) return true;
-    if (statement.type === 'FunctionDeclaration' && hasConsoleBindingPattern(statement.id)) return true;
-    if (statement.type === 'ClassDeclaration' && hasConsoleBindingPattern(statement.id)) return true;
-    if (statement.type === 'VariableDeclaration' && hasVariableDeclarationConsoleBinding(statement)) return true;
+    if (hasDeclarationConsoleBinding(getExportDeclaration(statement) ?? statement, true)) return true;
   }
   return hasHoistedVarConsoleBinding(node);
 }
@@ -561,22 +566,14 @@ function hasFunctionConsoleBinding(node: ConsoleNode): boolean {
   }
   const body = getConsoleNodeProperty(node, 'body');
   for (const statement of getConsoleArrayProperty(body ?? node, 'body')) {
-    if (statement.type === 'FunctionDeclaration' && hasConsoleBindingPattern(statement.id)) return true;
+    if (hasDeclarationConsoleBinding(statement, false)) return true;
   }
   return hasHoistedVarConsoleBinding(getConsoleNodeProperty(node, 'body'));
 }
 
 function hasBlockConsoleBinding(node: ConsoleNode): boolean {
   for (const statement of getConsoleArrayProperty(node, 'body')) {
-    if (statement.type === 'FunctionDeclaration' && hasConsoleBindingPattern(statement.id)) return true;
-    if (statement.type === 'ClassDeclaration' && hasConsoleBindingPattern(statement.id)) return true;
-    if (
-      statement.type === 'VariableDeclaration' &&
-      statement.kind !== 'var' &&
-      hasVariableDeclarationConsoleBinding(statement)
-    ) {
-      return true;
-    }
+    if (hasDeclarationConsoleBinding(statement, false)) return true;
   }
   return false;
 }
@@ -605,6 +602,15 @@ function hasHoistedVarConsoleBinding(root: ConsoleNode | undefined): boolean {
 
 function hasImportConsoleBinding(node: ConsoleNode): boolean {
   return getConsoleArrayProperty(node, 'specifiers').some((specifier) => hasConsoleBindingPattern(specifier.local));
+}
+
+function hasDeclarationConsoleBinding(node: ConsoleNode, includeVar: boolean): boolean {
+  if (node.type === 'ImportDeclaration') return hasImportConsoleBinding(node);
+  if (node.type === 'FunctionDeclaration' || node.type === 'ClassDeclaration') return hasConsoleBindingPattern(node.id);
+  if (node.type === 'TSEnumDeclaration' || node.type === 'TSModuleDeclaration') {
+    return node.declare !== true && hasConsoleBindingPattern(node.id);
+  }
+  return node.type === 'VariableDeclaration' && (includeVar || node.kind !== 'var') && hasVariableDeclarationConsoleBinding(node);
 }
 
 function hasVariableDeclarationConsoleBinding(node: ConsoleNode): boolean {
@@ -649,7 +655,7 @@ function collectConsoleCallReplacement(
   const callee = getConsoleNodeProperty(node, 'callee');
   if (!callee || !isIncludedConsoleMember(callee, excludedMethods)) {
     if (callee && isIncludedConsoleBindMember(callee, excludedMethods)) {
-      replacements.push({ kind: 'replace', start: node.start, end: node.end, value: 'function () {}' });
+      replacements.push({ kind: 'replace', start: node.start, end: node.end, value: noopFunctionExpression });
     }
     return;
   }
@@ -681,12 +687,12 @@ function collectConsoleMemberReplacement(
   if (parent?.type === 'AssignmentExpression' && parent.left === node) {
     const right = getConsoleNodeProperty(parent, 'right');
     if (right) {
-      replacements.push({ kind: 'replace', start: right.start, end: right.end, value: 'function () {}' });
+      replacements.push({ kind: 'replace', start: right.start, end: right.end, value: noopFunctionExpression });
     }
     return;
   }
 
-  replacements.push({ kind: 'replace', start: node.start, end: node.end, value: 'function () {}' });
+  replacements.push({ kind: 'replace', start: node.start, end: node.end, value: noopFunctionExpression });
 }
 
 function isIncludedConsoleMember(node: ConsoleNode, excludedMethods: Set<string>): boolean {
@@ -700,6 +706,7 @@ function isIncludedConsoleMember(node: ConsoleNode, excludedMethods: Set<string>
   return (
     object.type === 'MemberExpression' &&
     isGlobalConsoleIdentifier(getConsoleNodeProperty(object, 'object')) &&
+    // Matches babel-plugin-transform-remove-console: call/apply exclusions are checked on the outer property only.
     node.computed !== true &&
     property.type === 'Identifier' &&
     (property.name === 'call' || property.name === 'apply')
@@ -752,6 +759,11 @@ function getConsoleNodeChildren(node: ConsoleNode): ConsoleNode[] {
 function getConsoleNodeProperty(node: ConsoleNode, key: string): ConsoleNode | undefined {
   const value = node[key];
   return isConsoleNode(value) ? value : undefined;
+}
+
+function getExportDeclaration(node: ConsoleNode): ConsoleNode | undefined {
+  if (node.type !== 'ExportNamedDeclaration' && node.type !== 'ExportDefaultDeclaration') return undefined;
+  return getConsoleNodeProperty(node, 'declaration');
 }
 
 function getConsoleArrayProperty(node: ConsoleNode, key: string): ConsoleNode[] {

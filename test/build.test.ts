@@ -32,9 +32,16 @@ describe('build', { timeout: 60_000 }, () => {
     await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
-      `if (Math.random() < 0) console.log('global-if');
+      `import './class-expression.js';
+import './enum.js';
+import './exported.js';
+import './namespace.js';
+
+if (Math.random() < 0) console.log('global-if');
 else process.stdout.write('else');
 for (let i = 0; i < 0; i++) console.log('global-for');
+console.log || process.stdout.write(':fallback');
+console.log.bind(console)();
 
 {
   const console = { log: (value: string) => process.stdout.write(value) };
@@ -58,6 +65,48 @@ localVarConsole();
 localFunctionConsole();
 `
     );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/class-expression.ts`,
+      `const ClassWithLocalName = class console {
+  static log(value: string) {
+    process.stdout.write(value);
+  }
+
+  static run() {
+    console.log(':class');
+  }
+};
+
+ClassWithLocalName.run();
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/enum.ts`,
+      `enum console {
+  log = ':enum',
+}
+
+process.stdout.write(console.log);
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/exported.ts`,
+      `export const console = { log: (value: string) => process.stdout.write(value) };
+
+console.log(':export');
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/namespace.ts`,
+      `namespace console {
+  export function log(value: string) {
+    process.stdout.write(value);
+  }
+}
+
+console.log(':namespace');
+`
+    );
 
     await buildWithPackagePath(fixtureDirPath, 'app');
     const code = await readGeneratedCode(`${fixtureDirPath}/dist/index.js`);
@@ -66,9 +115,13 @@ localFunctionConsole();
     expect(code).to.includes(':block');
     expect(code).to.includes(':var');
     expect(code).to.includes(':function');
+    expect(code).to.includes(':class');
+    expect(code).to.includes(':enum');
+    expect(code).to.includes(':export');
+    expect(code).to.includes(':namespace');
     const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
     expect(execRet.status).toBe(0);
-    expect(execRet.stdout.toString()).toBe('else:block:var:function');
+    expect(execRet.stdout.toString()).toBe(':class:enum:export:namespaceelse:block:var:function');
   });
 
   it('app-node with core-js', async () => {
