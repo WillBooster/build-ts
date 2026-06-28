@@ -30,13 +30,13 @@
     "verify-full": "wb verify --full"
   },
   "dependencies": {
-    "@babel/core": "7.29.7",
-    "@babel/plugin-proposal-decorators": "7.29.7",
+    "@babel/core": "8.0.1",
+    "@babel/plugin-proposal-decorators": "8.0.2",
     "@babel/plugin-proposal-explicit-resource-management": "7.27.4",
     "@babel/plugin-syntax-import-attributes": "7.29.7",
-    "@babel/preset-env": "7.29.7",
-    "@babel/preset-react": "7.29.7",
-    "@babel/preset-typescript": "7.29.7",
+    "@babel/preset-env": "8.0.2",
+    "@babel/preset-react": "8.0.1",
+    "@babel/preset-typescript": "8.0.1",
     "@typescript/native-preview": "7.0.0-dev.20260620.1",
     "@willbooster/shared-lib-node": "8.5.23",
     "babel-plugin-polyfill-corejs3": "0.14.2",
