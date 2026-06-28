@@ -83,6 +83,16 @@ function localFunctionConsole() {
 localVarConsole();
 localFunctionConsole();
 
+function foo() {
+  process.stdout.write(':foo');
+}
+
+foo()
+console.log('asi-global');
+(function () {
+  process.stdout.write(':iife');
+})();
+
 function parameterDefault(value = console.log('param-default-global')) {
   const console = { log: (message: string) => process.stdout.write(message) };
   console.log(':param-body');
@@ -228,6 +238,7 @@ console.log('type-only-global');
     expect(code).to.not.includes('global-if');
     expect(code).to.not.includes('global-for');
     expect(code).to.not.includes('escaped-global');
+    expect(code).to.not.includes('asi-global');
     expect(code).to.not.includes('declare-global');
     expect(code).to.not.includes('dotted-global');
     expect(code).to.not.includes('param-default-global');
@@ -255,11 +266,11 @@ console.log('type-only-global');
     const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
     expect(execRet.status).toBe(0);
     expect(execRet.stdout.toString()).toBe(
-      ':class:enum:export:import-equals:namespace:namespace-local:namespace-export:namespace-var:namespace-dotted-left:namespace-dotted-right:staticelse:optional-call:switch:block:var:function:param-body'
+      ':class:enum:export:import-equals:namespace:namespace-local:namespace-export:namespace-var:namespace-dotted-left:namespace-dotted-right:staticelse:optional-call:switch:block:var:function:foo:iife:param-body'
     );
   });
 
-  it('app-node removes console calls in CommonJS input with top-level return', async () => {
+  it('app-node removes console calls in CommonJS inputs with top-level return', async () => {
     const fixtureDirPath = '.tmp/test-fixtures/app-node-cjs-return';
     await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
     await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
@@ -277,6 +288,24 @@ console.log('cjs-after');
     const code = await readGeneratedCode(`${fixtureDirPath}/dist/index.js`);
     expect(code).to.not.includes('cjs-before');
     expect(code).to.not.includes('cjs-after');
+
+    const jsFixtureDirPath = '.tmp/test-fixtures/app-node-cjs-js-return';
+    await fs.promises.rm(jsFixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${jsFixtureDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(`${jsFixtureDirPath}/package.json`, JSON.stringify({ packageManager: 'yarn@4.17.0' }));
+    await fs.promises.writeFile(`${jsFixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${jsFixtureDirPath}/src/index.js`,
+      `console.log('cjs-js-before');
+return;
+console.log('cjs-js-after');
+`
+    );
+
+    await buildWithPackagePath(jsFixtureDirPath, 'app', '--input', `${jsFixtureDirPath}/src/index.js`);
+    const jsCode = await readGeneratedCode(`${jsFixtureDirPath}/dist/index.js`);
+    expect(jsCode).to.not.includes('cjs-js-before');
+    expect(jsCode).to.not.includes('cjs-js-after');
   });
 
   it('app-node with core-js', async () => {

@@ -435,11 +435,8 @@ function removeConsole(code: string, id: string): { code: string; map: SourceMap
   const excludedMethods = getConsoleRemovalExcludedMethods();
   if (!excludedMethods) return undefined;
 
-  const ast = parseSync(id, code, {
-    lang: getParserLang(id),
-    sourceType: getParserSourceType(id),
-  });
-  if (ast.errors.some((error) => error.severity === 'Error')) return undefined;
+  const ast = parseConsoleRemovalAst(code, id);
+  if (!ast) return undefined;
 
   const magicString = new MagicString(code);
   const replacements: ConsoleReplacement[] = [];
@@ -465,6 +462,22 @@ function getConsoleRemovalExcludedMethods(): Set<string> | undefined {
   if (env.NODE_ENV === 'production') return new Set(['error', 'info', 'warn']);
   if (env.NODE_ENV === 'test') return new Set(['debug', 'error', 'info', 'warn']);
   return undefined;
+}
+
+function parseConsoleRemovalAst(code: string, id: string): ReturnType<typeof parseSync> | undefined {
+  const lang = getParserLang(id);
+  const sourceType = getParserSourceType(id);
+  const ast = parseSync(id, code, { lang, sourceType });
+  if (!hasParseError(ast)) return ast;
+  if (id.endsWith('.js') && sourceType === 'unambiguous') {
+    const commonJsAst = parseSync(id, code, { lang, sourceType: 'commonjs' });
+    if (!hasParseError(commonJsAst)) return commonJsAst;
+  }
+  return undefined;
+}
+
+function hasParseError(ast: ReturnType<typeof parseSync>): boolean {
+  return ast.errors.some((error) => error.severity === 'Error');
 }
 
 function getParserLang(id: string): 'js' | 'jsx' | 'ts' | 'tsx' {
@@ -723,18 +736,10 @@ function collectConsoleCallReplacement(
   }
 
   if (parent?.type === 'ExpressionStatement') {
-    replacements.push(
-      canRemoveConsoleExpressionStatement(grandparent)
-        ? { kind: 'remove', start: parent.start, end: parent.end }
-        : { kind: 'replace', start: parent.start, end: parent.end, value: ';' }
-    );
+    replacements.push({ kind: 'replace', start: parent.start, end: parent.end, value: ';' });
   } else {
     replacements.push({ kind: 'replace', start: node.start, end: node.end, value: 'void 0' });
   }
-}
-
-function canRemoveConsoleExpressionStatement(parent: ConsoleNode | undefined): boolean {
-  return !parent || parent.type === 'Program' || parent.type === 'BlockStatement' || parent.type === 'StaticBlock' || parent.type === 'SwitchCase';
 }
 
 function collectConsoleMemberReplacement(
