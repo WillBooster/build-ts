@@ -508,6 +508,7 @@ type ConsoleScope = {
 };
 
 const noopFunctionExpression = '(function () {})';
+const undefinedExpression = '(void 0)';
 
 function collectConsoleReplacements(
   node: ConsoleNode,
@@ -720,7 +721,7 @@ function collectConsoleCallReplacement(
   if (node.optional === true) return;
   if (!callee || !isIncludedConsoleMember(callee, excludedMethods)) {
     if (callee && isIncludedConsoleBindMember(callee, excludedMethods)) {
-      replacements.push({ kind: 'replace', start: node.start, end: node.end, value: noopFunctionExpression });
+      replacements.push({ kind: 'replace', start: node.start, end: node.end, value: getNoopFunctionReplacement(node, parent, grandparent) });
     }
     return;
   }
@@ -728,7 +729,7 @@ function collectConsoleCallReplacement(
   if (parent?.type === 'ExpressionStatement') {
     replacements.push({ kind: 'replace', start: parent.start, end: parent.end, value: ';' });
   } else {
-    replacements.push({ kind: 'replace', start: node.start, end: node.end, value: 'void 0' });
+    replacements.push({ kind: 'replace', start: node.start, end: node.end, value: undefinedExpression });
   }
 }
 
@@ -746,12 +747,29 @@ function collectConsoleMemberReplacement(
   if (parent?.type === 'AssignmentExpression' && parent.left === node) {
     const right = getConsoleNodeProperty(parent, 'right');
     if (right) {
-      replacements.push({ kind: 'replace', start: right.start, end: right.end, value: noopFunctionExpression });
+      replacements.push({ kind: 'replace', start: right.start, end: right.end, value: getNoopFunctionReplacement(right, parent, grandparent) });
     }
     return;
   }
 
-  replacements.push({ kind: 'replace', start: node.start, end: node.end, value: noopFunctionExpression });
+  replacements.push({ kind: 'replace', start: node.start, end: node.end, value: getNoopFunctionReplacement(node, parent, grandparent) });
+}
+
+function getNoopFunctionReplacement(
+  node: ConsoleNode,
+  parent: ConsoleNode | undefined,
+  grandparent: ConsoleNode | undefined
+): string {
+  return startsExpressionStatement(node, parent, grandparent) ? `;${noopFunctionExpression}` : noopFunctionExpression;
+}
+
+function startsExpressionStatement(
+  node: ConsoleNode,
+  parent: ConsoleNode | undefined,
+  grandparent: ConsoleNode | undefined
+): boolean {
+  const statement = parent?.type === 'ExpressionStatement' ? parent : grandparent?.type === 'ExpressionStatement' ? grandparent : undefined;
+  return statement?.start === node.start;
 }
 
 function isConsoleAssignmentTarget(

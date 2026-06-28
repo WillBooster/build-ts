@@ -83,6 +83,14 @@ function localFunctionConsole() {
 localVarConsole();
 localFunctionConsole();
 
+const power = console.log('power-global') ** 2;
+void power;
+
+if (Math.random() < 0) {
+  class Derived extends console.log('extends-global') {}
+  void Derived;
+}
+
 function foo() {
   process.stdout.write(':foo');
 }
@@ -92,6 +100,16 @@ console.log('asi-global');
 (function () {
   process.stdout.write(':iife');
 })();
+
+function createLogger() {
+  process.stdout.write(':logger');
+  return 5;
+}
+
+createLogger()
+console.log;
+createLogger()
+console.log.bind(console)();
 
 function parameterDefault(value = console.log('param-default-global')) {
   const console = { log: (message: string) => process.stdout.write(message) };
@@ -239,9 +257,11 @@ console.log('type-only-global');
     expect(code).to.not.includes('global-for');
     expect(code).to.not.includes('escaped-global');
     expect(code).to.not.includes('asi-global');
+    expect(code).to.not.includes('extends-global');
     expect(code).to.not.includes('declare-global');
     expect(code).to.not.includes('dotted-global');
     expect(code).to.not.includes('param-default-global');
+    expect(code).to.not.includes('power-global');
     expect(code).to.not.includes('static-global');
     expect(code).to.not.includes('type-only-global');
     expect(code).to.includes('optional-member');
@@ -266,7 +286,7 @@ console.log('type-only-global');
     const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
     expect(execRet.status).toBe(0);
     expect(execRet.stdout.toString()).toBe(
-      ':class:enum:export:import-equals:namespace:namespace-local:namespace-export:namespace-var:namespace-dotted-left:namespace-dotted-right:staticelse:optional-call:switch:block:var:function:foo:iife:param-body'
+      ':class:enum:export:import-equals:namespace:namespace-local:namespace-export:namespace-var:namespace-dotted-left:namespace-dotted-right:staticelse:optional-call:switch:block:var:function:foo:iife:logger:logger:param-body'
     );
   });
 
