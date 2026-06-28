@@ -8,10 +8,376 @@ describe('build', { timeout: 60_000 }, () => {
     await buildAndRunApp('app-node', 'app', '--inline', 'A');
     const indexJs = await readGeneratedCode('test/fixtures/app-node/dist/index.js');
     expect(indexJs).to.includes('("1")');
-    expect(indexJs).to.includes('console.log');
+    expect(indexJs).to.not.includes('console.log');
+    expect(indexJs).to.not.includes('console.table');
+    expect(indexJs).to.includes('console.info');
+    expect(indexJs).to.includes('console.warn');
+    expect(indexJs).to.includes('console.error');
+    expect(indexJs).to.includes('console.debug');
     expect(indexJs).to.not.includes('core-js');
     expect(indexJs).to.not.includes('@logged');
     expect(indexJs).to.not.includes('process.env.A');
+  });
+
+  it('app-node removes only global console calls in valid statements', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/app-node-console-scope';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({
+        packageManager: 'yarn@4.17.0',
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/index.ts`,
+      `import './class-expression.js';
+import './declare.js';
+import './dotted-global.js';
+import './enum.js';
+import './exported.js';
+import './import-equals.js';
+import './namespace.js';
+import './static-block.js';
+import './type-only.js';
+
+if (Math.random() < 0) console.log('global-if');
+else process.stdout.write('else');
+if (Math.random() < 0) console.log;
+else process.stdout.write(':member-else');
+if (Math.random() < 0) console.log.bind(console)();
+else process.stdout.write(':bind-else');
+for (let i = 0; i < 0; i++) console.log('global-for');
+\\u0063onsole.log('escaped-global');
+console.log || process.stdout.write(':fallback');
+console.log.bind(console)();
+if (Math.random() < 0) console?.log('optional-member');
+console.log?.(process.stdout.write(':optional-call'));
+if (Math.random() < 0) console.error?.('kept-error');
+if (Math.random() < 0) {
+  console.log++;
+  for (console.log in { done: 1 }) {}
+  ({ x: console.log } = { x: 'done' });
+}
+switch (1) {
+  case 1:
+    const console = { log: (value: string) => process.stdout.write(value) };
+    console.log(':switch');
+}
+switch (console.log('switch-discriminant-global')) {
+  case undefined:
+    const console = { log: (value: string) => process.stdout.write(value) };
+    console.log(':switch-discriminant');
+}
+const caseTestValue = Number(process.argv[2] ?? '1');
+switch (caseTestValue) {
+  case 1:
+    process.stdout.write(':switch-case-skip');
+    break;
+  case console.log('switch-case-test-global'):
+    const console = { log: (value: string) => process.stdout.write(value) };
+    console.log(':switch-case-test-local');
+}
+const crossCaseValue = process.argv.length > 0 ? 2 : 1;
+switch (crossCaseValue) {
+  case 1:
+    console.log('switch-cross-before');
+    break;
+  case 2:
+    const console = { log: (value: string) => process.stdout.write(value) };
+    console.log(':switch-cross-local');
+}
+const reverseCrossCaseValue = process.argv.length > 0 ? 1 : 2;
+switch (reverseCrossCaseValue) {
+  case 1:
+    const console = { log: (value: string) => process.stdout.write(value) };
+    console.log(':switch-cross-declare');
+    break;
+  case 2:
+    console.log('switch-cross-after');
+}
+
+{
+  const console = { log: (value: string) => process.stdout.write(value) };
+  console.log(':block');
+}
+
+function localVarConsole() {
+  {
+    var console = { log: (value: string) => process.stdout.write(value) };
+  }
+  console.log(':var');
+}
+
+function localFunctionConsole() {
+  function console() {}
+  console.log = (value: string) => process.stdout.write(value);
+  console.log(':function');
+}
+
+localVarConsole();
+localFunctionConsole();
+
+const power = console.log('power-global') ** 2;
+void power;
+
+if (Math.random() < 0) {
+  class Derived extends console.log('extends-global') {}
+  void Derived;
+}
+
+function foo() {
+  process.stdout.write(':foo');
+}
+
+foo()
+console.log('asi-global');
+(function () {
+  process.stdout.write(':iife');
+})();
+foo()
+console.log?.(process.stdout.write(':optional-asi'));
+
+function asiFunction(value: unknown) {
+  process.stdout.write(':bad-asi');
+  return value;
+}
+
+asiFunction
+console.log('call-expression-asi-global') + 2;
+
+function createLogger() {
+  process.stdout.write(':logger');
+  return 5;
+}
+
+createLogger()
+console.log;
+createLogger()
+console.log.bind(console)();
+
+function parameterDefault(value = console.log('param-default-global')) {
+  const console = { log: (message: string) => process.stdout.write(message) };
+  console.log(':param-body');
+  return value;
+}
+
+parameterDefault();
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/class-expression.ts`,
+      `const ClassWithLocalName = class console {
+  static log(value: string) {
+    process.stdout.write(value);
+  }
+
+  static run() {
+    console.log(':class');
+  }
+};
+
+ClassWithLocalName.run();
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/declare.ts`,
+      `declare const console: { log: (value: string) => void };
+
+console.log('declare-global');
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/dotted-global.ts`,
+      `namespace DottedRight.console {
+  export function log(value: string) {
+    process.stdout.write(value);
+  }
+}
+
+console.log('dotted-global');
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/enum.ts`,
+      `enum console {
+  log = ':enum',
+}
+
+process.stdout.write(console.log);
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/exported.ts`,
+      `export const console = { log: (value: string) => process.stdout.write(value) };
+
+console.log(':export');
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/import-equals.ts`,
+      `import console = require('./local-console.js');
+
+console.log(':import-equals');
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/local-console.ts`,
+      `const localConsole = { log: (value: string) => process.stdout.write(value) };
+
+export = localConsole;
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/namespace.ts`,
+      `namespace console {
+  export function log(value: string) {
+    process.stdout.write(value);
+  }
+}
+
+console.log(':namespace');
+
+namespace LocalNamespace {
+  const console = { log: (value: string) => process.stdout.write(value) };
+  console.log(':namespace-local');
+}
+
+namespace ExportNamespace {
+  export const console = { log: (value: string) => process.stdout.write(value) };
+  console.log(':namespace-export');
+}
+
+namespace NestedVarNamespace {
+  if (Math.random() > -1) {
+    var console = { log: (value: string) => process.stdout.write(value) };
+  }
+  console.log(':namespace-var');
+}
+
+namespace console.DottedLeft {
+  console.log(':namespace-dotted-left');
+}
+
+namespace DottedRight.console {
+  export function log(value: string) {
+    process.stdout.write(value);
+  }
+
+  console.log(':namespace-dotted-right');
+}
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/static-block.ts`,
+      `class StaticBlock {
+  static {
+    if (Math.random() > -1) {
+      var console = { log: (value: string) => process.stdout.write(value) };
+    }
+    console.log(':static');
+  }
+}
+
+console.log('static-global');
+void StaticBlock;
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/type-only.ts`,
+      `import type { console } from './types.js';
+
+console.log('type-only-global');
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/types.ts`,
+      `export type console = { log: (value: string) => void };
+`
+    );
+
+    await buildWithPackagePath(fixtureDirPath, 'app');
+    const code = await readGeneratedCode(`${fixtureDirPath}/dist/index.js`);
+    expect(code).to.not.includes('global-if');
+    expect(code).to.not.includes('global-for');
+    expect(code).to.not.includes('escaped-global');
+    expect(code).to.not.includes('asi-global');
+    expect(code).to.not.includes('call-expression-asi-global');
+    expect(code).to.not.includes('extends-global');
+    expect(code).to.not.includes('switch-discriminant-global');
+    expect(code).to.not.includes('declare-global');
+    expect(code).to.not.includes('dotted-global');
+    expect(code).to.not.includes('param-default-global');
+    expect(code).to.not.includes('power-global');
+    expect(code).to.not.includes('static-global');
+    expect(code).to.not.includes('type-only-global');
+    expect(code).to.includes('optional-member');
+    expect(code).to.includes('optional-call');
+    expect(code).to.includes('kept-error');
+    expect(code).to.includes(':block');
+    expect(code).to.includes(':var');
+    expect(code).to.includes(':function');
+    expect(code).to.includes(':class');
+    expect(code).to.includes(':enum');
+    expect(code).to.includes(':export');
+    expect(code).to.includes(':namespace');
+    expect(code).to.includes(':import-equals');
+    expect(code).to.includes(':namespace-local');
+    expect(code).to.includes(':namespace-export');
+    expect(code).to.includes(':namespace-var');
+    expect(code).to.includes(':namespace-dotted-left');
+    expect(code).to.includes(':namespace-dotted-right');
+    expect(code).to.includes(':static');
+    expect(code).to.includes(':switch');
+    expect(code).to.includes(':switch-discriminant');
+    expect(code).to.includes('switch-case-test-global');
+    expect(code).to.includes('switch-cross-before');
+    expect(code).to.includes('switch-cross-after');
+    expect(code).to.includes(':param-body');
+    const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
+    expect(execRet.status).toBe(0);
+    expect(execRet.stdout.toString()).toBe(
+      ':class:enum:export:import-equals:namespace:namespace-local:namespace-export:namespace-var:namespace-dotted-left:namespace-dotted-right:staticelse:member-else:bind-else:optional-call:switch:switch-discriminant:switch-case-skip:switch-cross-local:switch-cross-declare:block:var:function:foo:iife:foo:optional-asi:logger:logger:param-body'
+    );
+  });
+
+  it('app-node removes console calls in CommonJS inputs with top-level return', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/app-node-cjs-return';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(`${fixtureDirPath}/package.json`, JSON.stringify({ packageManager: 'yarn@4.17.0' }));
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/index.cjs`,
+      `console.log('cjs-before');
+return;
+console.log('cjs-after');
+`
+    );
+
+    await buildWithPackagePath(fixtureDirPath, 'app', '--input', `${fixtureDirPath}/src/index.cjs`);
+    const code = await readGeneratedCode(`${fixtureDirPath}/dist/index.js`);
+    expect(code).to.not.includes('cjs-before');
+    expect(code).to.not.includes('cjs-after');
+
+    const jsFixtureDirPath = '.tmp/test-fixtures/app-node-cjs-js-return';
+    await fs.promises.rm(jsFixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${jsFixtureDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(`${jsFixtureDirPath}/package.json`, JSON.stringify({ packageManager: 'yarn@4.17.0' }));
+    await fs.promises.writeFile(`${jsFixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${jsFixtureDirPath}/src/index.js`,
+      `console.log('cjs-js-before');
+return;
+console.log('cjs-js-after');
+`
+    );
+
+    await buildWithPackagePath(jsFixtureDirPath, 'app', '--input', `${jsFixtureDirPath}/src/index.js`);
+    const jsCode = await readGeneratedCode(`${jsFixtureDirPath}/dist/index.js`);
+    expect(jsCode).to.not.includes('cjs-js-before');
+    expect(jsCode).to.not.includes('cjs-js-after');
   });
 
   it('app-node with core-js', async () => {
@@ -41,7 +407,7 @@ describe('build', { timeout: 60_000 }, () => {
       `${fixtureDirPath}/src/index.ts`,
       `#!/usr/bin/env node
 const values = [1, 2, 3].toReversed();
-console.log(values.join(','));
+process.stdout.write(values.join(','));
 `
     );
 
@@ -87,7 +453,7 @@ console.log(values.join(','));
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `const mod = await import('./lazy.js');
-console.log(mod.marker);
+process.stdout.write(mod.marker);
 `
     );
     await fs.promises.writeFile(`${fixtureDirPath}/src/lazy.ts`, `export const marker = 'lazy-loaded';\n`);
@@ -115,7 +481,7 @@ console.log(mod.marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from './mod.js';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
     await fs.promises.writeFile(`${fixtureDirPath}/src/mod.js`, `export const marker = 'js-file';\n`);
@@ -160,7 +526,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:buffer';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -205,7 +571,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:buffer';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -256,7 +622,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:buffer';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -302,7 +668,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'undici';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -352,7 +718,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.cts`,
       `const { marker } = require('node:buffer');
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -394,7 +760,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:buffer';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -436,7 +802,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/promises';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -478,7 +844,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/promises';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -524,7 +890,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'undici';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -575,7 +941,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'undici';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -609,7 +975,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.cts`,
       `const { marker } = require('undici/promises');
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -648,7 +1014,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'undici/promises.js';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -687,7 +1053,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/promises';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -735,7 +1101,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/features/thing';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -779,7 +1145,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/features/private-internal/secret.js';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -817,7 +1183,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/private.js';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -857,7 +1223,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -894,7 +1260,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/promises';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -929,7 +1295,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/promises';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -966,7 +1332,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:fs/promises';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -1002,7 +1368,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:buffer';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -1050,7 +1416,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:buffer';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
@@ -1086,7 +1452,7 @@ console.log(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from 'node:buffer';
-console.log(marker);
+process.stdout.write(marker);
 `
     );
 
