@@ -82,6 +82,14 @@ function localFunctionConsole() {
 
 localVarConsole();
 localFunctionConsole();
+
+function parameterDefault(value = console.log('param-default-global')) {
+  const console = { log: (message: string) => process.stdout.write(message) };
+  console.log(':param-body');
+  return value;
+}
+
+parameterDefault();
 `
     );
     await fs.promises.writeFile(
@@ -167,6 +175,13 @@ namespace ExportNamespace {
   console.log(':namespace-export');
 }
 
+namespace NestedVarNamespace {
+  if (Math.random() > -1) {
+    var console = { log: (value: string) => process.stdout.write(value) };
+  }
+  console.log(':namespace-var');
+}
+
 namespace console.DottedLeft {
   console.log(':namespace-dotted-left');
 }
@@ -184,7 +199,9 @@ namespace DottedRight.console {
       `${fixtureDirPath}/src/static-block.ts`,
       `class StaticBlock {
   static {
-    var console = { log: (value: string) => process.stdout.write(value) };
+    if (Math.random() > -1) {
+      var console = { log: (value: string) => process.stdout.write(value) };
+    }
     console.log(':static');
   }
 }
@@ -213,6 +230,7 @@ console.log('type-only-global');
     expect(code).to.not.includes('escaped-global');
     expect(code).to.not.includes('declare-global');
     expect(code).to.not.includes('dotted-global');
+    expect(code).to.not.includes('param-default-global');
     expect(code).to.not.includes('static-global');
     expect(code).to.not.includes('type-only-global');
     expect(code).to.includes('optional-member');
@@ -228,15 +246,37 @@ console.log('type-only-global');
     expect(code).to.includes(':import-equals');
     expect(code).to.includes(':namespace-local');
     expect(code).to.includes(':namespace-export');
+    expect(code).to.includes(':namespace-var');
     expect(code).to.includes(':namespace-dotted-left');
     expect(code).to.includes(':namespace-dotted-right');
     expect(code).to.includes(':static');
     expect(code).to.includes(':switch');
+    expect(code).to.includes(':param-body');
     const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
     expect(execRet.status).toBe(0);
     expect(execRet.stdout.toString()).toBe(
-      ':class:enum:export:import-equals:namespace:namespace-local:namespace-export:namespace-dotted-left:namespace-dotted-right:staticelse:optional-call:switch:block:var:function'
+      ':class:enum:export:import-equals:namespace:namespace-local:namespace-export:namespace-var:namespace-dotted-left:namespace-dotted-right:staticelse:optional-call:switch:block:var:function:param-body'
     );
+  });
+
+  it('app-node removes console calls in CommonJS input with top-level return', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/app-node-cjs-return';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(`${fixtureDirPath}/package.json`, JSON.stringify({ packageManager: 'yarn@4.17.0' }));
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/index.cjs`,
+      `console.log('cjs-before');
+return;
+console.log('cjs-after');
+`
+    );
+
+    await buildWithPackagePath(fixtureDirPath, 'app', '--input', `${fixtureDirPath}/src/index.cjs`);
+    const code = await readGeneratedCode(`${fixtureDirPath}/dist/index.js`);
+    expect(code).to.not.includes('cjs-before');
+    expect(code).to.not.includes('cjs-after');
   });
 
   it('app-node with core-js', async () => {

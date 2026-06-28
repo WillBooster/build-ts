@@ -437,7 +437,7 @@ function removeConsole(code: string, id: string): { code: string; map: SourceMap
 
   const ast = parseSync(id, code, {
     lang: getParserLang(id),
-    sourceType: 'unambiguous',
+    sourceType: getParserSourceType(id),
   });
   if (ast.errors.some((error) => error.severity === 'Error')) return undefined;
 
@@ -461,8 +461,9 @@ function removeConsole(code: string, id: string): { code: string; map: SourceMap
 }
 
 function getConsoleRemovalExcludedMethods(): Set<string> | undefined {
-  if (process.env.NODE_ENV === 'production') return new Set(['error', 'info', 'warn']);
-  if (process.env.NODE_ENV === 'test') return new Set(['debug', 'error', 'info', 'warn']);
+  const { env } = process;
+  if (env.NODE_ENV === 'production') return new Set(['error', 'info', 'warn']);
+  if (env.NODE_ENV === 'test') return new Set(['debug', 'error', 'info', 'warn']);
   return undefined;
 }
 
@@ -471,6 +472,10 @@ function getParserLang(id: string): 'js' | 'jsx' | 'ts' | 'tsx' {
   if (id.endsWith('.ts') || id.endsWith('.cts') || id.endsWith('.mts')) return 'ts';
   if (id.endsWith('.jsx')) return 'jsx';
   return 'js';
+}
+
+function getParserSourceType(id: string): 'commonjs' | 'unambiguous' {
+  return id.endsWith('.cjs') || id.endsWith('.cts') ? 'commonjs' : 'unambiguous';
 }
 
 type ConsoleNode = {
@@ -534,7 +539,8 @@ function getConsoleScope(node: ConsoleNode, parent: ConsoleNode | undefined): Co
     return { end: node.end, shadowsConsole: hasFunctionConsoleBinding(node), start: node.start };
   }
   if (node.type === 'BlockStatement') {
-    return { end: node.end, shadowsConsole: hasBlockConsoleBinding(node, false), start: node.start };
+    const isFunctionBody = parent ? isConsoleFunctionScopeNode(parent) : false;
+    return { end: node.end, shadowsConsole: hasBlockConsoleBinding(node, false) || (isFunctionBody && hasHoistedVarConsoleBinding(node)), start: node.start };
   }
   if (node.type === 'CatchClause') {
     return { end: node.end, shadowsConsole: hasConsoleBindingPattern(node.param), start: node.start };
@@ -545,7 +551,10 @@ function getConsoleScope(node: ConsoleNode, parent: ConsoleNode | undefined): Co
   if (node.type === 'StaticBlock' || node.type === 'TSModuleBlock') {
     return {
       end: node.end,
-      shadowsConsole: hasBlockConsoleBinding(node, true) || (node.type === 'TSModuleBlock' && hasNamespaceConsoleBinding(parent)),
+      shadowsConsole:
+        hasBlockConsoleBinding(node, false) ||
+        hasHoistedVarConsoleBinding(node) ||
+        (node.type === 'TSModuleBlock' && hasNamespaceConsoleBinding(parent)),
       start: node.start,
     };
   }
@@ -570,11 +579,7 @@ function hasFunctionConsoleBinding(node: ConsoleNode): boolean {
   for (const param of getConsoleArrayProperty(node, 'params')) {
     if (hasConsoleBindingPattern(param)) return true;
   }
-  const body = getConsoleNodeProperty(node, 'body');
-  for (const statement of getConsoleArrayProperty(body ?? node, 'body')) {
-    if (hasDeclarationConsoleBinding(statement, false)) return true;
-  }
-  return hasHoistedVarConsoleBinding(getConsoleNodeProperty(node, 'body'));
+  return false;
 }
 
 function hasBlockConsoleBinding(node: ConsoleNode, includeVar: boolean): boolean {
