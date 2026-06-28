@@ -519,7 +519,6 @@ function collectConsoleReplacements(
   excludedMethods: Set<string>
 ): void {
   const parent = ancestors.at(-1);
-  const grandparent = ancestors.at(-2);
   const scope = getConsoleScope(node, parent);
   if (scope) scopes.push(scope);
 
