@@ -44,6 +44,7 @@ import './type-only.js';
 if (Math.random() < 0) console.log('global-if');
 else process.stdout.write('else');
 for (let i = 0; i < 0; i++) console.log('global-for');
+\\u0063onsole.log('escaped-global');
 console.log || process.stdout.write(':fallback');
 console.log.bind(console)();
 if (Math.random() < 0) {
@@ -194,6 +195,7 @@ console.log('type-only-global');
     const code = await readGeneratedCode(`${fixtureDirPath}/dist/index.js`);
     expect(code).to.not.includes('global-if');
     expect(code).to.not.includes('global-for');
+    expect(code).to.not.includes('escaped-global');
     expect(code).to.not.includes('declare-global');
     expect(code).to.not.includes('static-global');
     expect(code).to.not.includes('type-only-global');

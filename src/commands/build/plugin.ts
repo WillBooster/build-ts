@@ -434,7 +434,6 @@ function removeConsolePlugin(): Plugin {
 function removeConsole(code: string, id: string): { code: string; map: SourceMapInput } | undefined {
   const excludedMethods = getConsoleRemovalExcludedMethods();
   if (!excludedMethods) return undefined;
-  if (!code.includes('console')) return undefined;
 
   const ast = parseSync(id, code, {
     lang: getParserLang(id),
