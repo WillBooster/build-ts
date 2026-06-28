@@ -5,6 +5,7 @@ import path from 'node:path';
 
 import type { TransformOptions } from '@babel/core';
 import MagicString from 'magic-string';
+import { parseSync, visitorKeys } from 'oxc-parser';
 import type { ImportKind, OutputOptions, Plugin, RolldownPluginOption, SourceMapInput } from 'rolldown';
 import { minify } from 'terser';
 import type { MinifyOptions, SourceMapOptions } from 'terser';
@@ -39,6 +40,7 @@ export function setupPlugins(
   const plugins: RolldownPluginOption[] = [
     bundleBuiltinsPlugin(argv, packageDirPath),
     keepImportPlugin(argv.keepImport?.map((item) => item.toString()) ?? []),
+    removeConsolePlugin(),
   ];
   if (argv['core-js'] || argv['core-js-proposals']) {
     plugins.push(babelCoreJsPlugin());
@@ -375,7 +377,7 @@ function babelCoreJsPlugin(): Plugin {
 }
 
 function babelDecoratorsPlugin(): Plugin {
-  return babelPlugin('babel-decorators', (code) => containsRemovableConsole(code) || containsDecorator(code));
+  return babelPlugin('babel-decorators', containsDecorator);
 }
 
 function babelPlugin(name: string, shouldTransform: (code: string) => boolean): Plugin {
@@ -411,17 +413,292 @@ function babelPlugin(name: string, shouldTransform: (code: string) => boolean): 
   };
 }
 
-function containsRemovableConsole(code: string): boolean {
-  const methods = process.env.NODE_ENV === 'test' ? ['log'] : process.env.NODE_ENV === 'production' ? ['debug', 'log'] : [];
-  if (!methods.length) return false;
-
-  const methodPattern = methods.join('|');
-  const consolePattern = new RegExp(`\\bconsole\\s*(?:\\.\\s*(?:${methodPattern})\\b|\\[\\s*['"](?:${methodPattern})['"]\\s*\\])`);
-  return consolePattern.test(stripComments(code));
-}
-
 function isBabelExcludedPath(id: string): boolean {
   return id.startsWith('\0') || isNodeModulesPath(id);
+}
+
+function removeConsolePlugin(): Plugin {
+  const extensions = ['.cjs', '.mjs', '.js', '.jsx', '.cts', '.mts', '.ts', '.tsx'];
+  return {
+    name: 'remove-console',
+    transform(code, id) {
+      if (!extensions.some((extension) => id.endsWith(extension)) || isBabelExcludedPath(id)) {
+        return undefined;
+      }
+
+      return removeConsole(code, id);
+    },
+  };
+}
+
+function removeConsole(code: string, id: string): { code: string; map: SourceMapInput } | undefined {
+  const excludedMethods = getConsoleRemovalExcludedMethods();
+  if (!excludedMethods) return undefined;
+  if (!code.includes('console')) return undefined;
+
+  const ast = parseSync(id, code, {
+    lang: getParserLang(id),
+    sourceType: 'unambiguous',
+  });
+  if (ast.errors.some((error) => error.severity === 'Error')) return undefined;
+
+  const magicString = new MagicString(code);
+  const replacements: ConsoleReplacement[] = [];
+  const scopes: ConsoleScope[] = [];
+  collectConsoleReplacements(ast.program as unknown as ConsoleNode, undefined, scopes, replacements, excludedMethods);
+  for (const replacement of selectConsoleReplacements(replacements)) {
+    if (replacement.kind === 'remove') {
+      magicString.remove(replacement.start, replacement.end);
+    } else {
+      magicString.overwrite(replacement.start, replacement.end, replacement.value);
+    }
+  }
+
+  if (!magicString.hasChanged()) return undefined;
+  return {
+    code: magicString.toString(),
+    map: magicString.generateMap({ hires: true }) as SourceMapInput,
+  };
+}
+
+function getConsoleRemovalExcludedMethods(): Set<string> | undefined {
+  if (process.env.NODE_ENV === 'production') return new Set(['error', 'info', 'warn']);
+  if (process.env.NODE_ENV === 'test') return new Set(['debug', 'error', 'info', 'warn']);
+  return undefined;
+}
+
+function getParserLang(id: string): 'js' | 'jsx' | 'ts' | 'tsx' {
+  if (id.endsWith('.tsx')) return 'tsx';
+  if (id.endsWith('.ts') || id.endsWith('.cts') || id.endsWith('.mts')) return 'ts';
+  if (id.endsWith('.jsx')) return 'jsx';
+  return 'js';
+}
+
+type ConsoleNode = {
+  type: string;
+  start: number;
+  end: number;
+  [key: string]: unknown;
+};
+
+type ConsoleReplacement =
+  | {
+      kind: 'remove';
+      start: number;
+      end: number;
+    }
+  | {
+      kind: 'replace';
+      start: number;
+      end: number;
+      value: string;
+    };
+
+type ConsoleScope = {
+  end: number;
+  shadowsConsole: boolean;
+  start: number;
+};
+
+function collectConsoleReplacements(
+  node: ConsoleNode,
+  parent: ConsoleNode | undefined,
+  scopes: ConsoleScope[],
+  replacements: ConsoleReplacement[],
+  excludedMethods: Set<string>
+): void {
+  const scope = getConsoleScope(node);
+  if (scope) scopes.push(scope);
+  registerConsoleBindings(node, scopes);
+
+  if (!isConsoleShadowed(scopes, node) && node.type === 'CallExpression') {
+    collectConsoleCallReplacement(node, parent, replacements, excludedMethods);
+  }
+  if (!isConsoleShadowed(scopes, node) && node.type === 'MemberExpression') {
+    collectConsoleMemberReplacement(node, parent, replacements, excludedMethods);
+  }
+
+  for (const child of getConsoleNodeChildren(node)) {
+    collectConsoleReplacements(child, node, scopes, replacements, excludedMethods);
+  }
+
+  if (scope) scopes.pop();
+}
+
+function getConsoleScope(node: ConsoleNode): ConsoleScope | undefined {
+  if (
+    node.type === 'Program' ||
+    node.type === 'BlockStatement' ||
+    node.type === 'FunctionDeclaration' ||
+    node.type === 'FunctionExpression' ||
+    node.type === 'ArrowFunctionExpression' ||
+    node.type === 'CatchClause'
+  ) {
+    return { end: node.end, shadowsConsole: false, start: node.start };
+  }
+  return undefined;
+}
+
+function registerConsoleBindings(node: ConsoleNode, scopes: ConsoleScope[]): void {
+  if (node.type === 'ImportDeclaration') {
+    for (const specifier of getConsoleArrayProperty(node, 'specifiers')) {
+      registerConsoleBindingPattern(specifier.local, scopes.at(-1));
+    }
+  } else if (node.type === 'VariableDeclarator') {
+    registerConsoleBindingPattern(node.id, scopes.at(-1));
+  } else if (node.type === 'FunctionDeclaration') {
+    registerConsoleBindingPattern(node.id, scopes.at(-2));
+    registerConsoleFunctionParams(node, scopes.at(-1));
+  } else if (node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression') {
+    registerConsoleBindingPattern(node.id, scopes.at(-1));
+    registerConsoleFunctionParams(node, scopes.at(-1));
+  } else if (node.type === 'ClassDeclaration') {
+    registerConsoleBindingPattern(node.id, scopes.at(-1));
+  } else if (node.type === 'CatchClause') {
+    registerConsoleBindingPattern(node.param, scopes.at(-1));
+  }
+}
+
+function registerConsoleFunctionParams(node: ConsoleNode, scope: ConsoleScope | undefined): void {
+  for (const param of getConsoleArrayProperty(node, 'params')) {
+    registerConsoleBindingPattern(param, scope);
+  }
+}
+
+function registerConsoleBindingPattern(value: unknown, scope: ConsoleScope | undefined): void {
+  if (!scope || !isConsoleNode(value)) return;
+
+  if (value.type === 'Identifier' && value.name === 'console') {
+    scope.shadowsConsole = true;
+  } else if (value.type === 'AssignmentPattern' || value.type === 'RestElement') {
+    registerConsoleBindingPattern(value.left ?? value.argument, scope);
+  } else if (value.type === 'ArrayPattern') {
+    for (const element of getConsoleArrayProperty(value, 'elements')) {
+      registerConsoleBindingPattern(element, scope);
+    }
+  } else if (value.type === 'ObjectPattern') {
+    for (const property of getConsoleArrayProperty(value, 'properties')) {
+      registerConsoleBindingPattern(property.value ?? property.argument, scope);
+    }
+  }
+}
+
+function isConsoleShadowed(scopes: ConsoleScope[], node: ConsoleNode): boolean {
+  return scopes.some((scope) => scope.shadowsConsole && scope.start <= node.start && node.end <= scope.end);
+}
+
+function collectConsoleCallReplacement(
+  node: ConsoleNode,
+  parent: ConsoleNode | undefined,
+  replacements: ConsoleReplacement[],
+  excludedMethods: Set<string>
+): void {
+  const callee = getConsoleNodeProperty(node, 'callee');
+  if (!callee || !isIncludedConsoleMember(callee, excludedMethods)) {
+    if (callee && isIncludedConsoleBindMember(callee, excludedMethods)) {
+      replacements.push({ kind: 'replace', start: node.start, end: node.end, value: 'function () {}' });
+    }
+    return;
+  }
+
+  if (parent?.type === 'ExpressionStatement') {
+    replacements.push({ kind: 'remove', start: parent.start, end: parent.end });
+  } else {
+    replacements.push({ kind: 'replace', start: node.start, end: node.end, value: 'void 0' });
+  }
+}
+
+function collectConsoleMemberReplacement(
+  node: ConsoleNode,
+  parent: ConsoleNode | undefined,
+  replacements: ConsoleReplacement[],
+  excludedMethods: Set<string>
+): void {
+  if (!isIncludedConsoleMember(node, excludedMethods) || parent?.type === 'MemberExpression') return;
+  if (parent?.type === 'CallExpression' && parent.callee === node) return;
+
+  if (parent?.type === 'AssignmentExpression' && parent.left === node) {
+    const right = getConsoleNodeProperty(parent, 'right');
+    if (right) {
+      replacements.push({ kind: 'replace', start: right.start, end: right.end, value: 'function () {}' });
+    }
+    return;
+  }
+
+  replacements.push({ kind: 'replace', start: node.start, end: node.end, value: 'function () {}' });
+}
+
+function isIncludedConsoleMember(node: ConsoleNode, excludedMethods: Set<string>): boolean {
+  if (node.type !== 'MemberExpression') return false;
+
+  const object = getConsoleNodeProperty(node, 'object');
+  const property = getConsoleNodeProperty(node, 'property');
+  if (!object || !property || isExcludedConsoleProperty(node, property, excludedMethods)) return false;
+  if (isGlobalConsoleIdentifier(object)) return true;
+
+  return (
+    object.type === 'MemberExpression' &&
+    isGlobalConsoleIdentifier(getConsoleNodeProperty(object, 'object')) &&
+    node.computed !== true &&
+    property.type === 'Identifier' &&
+    (property.name === 'call' || property.name === 'apply')
+  );
+}
+
+function isIncludedConsoleBindMember(node: ConsoleNode, excludedMethods: Set<string>): boolean {
+  if (node.type !== 'MemberExpression') return false;
+
+  const object = getConsoleNodeProperty(node, 'object');
+  const property = getConsoleNodeProperty(node, 'property');
+  if (!object || !property || object.type !== 'MemberExpression') return false;
+  if (node.computed === true || property.type !== 'Identifier' || property.name !== 'bind') return false;
+  if (!isGlobalConsoleIdentifier(getConsoleNodeProperty(object, 'object'))) return false;
+  const consoleMethod = getConsoleNodeProperty(object, 'property');
+  return !!consoleMethod && !isExcludedConsoleProperty(object, consoleMethod, excludedMethods);
+}
+
+function isExcludedConsoleProperty(
+  memberExpression: ConsoleNode,
+  property: ConsoleNode,
+  excludedMethods: Set<string>
+): boolean {
+  return memberExpression.computed !== true && property.type === 'Identifier' && excludedMethods.has(property.name as string);
+}
+
+function isGlobalConsoleIdentifier(node: ConsoleNode | undefined): boolean {
+  return node?.type === 'Identifier' && node.name === 'console';
+}
+
+function selectConsoleReplacements(replacements: ConsoleReplacement[]): ConsoleReplacement[] {
+  const selected: ConsoleReplacement[] = [];
+  for (const replacement of replacements.toSorted((a, b) => a.start - b.start || b.end - a.end)) {
+    if (selected.some((item) => item.start <= replacement.start && replacement.end <= item.end)) continue;
+    selected.push(replacement);
+  }
+  return selected.toSorted((a, b) => b.start - a.start);
+}
+
+function getConsoleNodeChildren(node: ConsoleNode): ConsoleNode[] {
+  return (visitorKeys[node.type] ?? [])
+    .flatMap((key) => {
+      const value = node[key];
+      return Array.isArray(value) ? value : [value];
+    })
+    .filter((value): value is ConsoleNode => isConsoleNode(value));
+}
+
+function getConsoleNodeProperty(node: ConsoleNode, key: string): ConsoleNode | undefined {
+  const value = node[key];
+  return isConsoleNode(value) ? value : undefined;
+}
+
+function getConsoleArrayProperty(node: ConsoleNode, key: string): ConsoleNode[] {
+  const value = node[key];
+  return Array.isArray(value) ? value.filter((item): item is ConsoleNode => isConsoleNode(item)) : [];
+}
+
+function isConsoleNode(value: unknown): value is ConsoleNode {
+  return !!value && typeof value === 'object' && typeof (value as ConsoleNode).type === 'string';
 }
 
 function isNodeModulesPath(id: string): boolean {

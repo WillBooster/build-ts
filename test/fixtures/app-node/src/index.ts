@@ -15,6 +15,7 @@ assert(process.env.A);
 assert(Math.random() ? process.env.A : '0');
 if (process.env.__BUILD_TS_KEEP_CONSOLE_TEST__) {
   console.log('removed');
+  console.table(['removed']);
   console.info('info');
   console.warn('warn');
   console.error('error');

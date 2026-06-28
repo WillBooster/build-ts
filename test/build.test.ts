@@ -9,6 +9,7 @@ describe('build', { timeout: 60_000 }, () => {
     const indexJs = await readGeneratedCode('test/fixtures/app-node/dist/index.js');
     expect(indexJs).to.includes('("1")');
     expect(indexJs).to.not.includes('console.log');
+    expect(indexJs).to.not.includes('console.table');
     expect(indexJs).to.includes('console.info');
     expect(indexJs).to.includes('console.warn');
     expect(indexJs).to.includes('console.error');

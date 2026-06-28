@@ -41,28 +41,6 @@ const config = {
       },
     ],
   ],
-  env: {
-    production: {
-      plugins: [
-        [
-          'transform-remove-console',
-          {
-            exclude: ['error', 'info', 'warn'],
-          },
-        ],
-      ],
-    },
-    test: {
-      plugins: [
-        [
-          'transform-remove-console',
-          {
-            exclude: ['error', 'info', 'warn', 'debug'],
-          },
-        ],
-      ],
-    },
-  },
 };
 
 if (process.env.BUILD_TS_COREJS || process.env.BUILD_TS_COREJS_WITH_PROPOSALS) {
