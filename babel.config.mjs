@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
 
-/** @type {import('@babel/core').TransformOptions} */
+/** @type {import('@babel/core').InputOptions} */
 const config = {
   assumptions: {
     constantReexports: true,
