@@ -2,7 +2,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
 
-/** @type {import('@babel/core').TransformOptions} */
+import pluginProposalDecorators from '@babel/plugin-proposal-decorators';
+import pluginTransformExplicitResourceManagement from '@babel/plugin-transform-explicit-resource-management';
+import presetEnv from '@babel/preset-env';
+import presetReact from '@babel/preset-react';
+import presetTypescript from '@babel/preset-typescript';
+import pluginPolyfillCorejs3 from 'babel-plugin-polyfill-corejs3';
+
+/** @type {import('@babel/core').InputOptions} */
 const config = {
   assumptions: {
     constantReexports: true,
@@ -19,23 +26,12 @@ const config = {
     setPublicClassFields: true,
     superIsCallableConstructor: true,
   },
-  presets: [
-    [
-      '@babel/preset-env',
-      {
-        bugfixes: true,
-      },
-    ],
-    '@babel/typescript',
-  ],
+  presets: [[presetEnv, {}], presetTypescript],
   plugins: [
-    // cf. https://babeljs.io/blog/2023/05/26/7.22.0#import-attributes-15536-15620
-    '@babel/plugin-syntax-import-attributes',
-    // cf. https://babeljs.io/blog/2023/05/26/7.22.0#explicit-resource-management-15633-15520
-    '@babel/plugin-proposal-explicit-resource-management',
+    pluginTransformExplicitResourceManagement,
     // cf. https://babeljs.io/blog/2024/02/28/7.24.0#decorators-updates-16242
     [
-      '@babel/plugin-proposal-decorators',
+      pluginProposalDecorators,
       {
         version: '2023-11',
       },
@@ -50,19 +46,19 @@ if (process.env.BUILD_TS_COREJS || process.env.BUILD_TS_COREJS_WITH_PROPOSALS) {
   const proposals = process.env.BUILD_TS_COREJS_WITH_PROPOSALS ? { proposals: true } : {};
 
   if (process.env.BUILD_TS_TARGET_CATEGORY === 'app') {
-    /** @type {import('@babel/core').PluginItem} */
-    const presetEnvConfig = config.presets[0][1];
-    presetEnvConfig.useBuiltIns = 'usage';
-    presetEnvConfig.corejs = { version: `${major}.${minor}`, ...proposals };
+    config.plugins.push([
+      pluginPolyfillCorejs3,
+      { method: 'usage-global', version: `${major}.${minor}`, ...proposals },
+    ]);
   } else if (process.env.BUILD_TS_TARGET_CATEGORY === 'lib') {
     // cf. https://github.com/babel/babel-polyfills#injection-methods
-    config.plugins.push(['polyfill-corejs3', { method: 'usage-pure', version: `${major}.${minor}`, ...proposals }]);
+    config.plugins.push([pluginPolyfillCorejs3, { method: 'usage-pure', version: `${major}.${minor}`, ...proposals }]);
   }
 }
 
 if (process.env.BUILD_TS_TARGET_DETAIL === 'lib-react') {
   config.presets.push([
-    '@babel/preset-react',
+    presetReact,
     {
       runtime: 'automatic',
     },

@@ -3,7 +3,7 @@ import { builtinModules } from 'node:module';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
-import type { TransformOptions } from '@babel/core';
+import type { InputOptions } from '@babel/core';
 import MagicString from 'magic-string';
 import { parseSync, visitorKeys } from 'oxc-parser';
 import type { ImportKind, OutputOptions, Plugin, RolldownPluginOption, SourceMapInput } from 'rolldown';
@@ -391,7 +391,7 @@ function babelPlugin(name: string, shouldTransform: (code: string) => boolean): 
       }
 
       const { transformAsync } = await import('@babel/core');
-      const options: TransformOptions = {
+      const options: InputOptions = {
         caller: {
           name: 'build-ts',
           supportsDynamicImport: true,
