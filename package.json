@@ -5,7 +5,7 @@
     "type": "git",
     "url": "git+https://github.com/WillBooster/build-ts.git"
   },
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "author": "WillBooster Inc.",
   "type": "module",
   "bin": "bin/index.js",

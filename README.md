@@ -86,6 +86,12 @@ npx build-ts run src/main.ts -- --foo bar
 | `--bundle-builtins`              |       |          | Module names that shadow Node.js builtins (e.g., `undici`) to be bundled.                              |
 | `--silent`                       | `-s`  | `false`  | Suppress non-error output.                                                                             |
 
+### `functions`-specific options
+
+| Option                | Alias | Default | Description                                             |
+| --------------------- | ----- | ------- | ------------------------------------------------------- |
+| `--only-package-json` |       | `false` | Generate only the optimized `package.json` for `dist/`. |
+
 ### `lib`-specific options
 
 | Option           | Alias | Default  | Description                                                                                            |
