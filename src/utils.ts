@@ -16,7 +16,7 @@ export async function readPackageJson(dirPath: string): Promise<[PackageJson | u
 }
 
 export function getBuildTsRootPath(): string {
-  return url.fileURLToPath(path.dirname(path.dirname(import.meta.url)));
+  return path.dirname(path.dirname(url.fileURLToPath(import.meta.url)));
 }
 
 export function getNamespaceAndName(packageJson: PackageJson): [string | undefined, string | undefined] {
@@ -24,4 +24,24 @@ export function getNamespaceAndName(packageJson: PackageJson): [string | undefin
   const match = /@([^/]+)\/(.+)/.exec(packageName);
   const [, namespace, name] = match ?? [];
   return [namespace, name];
+}
+
+export function formatDateTime(date: Date): string {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(
+    date.getMinutes()
+  )}:${pad(date.getSeconds())}`;
+}
+
+function pad(value: number): string {
+  return String(value).padStart(2, '0');
+}
+
+export function formatDuration(milliseconds: number): string {
+  if (milliseconds < 1000) return `${Math.round(milliseconds)}ms`;
+
+  const seconds = milliseconds / 1000;
+  if (seconds < 60) return `${Number(seconds.toFixed(1))}s`;
+
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}m ${Number((seconds - minutes * 60).toFixed(1))}s`;
 }

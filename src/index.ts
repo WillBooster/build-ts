@@ -8,6 +8,7 @@ import { hideBin } from 'yargs/helpers';
 import { app, functions, lib } from './commands/build/build.js';
 import { run } from './commands/run.js';
 import { sharedOptionsBuilder } from './sharedOptionsBuilder.js';
+import { getBuildTsRootPath } from './utils.js';
 
 removeNpmAndYarnEnvironmentVariables(process.env);
 
@@ -24,11 +25,7 @@ await yargs(hideBin(process.argv))
   .help().argv;
 
 function getVersion(): string {
-  let packageJsonDir = path.dirname(new URL(import.meta.url).pathname);
-  while (!fs.existsSync(path.join(packageJsonDir, 'package.json'))) {
-    packageJsonDir = path.dirname(packageJsonDir);
-  }
-  const packageJson = JSON.parse(fs.readFileSync(path.join(packageJsonDir, 'package.json'), 'utf8')) as {
+  const packageJson = JSON.parse(fs.readFileSync(path.join(getBuildTsRootPath(), 'package.json'), 'utf8')) as {
     version: string;
   };
   return packageJson.version;

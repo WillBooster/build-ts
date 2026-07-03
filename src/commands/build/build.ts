@@ -1,12 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { styleText } from 'node:util';
 
-import chalk from 'chalk';
-import dateTime from 'date-time';
-import ms from 'pretty-ms';
 import { rolldown, watch } from 'rolldown';
 import type { OutputOptions, RolldownBuild, RolldownOptions } from 'rolldown';
-import type { Handler } from 'signal-exit';
 import { onExit } from 'signal-exit';
 import type { PackageJson } from 'type-fest';
 import type { CommandModule } from 'yargs';
@@ -14,12 +11,13 @@ import type { CommandModule } from 'yargs';
 import { createEnvironmentVariablesDefinition, loadEnvironmentVariablesWithCache } from '../../env.js';
 import type { ArgumentsType, TargetCategory, TargetDetail } from '../../types.js';
 import { allTargetCategories } from '../../types.js';
-import { getNamespaceAndName, readPackageJson } from '../../utils.js';
+import { formatDateTime, formatDuration, getNamespaceAndName, readPackageJson } from '../../utils.js';
 
 import type { AnyBuilderType, builder } from './builder.js';
 import { appBuilder, functionsBuilder, libBuilder } from './builder.js';
 import { handleError } from './bundlerLogger.js';
-import { createExternalMatcher, setupPlugins } from './plugin.js';
+import { createExternalMatcher } from './externals.js';
+import { setupPlugins } from './plugin.js';
 import { generateDeclarationFiles } from './typeScript.js';
 
 export const app: CommandModule<unknown, ArgumentsType<typeof appBuilder>> = {
@@ -116,7 +114,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
   const options: RolldownOptions = {
     checks: { preferBuiltinFeature: false },
-    external: createExternalMatcher(argv, targetDetail, packageJson, namespace),
+    external: createExternalMatcher(argv, targetDetail, packageJson, namespace, packageDirPath),
     input:
       targetDetail === 'functions'
         ? Object.fromEntries(
@@ -139,17 +137,23 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
   const pathToRelativePath = (paths: string | Readonly<string[]>): string[] =>
     (Array.isArray(paths) ? paths : [paths]).map((p) => path.relative(packageDirPath, p));
+  const printBundlingMessage = (inputPaths: string | Readonly<string[]>): void => {
+    const outputPaths = pathToRelativePath(outputOptionsList.map((opts) => opts.file || opts.dir || ''));
+    console.info(
+      styleText(
+        'cyan',
+        `Bundles ${styleText('bold', pathToRelativePath(inputPaths).join(', '))} → ${styleText(
+          'bold',
+          outputPaths.join(', ')
+        )}\non ${packageDirPath} ...`
+      )
+    );
+  };
   if (argv.watch) {
-    watchRolldown(argv, targetDetail, packageDirPath, options, outputOptionsList, pathToRelativePath);
+    watchRolldown(argv, targetDetail, packageDirPath, options, outputOptionsList, pathToRelativePath, printBundlingMessage);
   } else {
     if (!argv.silent) {
-      console.info(
-        chalk.cyan(
-          `Bundles ${chalk.bold(pathToRelativePath(inputs).join(', '))} → ${chalk.bold(
-            pathToRelativePath(outputOptionsList.map((opts) => opts.file || opts.dir || '')).join(', ')
-          )}\non ${packageDirPath} ...`
-        )
-      );
+      printBundlingMessage(inputs);
     }
 
     let bundle: RolldownBuild | undefined;
@@ -162,10 +166,11 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
       if (!argv.silent) {
         console.info(
-          chalk.green(
+          styleText(
+            'green',
             `Created ${pathToRelativePath(outputOptionsList.map((opts) => opts.file || opts.dir || '')).join(
               ', '
-            )} in ${chalk.bold(ms(Date.now() - startTime))}`
+            )} in ${styleText('bold', formatDuration(Date.now() - startTime))}`
           )
         );
       }
@@ -200,65 +205,76 @@ function watchRolldown(
   packageDirPath: string,
   options: RolldownOptions,
   outputOptionsList: OutputOptions[],
-  pathToRelativePath: (paths: string | Readonly<string[]>) => string[]
+  pathToRelativePath: (paths: string | Readonly<string[]>) => string[],
+  printBundlingMessage: (inputPaths: string | Readonly<string[]>) => void
 ): void {
   const watcher = watch({ ...options, output: outputOptionsList });
 
-  const close = async (code: number | null | undefined): Promise<void> => {
-    process.removeListener('uncaughtException', close);
-    process.stdin.removeListener('end', close);
-    if (watcher) await watcher.close();
+  const close = async (code?: number | null): Promise<void> => {
+    process.removeListener('uncaughtException', closeOnUncaughtException);
+    process.stdin.removeListener('end', closeOnStdinEnd);
+    await watcher.close();
     if (code) process.exit(code);
   };
-  onExit(close as unknown as Handler);
-  process.on('uncaughtException', close);
+  const closeOnUncaughtException = (error: unknown): void => {
+    console.error(error);
+    void close(1);
+  };
+  const closeOnStdinEnd = (): void => {
+    void close();
+  };
+  onExit((code) => void close(code));
+  process.on('uncaughtException', closeOnUncaughtException);
   if (!process.stdin.isTTY) {
-    process.stdin.on('end', close);
+    process.stdin.on('end', closeOnStdinEnd);
     process.stdin.resume();
   }
 
   watcher.on('event', async (event) => {
-    switch (event.code) {
-      case 'ERROR': {
-        handleError(event.error, true);
-        break;
-      }
-      case 'BUNDLE_START': {
-        if (argv.silent) break;
-
-        console.info(
-          chalk.cyan(
-            `Bundles ${chalk.bold(pathToRelativePath(getInputFiles(options.input)).join(', '))} → ${chalk.bold(
-              pathToRelativePath(outputOptionsList.map((opts) => opts.file || opts.dir || '')).join(', ')
-            )}\non ${packageDirPath} ...`
-          )
-        );
-        break;
-      }
-      case 'BUNDLE_END': {
-        if (argv.silent) break;
-
-        console.info(
-          chalk.green(
-            `Created ${chalk.bold(pathToRelativePath(event.output).join(', '))} in ${chalk.bold(ms(event.duration))}`
-          )
-        );
-
-        if (targetDetail !== 'app-node' && targetDetail !== 'functions') {
-          await generateDeclarationFiles(argv, packageDirPath);
+    try {
+      switch (event.code) {
+        case 'ERROR': {
+          handleError(event.error, true);
+          break;
         }
-        break;
-      }
-      case 'END': {
-        if (argv.silent) break;
+        case 'BUNDLE_START': {
+          if (argv.silent) break;
 
-        console.info(`\n[${dateTime()}] waiting for changes...`);
-        break;
-      }
-    }
+          printBundlingMessage(getInputFiles(options.input));
+          break;
+        }
+        case 'BUNDLE_END': {
+          if (argv.silent) break;
 
-    if ('result' in event && event.result) {
-      void event.result.close();
+          console.info(
+            styleText(
+              'green',
+              `Created ${styleText('bold', pathToRelativePath(event.output).join(', '))} in ${styleText(
+                'bold',
+                formatDuration(event.duration)
+              )}`
+            )
+          );
+
+          if (targetDetail !== 'app-node' && targetDetail !== 'functions') {
+            await generateDeclarationFiles(argv, packageDirPath);
+          }
+          break;
+        }
+        case 'END': {
+          if (argv.silent) break;
+
+          console.info(`\n[${formatDateTime(new Date())}] waiting for changes...`);
+          break;
+        }
+      }
+    } catch (error) {
+      // Keep the watcher alive even if handling an event (e.g. declaration file generation) fails.
+      console.error('Failed to handle watch event due to:', error);
+    } finally {
+      if ('result' in event && event.result) {
+        void event.result.close();
+      }
     }
   });
 }
@@ -353,7 +369,7 @@ function getOutputOptionsList(
       {
         dir: outDirPath,
         format: esmOutput ? 'module' : 'commonjs',
-        minify: false,
+        minify: argv.minify,
         sourcemap: argv.sourcemap && 'inline',
         strict: !esmOutput,
       },

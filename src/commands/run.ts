@@ -7,11 +7,6 @@ import { sharedOptionsBuilder } from '../sharedOptionsBuilder.js';
 
 const builder = {
   ...sharedOptionsBuilder,
-  module: {
-    description: 'A module type: cjs or esm',
-    type: 'string',
-    alias: 'm',
-  },
   watch: {
     description: 'Whether watch mode is enabled or not',
     type: 'boolean',

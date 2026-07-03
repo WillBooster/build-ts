@@ -7,7 +7,8 @@ describe('build', { timeout: 60_000 }, () => {
   it('app-node', async () => {
     await buildAndRunApp('app-node', 'app', '--inline', 'A');
     const indexJs = await readGeneratedCode('test/fixtures/app-node/dist/index.js');
-    expect(indexJs).to.includes('("1")');
+    // The minifier may emit string literals with double quotes or backticks.
+    expect(indexJs).to.match(/\((?:"1"|`1`)\)/);
     expect(indexJs).to.not.includes('console.log');
     expect(indexJs).to.not.includes('console.table');
     expect(indexJs).to.includes('console.info');
@@ -384,9 +385,11 @@ console.log('cjs-js-after');
     await buildWithCommand('app-node', 'app', '--inline', 'A', '--core-js');
     const indexJs = await readGeneratedCode('test/fixtures/app-node/dist/index.js');
     expect(indexJs.startsWith('"use strict";')).toBe(true);
-    expect(indexJs).to.includes('__commonJSMin');
-    expect(indexJs).to.not.includes('require("core-js');
-    expect(indexJs).to.includes('("1")');
+    // The commonjs runtime helpers must be seeded before core-js wrappers call them
+    // (their identifiers may be mangled by minification).
+    expect(indexJs).to.match(/^"use strict";var \w+=Object\.create/);
+    expect(indexJs).to.not.match(/require\((?:"|`)core-js/);
+    expect(indexJs).to.match(/\((?:"1"|`1`)\)/);
     await runApp('app-node');
     expect(indexJs).to.not.includes('process.env.A');
   });

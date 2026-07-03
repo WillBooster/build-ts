@@ -1,6 +1,5 @@
 import process from 'node:process';
-
-import chalk from 'chalk';
+import { styleText } from 'node:util';
 
 export function handleError(error: BuildError, recover = false): void {
   const name = error.name || (error.cause as Error)?.name;
@@ -8,10 +7,10 @@ export function handleError(error: BuildError, recover = false): void {
   const pluginSection = error.plugin ? `(plugin ${error.plugin}) ` : '';
   const message = `${pluginSection}${nameSection}${error.message}`;
 
-  const outputLines = [chalk.bold(chalk.red(`[!] ${chalk.bold(message.toString())}`))];
+  const outputLines = [styleText(['bold', 'red'], `[!] ${message}`)];
 
   if (error.url) {
-    outputLines.push(chalk.cyan(error.url));
+    outputLines.push(styleText('cyan', error.url));
   }
 
   if (error.loc) {
@@ -21,11 +20,11 @@ export function handleError(error: BuildError, recover = false): void {
   }
 
   if (error.frame) {
-    outputLines.push(chalk.dim(error.frame));
+    outputLines.push(styleText('dim', error.frame));
   }
 
   if (error.stack) {
-    outputLines.push(chalk.dim(error.stack?.replace(`${nameSection}${error.message}\n`, '')));
+    outputLines.push(styleText('dim', error.stack.replace(`${nameSection}${error.message}\n`, '')));
   }
 
   outputLines.push('', '');
