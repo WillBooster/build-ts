@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { containsDecorator } from '../src/commands/build/plugin.js';
+import { containsDecorator } from '../src/commands/build/decoratorDetection.js';
 
 describe('build plugins', () => {
   it('detects decorator syntax without matching comment tags', () => {
@@ -22,5 +22,14 @@ describe('build plugins', () => {
     expect(containsDecorator('const regex = new /[\\/*]/;\n@logged class A {}')).toBe(true);
     expect(containsDecorator('const x = (1 + 2) / 3; @logged class A {}')).toBe(true);
     expect(containsDecorator('const value = count++ / total; @logged class A {}')).toBe(true);
+  });
+
+  it('assumes a decorator when code with `@` fails to parse', () => {
+    expect(containsDecorator('@logged class A {')).toBe(true);
+  });
+
+  it('respects the file extension when parsing', () => {
+    expect(containsDecorator('class A { @logged method() {} }', 'file.tsx')).toBe(true);
+    expect(containsDecorator("const jsx = <div className='@' />;", 'file.tsx')).toBe(false);
   });
 });

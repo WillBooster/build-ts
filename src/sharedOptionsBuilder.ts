@@ -3,7 +3,7 @@ import { yargsOptionsBuilderForEnv } from '@willbooster/shared-lib-node';
 export const sharedOptionsBuilder = {
   ...yargsOptionsBuilderForEnv,
   silent: {
-    description: 'Whether watch mode is enabled or not',
+    description: 'Whether to suppress non-error output or not',
     type: 'boolean',
     alias: 's',
   },
