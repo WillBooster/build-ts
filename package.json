@@ -12,7 +12,8 @@
   "files": [
     "bin/",
     "dist/",
-    "babel.*"
+    "babel.*",
+    "NOTICE"
   ],
   "scripts": {
     "build": "wb buildIfNeeded --command 'yarn start app'",
