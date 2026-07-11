@@ -37,15 +37,15 @@
     "@babel/preset-env": "8.0.2",
     "@babel/preset-react": "8.0.1",
     "@babel/preset-typescript": "8.0.1",
-    "@willbooster/shared-lib-node": "8.5.23",
+    "@willbooster/shared-lib-node": "8.6.1",
     "babel-plugin-polyfill-corejs3": "1.0.0",
     "core-js": "3.49.0",
     "core-js-pure": "3.49.0",
     "magic-string": "0.30.21",
-    "oxc-parser": "0.137.0",
+    "oxc-parser": "0.138.0",
     "rolldown": "1.1.4",
     "signal-exit": "4.1.0",
-    "tsx": "4.22.4",
+    "tsx": "4.23.0",
     "yargs": "18.0.0"
   },
   "devDependencies": {
@@ -64,7 +64,7 @@
     "oxlint-tsgolint": "0.24.0",
     "semantic-release": "25.0.5",
     "sort-package-json": "4.0.0",
-    "type-fest": "5.7.0",
+    "type-fest": "5.8.0",
     "typescript": "7.0.2",
     "vitest": "4.1.10"
   },
