@@ -117,8 +117,10 @@ function findConfigFile(dirPath: string): string | undefined {
 }
 
 function getTsgoPath(): string {
-  const packageJsonPath = require.resolve('@typescript/native-preview/package.json');
-  return path.join(path.dirname(packageJsonPath), 'bin', 'tsgo.js');
+  // TypeScript 7 ships the native compiler (formerly `@typescript/native-preview`) as
+  // the `typescript` package, whose `lib/tsc.js` wrapper spawns the platform binary.
+  const packageJsonPath = require.resolve('typescript/package.json');
+  return path.join(path.dirname(packageJsonPath), 'lib', 'tsc.js');
 }
 
 async function usesNodeProtocolImport(dirPath: string): Promise<boolean> {
