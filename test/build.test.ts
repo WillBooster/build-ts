@@ -2024,6 +2024,78 @@ export const routes = { helper };
     // Both emitted sources need declarations, since each output resolved to a different one.
     await expectFileExists(`${outDirPath}/dir/browser.d.ts`);
     await expectFileExists(`${outDirPath}/dir/main.d.ts`);
+
+    // Conditional exports are selected with the platform's condition names, so the declaration must
+    // describe the same condition's target as the bundled JavaScript.
+    await fs.promises.mkdir(`${fixtureDirPath}/src/cond/node_modules/dep`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/cond/package.json`,
+      JSON.stringify({ browser: { './main.ts': 'dep' }, main: './main.ts' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/cond/main.ts`, 'export const v = "main";\n');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/cond/node_modules/dep/package.json`,
+      JSON.stringify({ name: 'dep', exports: { browser: './browser.ts', default: './default.ts' } })
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/cond/node_modules/dep/browser.ts`,
+      'export const v = "dep-browser";\n'
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/cond/node_modules/dep/default.ts`,
+      'export const v = "dep-default";\n'
+    );
+    const conditionOutDirPath = '.tmp/test-fixtures/lib-platform-input-condition';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--module-type',
+      'esm',
+      '--input',
+      `${fixtureDirPath}/src/cond`,
+      '--out-dir',
+      conditionOutDirPath
+    );
+    await expectFileExists(`${conditionOutDirPath}/cond/node_modules/dep/browser.d.ts`);
+    expect(fs.existsSync(`${conditionOutDirPath}/cond/node_modules/dep/default.d.ts`)).toBe(false);
+  });
+
+  it('lib fails when an entry is unresolvable on any output platform', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/lib-platform-failure';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src/dir`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({ type: 'module', packageManager: 'yarn@4.17.0' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/tsconfig.json`,
+      JSON.stringify({
+        compilerOptions: { module: 'esnext', moduleResolution: 'bundler', strict: true, target: 'es2022' },
+        include: ['src/**/*'],
+      })
+    );
+    // Resolvable for the CommonJS output but not the ESM one, which the bundler rejects outright, so
+    // succeeding on the resolvable platform alone would declare a build that cannot be produced.
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/dir/package.json`,
+      JSON.stringify({ browser: { './main.ts': './missing.ts' }, main: './main.ts' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/dir/main.ts`, 'export const v = "main";\n');
+
+    const ret = await buildWithPackagePathAndGetStatus(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--module-type',
+      'both',
+      '--input',
+      `${fixtureDirPath}/src/dir`,
+      '--out-dir',
+      '.tmp/test-fixtures/lib-platform-failure-out'
+    );
+    expect(ret.status).not.toBe(0);
   });
 
   it('lib skips declarations for entries the bundler ignores', async () => {

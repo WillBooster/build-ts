@@ -21,18 +21,26 @@ export const bundlerResolveOptions = {
 // Verified against the bundler: a directory whose package.json has "browser", "module" and "main"
 // resolves to the browser entry for an ESM output and to the main entry for a CommonJS one, and the
 // "browser" alias map only takes effect for the former.
-const platformResolveOptions: Record<BundlerPlatform, { aliasFields: string[][]; mainFields: string[] }> = {
-  browser: { aliasFields: [['browser']], mainFields: ['browser', 'module', 'main'] },
-  node: { aliasFields: [], mainFields: ['main', 'module'] },
+const platformResolveOptions: Record<
+  BundlerPlatform,
+  { aliasFields: string[][]; conditionNames: string[]; mainFields: string[] }
+> = {
+  browser: {
+    aliasFields: [['browser']],
+    conditionNames: ['import', 'browser', 'default'],
+    mainFields: ['browser', 'module', 'main'],
+  },
+  node: { aliasFields: [], conditionNames: ['import', 'node', 'default'], mainFields: ['main', 'module'] },
 };
 
-// The resolver reports a deliberately ignored entry as an error rather than as a distinct state, so
-// the two have to be told apart by this prefix.
 const ignoredPathErrorPrefix = 'Path is ignored';
 
-/** Reports whether the bundler can resolve the path on any platform, for validating an input. */
+/** Reports whether any platform accepts the path, which is all an input needs to be worth passing on. */
 export function isBundlerResolvablePath(literalPath: string): boolean {
-  return resolveSourceFilePaths(literalPath, createBundlerResolvers(['browser', 'node'])) !== undefined;
+  return createBundlerResolvers(['browser', 'node']).some((resolver) => {
+    const { error, path: resolvedPath } = resolve(literalPath, resolver);
+    return resolvedPath !== undefined || isIgnored(error);
+  });
 }
 
 /**
@@ -40,21 +48,30 @@ export function isBundlerResolvablePath(literalPath: string): boolean {
  * the outputs resolve differently per platform (e.g. a "browser" entry for ESM and a "main" entry for
  * CommonJS). An empty array means the bundler deliberately ignores the entry on every platform (a
  * `"browser"` mapping to `false`), which is a successful resolution that simply has no source file.
- * Returns undefined only when the bundler cannot resolve the path either.
+ * Returns undefined when any requested platform fails to resolve, since the bundler fails there too.
  */
 export function resolveSourceFilePaths(literalPath: string, resolvers: ResolverFactory[]): string[] | undefined {
   const resolvedPaths: string[] = [];
-  let isUnresolved = false;
   for (const resolver of resolvers) {
-    const { error, path: resolvedPath } = resolver.sync(path.dirname(literalPath), `./${path.basename(literalPath)}`);
+    const { error, path: resolvedPath } = resolve(literalPath, resolver);
     if (resolvedPath) {
       resolvedPaths.push(resolvedPath);
-    } else if (!error?.startsWith(ignoredPathErrorPrefix)) {
-      isUnresolved = true;
+    } else if (!isIgnored(error)) {
+      // Succeeding here would let declaration generation pass for a build the bundler rejects.
+      return undefined;
     }
   }
-  // A path resolved for one platform still needs its declarations, even if another platform fails.
-  return isUnresolved && resolvedPaths.length === 0 ? undefined : [...new Set(resolvedPaths)];
+  return [...new Set(resolvedPaths)];
+}
+
+function resolve(literalPath: string, resolver: ResolverFactory): { error?: string; path?: string } {
+  return resolver.sync(path.dirname(literalPath), `./${path.basename(literalPath)}`);
+}
+
+// A deliberately ignored entry is reported as an error rather than as a distinct state, so the two
+// have to be told apart by the message itself.
+function isIgnored(error: string | undefined): boolean {
+  return error?.startsWith(ignoredPathErrorPrefix) ?? false;
 }
 
 /**
