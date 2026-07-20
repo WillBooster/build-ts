@@ -8,16 +8,6 @@ export const builder = {
     type: 'array',
     alias: 'i',
   },
-  'core-js': {
-    description: 'Whether or not core-js is employed.',
-    type: 'boolean',
-    default: false,
-  },
-  'core-js-proposals': {
-    description: 'Whether or not core-js with proposals support is employed.',
-    type: 'boolean',
-    default: false,
-  },
   minify: {
     description: 'Whether or not minification is enabled.',
     type: 'boolean',
@@ -51,14 +41,6 @@ export const builder = {
     type: 'boolean',
     alias: 'w',
   },
-  keepImport: {
-    description: 'Identifiers to be kept as import statements.',
-    type: 'array',
-  },
-  bundleBuiltins: {
-    description: 'Module names same with builtins (e.g., undici) to be bundled.',
-    type: 'array',
-  },
 } as const;
 
 export const appBuilder = {
@@ -84,14 +66,6 @@ export const libBuilder = {
     description: 'esm, cjs, either, or both (default).',
     type: 'string',
     alias: 'm',
-  },
-  // .js files in a package with `"type": "module"` are treated as esm.
-  // However, we want to treat them as cjs in the case where a cjs project imports an esm package.
-  // To deal with the case, we use .cjs and .mjs extensions instead of .js extension.
-  jsExtension: {
-    description: 'Whether to use .js in cjs and/or esm: either (default), both, or none.',
-    type: 'string',
-    alias: 'j',
   },
   declarationOnly: {
     description: 'Emit only declaration (.d.ts) files without bundling JavaScript.',

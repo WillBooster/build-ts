@@ -67,7 +67,7 @@ async function runTsgo(
 
   // The temporary config must live in the project directory so that its relative `rootDir` and
   // `include` resolve against the project even when the extended tsconfig is in an ancestor directory.
-  const tempConfigFile = path.join(projectDirPath, `.build-ts-tsgo.${process.pid}.${Date.now()}.json`);
+  const tempConfigFile = path.join(projectDirPath, `.build-ts-tsgo.${process.pid}.json`);
   try {
     await fs.promises.writeFile(
       tempConfigFile,

@@ -19,11 +19,9 @@ export function getBuildTsRootPath(): string {
   return path.dirname(path.dirname(url.fileURLToPath(import.meta.url)));
 }
 
-export function getNamespaceAndName(packageJson: PackageJson): [string | undefined, string | undefined] {
-  const packageName = packageJson.name?.toString() ?? '';
-  const match = /@([^/]+)\/(.+)/.exec(packageName);
-  const [, namespace, name] = match ?? [];
-  return [namespace, name];
+/** Returns the scope of a package name (e.g. "willbooster" for "@willbooster/shared-lib"). */
+export function getNamespace(packageJson: PackageJson): string | undefined {
+  return /^@([^/]+)\//.exec(packageJson.name ?? '')?.[1];
 }
 
 export function formatDateTime(date: Date): string {
