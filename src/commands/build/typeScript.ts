@@ -122,6 +122,7 @@ async function createTypeScriptNativeConfig(
     // declaration files are kept because entries may rely on their global types without importing them.
     ...(inputs?.length
       ? {
+          exclude: [],
           files: inputs.map((input) => path.resolve(projectDirPath, input).replaceAll(path.sep, '/')),
           include: ['src/**/*.d.ts', 'src/**/*.d.mts', 'src/**/*.d.cts'],
         }
