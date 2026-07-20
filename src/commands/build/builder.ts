@@ -4,7 +4,7 @@ export const builder = {
   ...sharedOptionsBuilder,
   input: {
     description:
-      'Paths of source code files to be built. The first file is main. If no option is given, "src/index.{ts,tsx,cts,mts}" from package directory is targeted.',
+      'Paths or glob patterns (e.g. "src/**/*.ts") of source code files to be built. The first file is main. If no option is given, "src/index.{ts,tsx,cts,mts}" from package directory is targeted.',
     type: 'array',
     alias: 'i',
   },

@@ -407,7 +407,25 @@ function getInputFiles(input: RolldownOptions['input']): string[] {
 }
 
 function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDirPath: string): string[] {
-  if (argv.input && argv.input.length > 0) return argv.input.map((p) => path.resolve(cwd, p.toString()));
+  if (argv.input && argv.input.length > 0) {
+    const inputs = argv.input.flatMap((p) => {
+      const pattern = p.toString();
+      if (!/[*?{[]/.test(pattern)) return [path.resolve(cwd, pattern)];
+
+      // Ambient declaration files always participate in type checking, so they must not become entries.
+      const matches = fs
+        .globSync(pattern, { cwd })
+        .filter((m) => !/\.d\.[cm]?ts$/.test(m) && fs.statSync(path.resolve(cwd, m)).isFile())
+        .sort()
+        .map((m) => path.resolve(cwd, m));
+      if (matches.length === 0) {
+        console.error(`No files matched the input pattern: ${pattern}`);
+        process.exit(1);
+      }
+      return matches;
+    });
+    return [...new Set(inputs)];
+  }
 
   const srcDirPath = path.join(packageDirPath, 'src');
   for (const ext of ['ts', 'tsx', 'cts', 'mts']) {

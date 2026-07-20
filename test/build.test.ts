@@ -1643,6 +1643,62 @@ export const routes = { helper };
     expect(fs.existsSync(`${fixtureDirPath}/src/routes.ts`)).toBe(true);
   });
 
+  it('lib with glob --input builds every matched module as an entry', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/lib-glob-input';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src/sub`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({
+        type: 'module',
+        packageManager: 'yarn@4.17.0',
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/tsconfig.json`,
+      JSON.stringify({
+        compilerOptions: {
+          module: 'esnext',
+          moduleResolution: 'bundler',
+          strict: true,
+          target: 'es2022',
+        },
+        include: ['src/**/*'],
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/index.ts`, 'export function main(): number {\n  return 1;\n}\n');
+    // Not imported from index.ts, so a single-entry build would drop its exports.
+    await fs.promises.writeFile(`${fixtureDirPath}/src/schemas.ts`, 'export const schema = { id: 1 };\n');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/sub/util.ts`,
+      'export function util(): number {\n  return 2;\n}\n'
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/ambient.d.ts`, 'declare const AMBIENT: string;\n');
+
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--module-type',
+      'esm',
+      '--input',
+      `${fixtureDirPath}/src/**/*.ts`
+    );
+
+    await expectFileExists(`${fixtureDirPath}/dist/index.js`);
+    await expectFileExists(`${fixtureDirPath}/dist/schemas.js`);
+    await expectFileExists(`${fixtureDirPath}/dist/schemas.d.ts`);
+    await expectFileExists(`${fixtureDirPath}/dist/sub/util.js`);
+    expect(fs.existsSync(`${fixtureDirPath}/dist/ambient.js`)).toBe(false);
+
+    const ret = await spawnAsync(
+      'node',
+      ['-e', "import('./dist/schemas.js').then((mod) => process.exit(mod.schema.id === 1 ? 0 : 1))"],
+      { cwd: fixtureDirPath }
+    );
+    expect(ret.status).toBe(0);
+  });
+
   it('lib-react-ts-entry', async () => {
     const dirName = 'lib-react-ts-entry';
     await buildWithCommand(dirName, 'lib', '--module-type', 'both');

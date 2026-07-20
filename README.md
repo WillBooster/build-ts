@@ -73,22 +73,22 @@ npx build-ts run src/main.ts -- --foo bar
 
 ### Common build options (`app`, `functions`, and `lib`)
 
-| Option                           | Alias | Default  | Description                                                                                                 |
-| -------------------------------- | ----- | -------- | ----------------------------------------------------------------------------------------------------------- |
-| `--input`                        | `-i`  | (auto)   | Source files to build. The first file is the main entry. Defaults to `src/index.{ts,tsx,cts,mts}`.          |
-| `--out-dir`                      | `-o`  | `dist`   | Output directory, resolved from the current directory (e.g., `../../dist/shared`). Removed before building. |
-| `--module-type`                  | `-m`  | (varies) | Output module format: `esm`, `cjs`, `either` (follow `package.json`'s `type`), or `both` (`lib` only).      |
-| `--minify` / `--no-minify`       |       | `true`   | Enable/disable minification.                                                                                |
-| `--sourcemap` / `--no-sourcemap` |       | `true`   | Enable/disable sourcemaps.                                                                                  |
-| `--watch`                        | `-w`  | `false`  | Rebuild on file changes.                                                                                    |
-| `--external`                     |       |          | Additional dependencies to keep external (not bundled).                                                     |
-| `--core-js`                      |       | `false`  | Inject `core-js` polyfills via Babel.                                                                       |
-| `--core-js-proposals`            |       | `false`  | Inject `core-js` polyfills including proposals via Babel.                                                   |
-| `--inline`                       |       |          | Names of environment variables to inline into the bundle.                                                   |
-| `--auto-inline`                  |       | `false`  | Inline all environment variables defined in `.env` files.                                                   |
-| `--keep-import`                  |       |          | Identifiers to keep as import statements.                                                                   |
-| `--bundle-builtins`              |       |          | Module names that shadow Node.js builtins (e.g., `undici`) to be bundled.                                   |
-| `--silent`                       | `-s`  | `false`  | Suppress non-error output.                                                                                  |
+| Option                           | Alias | Default  | Description                                                                                                                              |
+| -------------------------------- | ----- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `--input`                        | `-i`  | (auto)   | Source files (or glob patterns like `src/**/*.ts`) to build. The first file is the main entry. Defaults to `src/index.{ts,tsx,cts,mts}`. |
+| `--out-dir`                      | `-o`  | `dist`   | Output directory, resolved from the current directory (e.g., `../../dist/shared`). Removed before building.                              |
+| `--module-type`                  | `-m`  | (varies) | Output module format: `esm`, `cjs`, `either` (follow `package.json`'s `type`), or `both` (`lib` only).                                   |
+| `--minify` / `--no-minify`       |       | `true`   | Enable/disable minification.                                                                                                             |
+| `--sourcemap` / `--no-sourcemap` |       | `true`   | Enable/disable sourcemaps.                                                                                                               |
+| `--watch`                        | `-w`  | `false`  | Rebuild on file changes.                                                                                                                 |
+| `--external`                     |       |          | Additional dependencies to keep external (not bundled).                                                                                  |
+| `--core-js`                      |       | `false`  | Inject `core-js` polyfills via Babel.                                                                                                    |
+| `--core-js-proposals`            |       | `false`  | Inject `core-js` polyfills including proposals via Babel.                                                                                |
+| `--inline`                       |       |          | Names of environment variables to inline into the bundle.                                                                                |
+| `--auto-inline`                  |       | `false`  | Inline all environment variables defined in `.env` files.                                                                                |
+| `--keep-import`                  |       |          | Identifiers to keep as import statements.                                                                                                |
+| `--bundle-builtins`              |       |          | Module names that shadow Node.js builtins (e.g., `undici`) to be bundled.                                                                |
+| `--silent`                       | `-s`  | `false`  | Suppress non-error output.                                                                                                               |
 
 ### `functions`-specific options
 
