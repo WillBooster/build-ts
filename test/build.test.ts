@@ -1643,6 +1643,137 @@ export const routes = { helper };
     expect(fs.existsSync(`${fixtureDirPath}/src/routes.ts`)).toBe(true);
   });
 
+  it('lib with glob --input builds every matched module as an entry', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/lib-glob-input';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src/sub`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({
+        type: 'module',
+        packageManager: 'yarn@4.17.0',
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/tsconfig.json`,
+      JSON.stringify({
+        compilerOptions: {
+          module: 'esnext',
+          moduleResolution: 'bundler',
+          strict: true,
+          target: 'es2022',
+        },
+        include: ['src/**/*'],
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/index.ts`, 'export function main(): number {\n  return 1;\n}\n');
+    // Not imported from index.ts, so a single-entry build would drop its exports.
+    await fs.promises.writeFile(`${fixtureDirPath}/src/schemas.ts`, 'export const schema = { id: 1 };\n');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/sub/util.ts`,
+      'export function util(): number {\n  return 2;\n}\n'
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/ambient.d.ts`, 'declare const AMBIENT: string;\n');
+    // A broken symlink matched by the glob must be skipped, not crash the build.
+    await fs.promises.symlink('missing.ts', `${fixtureDirPath}/src/broken.ts`);
+
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--module-type',
+      'esm',
+      '--input',
+      `${fixtureDirPath}/src/**/*.ts`
+    );
+
+    await expectFileExists(`${fixtureDirPath}/dist/index.js`);
+    await expectFileExists(`${fixtureDirPath}/dist/schemas.js`);
+    await expectFileExists(`${fixtureDirPath}/dist/schemas.d.ts`);
+    await expectFileExists(`${fixtureDirPath}/dist/sub/util.js`);
+    expect(fs.existsSync(`${fixtureDirPath}/dist/ambient.js`)).toBe(false);
+    expect(fs.existsSync(`${fixtureDirPath}/dist/broken.js`)).toBe(false);
+
+    const ret = await spawnAsync(
+      'node',
+      ['-e', "import('./dist/schemas.js').then((mod) => process.exit(mod.schema.id === 1 ? 0 : 1))"],
+      { cwd: fixtureDirPath }
+    );
+    expect(ret.status).toBe(0);
+
+    // A path that names an existing file must be taken literally even when it contains glob metacharacters.
+    await fs.promises.writeFile(`${fixtureDirPath}/src/entry[1].ts`, 'export const literal = true;\n');
+    await fs.promises.writeFile(`${fixtureDirPath}/src/entry1.ts`, 'export const globbed = true;\n');
+    const literalOutDirPath = '.tmp/test-fixtures/lib-glob-input-literal';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/entry[1].ts`,
+      '--out-dir',
+      literalOutDirPath
+    );
+    expect(fs.readdirSync(literalOutDirPath)).toEqual(['entry[1].d.ts']);
+
+    // A directory named like a pattern must not shadow glob expansion.
+    // "[s]chemas.ts" keeps the fixture portable: Windows forbids "*" in names but allows "[]".
+    await fs.promises.mkdir(`${fixtureDirPath}/src/[s]chemas.ts`, { recursive: true });
+    const directoryOutDirPath = '.tmp/test-fixtures/lib-glob-input-directory';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/[s]chemas.ts`,
+      '--out-dir',
+      directoryOutDirPath
+    );
+    expect(fs.readdirSync(directoryOutDirPath)).toEqual(['schemas.d.ts']);
+
+    // A directory entry whose name contains glob metacharacters still resolves to its index file.
+    // Declarations are not generated here because tsgo cannot take a directory as an entry.
+    await fs.promises.mkdir(`${fixtureDirPath}/src/[b]racket`, { recursive: true });
+    await fs.promises.writeFile(`${fixtureDirPath}/src/[b]racket/index.ts`, 'export const bracket = true;\n');
+    const directoryEntryOutDirPath = '.tmp/test-fixtures/lib-glob-input-directory-entry';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'app',
+      '--input',
+      `${fixtureDirPath}/src/[b]racket`,
+      '--out-dir',
+      directoryEntryOutDirPath
+    );
+    await expectFileExists(`${directoryEntryOutDirPath}/index.js`);
+  });
+
+  it('functions fails on conflicting entry names instead of silently dropping one', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/functions-conflicting-entries';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src/one`, { recursive: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src/two`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({ type: 'module', packageManager: 'yarn@4.17.0' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(`${fixtureDirPath}/src/index.ts`, 'export const main = 1;\n');
+    await fs.promises.writeFile(`${fixtureDirPath}/src/one/handler.ts`, 'export const marker = "one";\n');
+    await fs.promises.writeFile(`${fixtureDirPath}/src/two/handler.ts`, 'export const marker = "two";\n');
+
+    const ret = await buildWithPackagePathAndGetStatus(
+      fixtureDirPath,
+      'functions',
+      '--input',
+      `${fixtureDirPath}/src/index.ts`,
+      '--input',
+      `${fixtureDirPath}/src/one/handler.ts`,
+      '--input',
+      `${fixtureDirPath}/src/two/handler.ts`
+    );
+    expect(ret.status).not.toBe(0);
+  });
+
   it('lib-react-ts-entry', async () => {
     const dirName = 'lib-react-ts-entry';
     await buildWithCommand(dirName, 'lib', '--module-type', 'both');

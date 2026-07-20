@@ -145,11 +145,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     checks: { preferBuiltinFeature: false },
     external: createExternalMatcher(argv, targetDetail, packageJson, namespace, packageDirPath),
     input:
-      targetDetail === 'functions'
-        ? Object.fromEntries(
-            inputs.map((input, index) => [index === 0 ? 'index' : path.basename(input, path.extname(input)), input])
-          )
-        : inputs,
+      targetDetail === 'functions' ? createFunctionsInputEntries(inputs) : inputs,
     plugins: setupPlugins(argv, outputOptionsList, packageDirPath),
     resolve: {
       extensionAlias: {
@@ -400,6 +396,33 @@ function containsPath(parentPath: string, childPath: string): boolean {
   return relativePath !== '..' && !relativePath.startsWith(`..${path.sep}`);
 }
 
+// Mirrors the bundler's `resolve.extensions` / `extensionAlias` configuration above.
+function isBundlerResolvablePath(literalPath: string): boolean {
+  const extension = path.extname(literalPath);
+  const aliasedExtensions = { '.cjs': ['.cts'], '.js': ['.ts', '.tsx'], '.mjs': ['.mts'] }[extension] ?? [];
+  const candidates = [
+    ...['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'].map((ext) => literalPath + ext),
+    ...aliasedExtensions.map((ext) => literalPath.slice(0, -extension.length) + ext),
+  ];
+  return candidates.some((candidate) => fs.statSync(candidate, { throwIfNoEntry: false })?.isFile());
+}
+
+function createFunctionsInputEntries(inputs: string[]): Record<string, string> {
+  // A null prototype avoids false conflicts with inherited members (e.g. an entry named "toString").
+  const entries: Record<string, string> = Object.create(null);
+  for (const [index, input] of inputs.entries()) {
+    const name = index === 0 ? 'index' : path.basename(input, path.extname(input));
+    if (entries[name]) {
+      console.error(
+        `Entry names conflict in the functions build: "${name}" (${entries[name]} vs ${input}). List --input files explicitly with unique base names, keeping the main entry first.`
+      );
+      process.exit(1);
+    }
+    entries[name] = input;
+  }
+  return entries;
+}
+
 function getInputFiles(input: RolldownOptions['input']): string[] {
   if (!input) return [];
   if (typeof input === 'string') return [input];
@@ -407,7 +430,43 @@ function getInputFiles(input: RolldownOptions['input']): string[] {
 }
 
 function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDirPath: string): string[] {
-  if (argv.input && argv.input.length > 0) return argv.input.map((p) => path.resolve(cwd, p.toString()));
+  if (argv.input && argv.input.length > 0) {
+    const inputs = argv.input.flatMap((p) => {
+      const raw = p.toString();
+      // An existing file always wins over glob interpretation (e.g. "src/entry[1].ts"), but a
+      // directory must not, so that a directory literally named like a pattern still expands.
+      const literalPath = path.resolve(cwd, raw);
+      const literalStats = fs.statSync(literalPath, { throwIfNoEntry: false });
+      if (literalStats?.isFile()) return [literalPath];
+
+      // `fs.globSync` requires "/" as the separator even on Windows (a no-op on POSIX).
+      const pattern = raw.split(path.sep).join('/');
+      // Ambient declaration files always participate in type checking, so they must not become entries.
+      // `throwIfNoEntry: false` skips broken symlinks instead of crashing.
+      const matches = fs
+        .globSync(pattern, { cwd })
+        .filter(
+          (m) => !/\.d\.[cm]?ts$/.test(m) && fs.statSync(path.resolve(cwd, m), { throwIfNoEntry: false })?.isFile()
+        )
+        .sort()
+        .map((m) => path.resolve(cwd, m));
+      if (matches.length > 0) return matches;
+      // Once no file matched, an existing directory is left to the bundler, which resolves it
+      // through its "index" file or its package.json entry fields.
+      if (literalStats?.isDirectory()) return [literalPath];
+      // A non-existing path may still be resolvable by the bundler (e.g. an extension-less path or a
+      // ".js" specifier aliased to ".ts"), even when it contains glob metacharacters.
+      if (isBundlerResolvablePath(literalPath)) return [literalPath];
+      // Error only on actual glob syntax ("*", "?", "[...]", alternation/range braces, or extglob "@(...)" etc.);
+      // characters like a bare "+" or a single-item brace ("{entry}") are ordinary filename characters.
+      if (/[*?]|[@!+]\(|\[.*\]|\{[^}]*(,|\.\.)[^}]*\}/.test(raw)) {
+        console.error(`No files matched the input pattern: ${raw}`);
+        process.exit(1);
+      }
+      return [literalPath];
+    });
+    return [...new Set(inputs)];
+  }
 
   const srcDirPath = path.join(packageDirPath, 'src');
   for (const ext of ['ts', 'tsx', 'cts', 'mts']) {
