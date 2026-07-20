@@ -1675,6 +1675,8 @@ export const routes = { helper };
       'export function util(): number {\n  return 2;\n}\n'
     );
     await fs.promises.writeFile(`${fixtureDirPath}/src/ambient.d.ts`, 'declare const AMBIENT: string;\n');
+    // A broken symlink matched by the glob must be skipped, not crash the build.
+    await fs.promises.symlink('missing.ts', `${fixtureDirPath}/src/broken.ts`);
 
     await buildWithPackagePath(
       fixtureDirPath,
@@ -1690,6 +1692,7 @@ export const routes = { helper };
     await expectFileExists(`${fixtureDirPath}/dist/schemas.d.ts`);
     await expectFileExists(`${fixtureDirPath}/dist/sub/util.js`);
     expect(fs.existsSync(`${fixtureDirPath}/dist/ambient.js`)).toBe(false);
+    expect(fs.existsSync(`${fixtureDirPath}/dist/broken.js`)).toBe(false);
 
     const ret = await spawnAsync(
       'node',
@@ -1697,6 +1700,48 @@ export const routes = { helper };
       { cwd: fixtureDirPath }
     );
     expect(ret.status).toBe(0);
+
+    // A path that names an existing file must be taken literally even when it contains glob metacharacters.
+    await fs.promises.writeFile(`${fixtureDirPath}/src/entry[1].ts`, 'export const literal = true;\n');
+    await fs.promises.writeFile(`${fixtureDirPath}/src/entry1.ts`, 'export const globbed = true;\n');
+    const literalOutDirPath = '.tmp/test-fixtures/lib-glob-input-literal';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/entry[1].ts`,
+      '--out-dir',
+      literalOutDirPath
+    );
+    expect(fs.readdirSync(literalOutDirPath)).toEqual(['entry[1].d.ts']);
+  });
+
+  it('functions fails on conflicting entry names instead of silently dropping one', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/functions-conflicting-entries';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src/one`, { recursive: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src/two`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({ type: 'module', packageManager: 'yarn@4.17.0' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(`${fixtureDirPath}/src/index.ts`, 'export const main = 1;\n');
+    await fs.promises.writeFile(`${fixtureDirPath}/src/one/handler.ts`, 'export const marker = "one";\n');
+    await fs.promises.writeFile(`${fixtureDirPath}/src/two/handler.ts`, 'export const marker = "two";\n');
+
+    const ret = await buildWithPackagePathAndGetStatus(
+      fixtureDirPath,
+      'functions',
+      '--input',
+      `${fixtureDirPath}/src/index.ts`,
+      '--input',
+      `${fixtureDirPath}/src/one/handler.ts`,
+      '--input',
+      `${fixtureDirPath}/src/two/handler.ts`
+    );
+    expect(ret.status).not.toBe(0);
   });
 
   it('lib-react-ts-entry', async () => {

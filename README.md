@@ -90,6 +90,8 @@ npx build-ts run src/main.ts -- --foo bar
 | `--bundle-builtins`              |       |          | Module names that shadow Node.js builtins (e.g., `undici`) to be bundled.                                                                |
 | `--silent`                       | `-s`  | `false`  | Suppress non-error output.                                                                                                               |
 
+Glob patterns in `--input` are expanded with matches sorted alphabetically, and a path that names an existing file is always taken literally. Two caveats: in watch mode, patterns are expanded only once at startup, so files created later are not picked up until a restart; and for the `functions` target, the main entry (`index`) is the first match, so prefer listing the main entry explicitly (entry-name conflicts fail the build).
+
 ### `functions`-specific options
 
 | Option                | Alias | Default | Description                                             |
