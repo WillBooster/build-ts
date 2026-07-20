@@ -337,7 +337,8 @@ function resolveOutDirPath(
     console.error(`--out-dir (${outDirPath}) must not contain the package directory (${canonicalPackageDirPath}).`);
     process.exit(1);
   }
-  const srcDirPath = path.join(canonicalPackageDirPath, 'src');
+  // `src` itself may be a symlink, so it needs its own canonicalization.
+  const srcDirPath = toCanonicalPath(path.join(canonicalPackageDirPath, 'src'));
   if (containsPath(srcDirPath, outDirPath)) {
     console.error(`--out-dir (${outDirPath}) must not be inside the source directory (${srcDirPath}).`);
     process.exit(1);
