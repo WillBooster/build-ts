@@ -1526,6 +1526,12 @@ process.stdout.write(marker);
     );
     await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
     await fs.promises.writeFile(
+      `${fixtureDirPath}/tsconfig.json`,
+      JSON.stringify({
+        compilerOptions: { module: 'esnext', moduleResolution: 'bundler', strict: true, target: 'es2022' },
+      })
+    );
+    await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `export function run() {
   return [1, 2, 3].includes(2) && [1].flatMap((value) => [value]).at(-1) === 1;
