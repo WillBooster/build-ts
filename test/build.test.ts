@@ -1790,6 +1790,36 @@ export const routes = { helper };
       aliasOutDirPath
     );
     await expectFileExists(`${aliasOutDirPath}/index.d.ts`);
+
+    // A package entry field wins over "index", so the declarations must describe the same source the
+    // bundler picks; resolving to "index.ts" here would silently describe the wrong file.
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/package.json`, JSON.stringify({ main: './entry.ts' }));
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/entry.ts`, 'export const fromEntry: number = 3;\n');
+    const packageEntryOutDirPath = '.tmp/test-fixtures/lib-resolved-input-package-entry';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/folder`,
+      '--out-dir',
+      packageEntryOutDirPath
+    );
+    expect(fs.readdirSync(`${packageEntryOutDirPath}/folder`)).toEqual(['entry.d.ts']);
+
+    // An unusable entry field falls back to "index" instead of failing, as the bundler does.
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/package.json`, '{ "main": ');
+    const brokenEntryOutDirPath = '.tmp/test-fixtures/lib-resolved-input-broken-entry';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/folder`,
+      '--out-dir',
+      brokenEntryOutDirPath
+    );
+    await expectFileExists(`${brokenEntryOutDirPath}/folder/index.d.ts`);
   });
 
   it('functions fails on conflicting entry names instead of silently dropping one', async () => {

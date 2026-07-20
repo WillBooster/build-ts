@@ -17,7 +17,13 @@ import type { AnyBuilderType, builder } from './builder.js';
 import { appBuilder, functionsBuilder, libBuilder } from './builder.js';
 import { handleError } from './bundlerLogger.js';
 import { createExternalMatcher } from './externals.js';
-import { bundlerExtensionAlias, bundlerExtensions, resolveSourceFilePath } from './inputResolver.js';
+import {
+  bundlerExtensionAlias,
+  bundlerExtensions,
+  bundlerMainFields,
+  bundlerMainFiles,
+  resolveSourceFilePath,
+} from './inputResolver.js';
 import { setupPlugins } from './plugin.js';
 import { generateDeclarationFiles } from './typeScript.js';
 
@@ -153,7 +159,12 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     input:
       targetDetail === 'functions' ? createFunctionsInputEntries(inputs) : inputs,
     plugins: setupPlugins(argv, outputOptionsList, packageDirPath),
-    resolve: { extensionAlias: bundlerExtensionAlias, extensions: bundlerExtensions },
+    resolve: {
+      extensionAlias: bundlerExtensionAlias,
+      extensions: bundlerExtensions,
+      mainFields: bundlerMainFields,
+      mainFiles: bundlerMainFiles,
+    },
     treeshake: argv['core-js'] || argv['core-js-proposals'] ? false : undefined,
     transform: getTransformOptions(argv, packageDirPath),
     watch: argv.watch ? { clearScreen: false } : undefined,
