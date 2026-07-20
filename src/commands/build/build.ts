@@ -327,7 +327,9 @@ function resolveOutDirPath(
   inputs?: string[],
   targetCategory?: TargetCategory
 ): string {
-  if (argv.outDir === '') {
+  // yargs also accepts `--no-out-dir`, which yields `false` despite the declared string type.
+  const outDirOption = typeof argv.outDir === 'string' ? argv.outDir : undefined;
+  if (outDirOption === '') {
     console.error('--out-dir must not be empty.');
     process.exit(1);
   }
@@ -336,14 +338,14 @@ function resolveOutDirPath(
   // Containment checks use canonical (symlink-resolved) paths because `fs.rm` follows symlinks in parent
   // components, but the lexical path is returned so that removing a symlinked output directory deletes
   // the symlink itself rather than its target's contents.
-  const lexicalOutDirPath = path.resolve(cwd, argv.outDir ?? path.join(packageDirPath, 'dist'));
+  const lexicalOutDirPath = path.resolve(cwd, outDirOption ?? path.join(packageDirPath, 'dist'));
   const outDirPath = toCanonicalPath(lexicalOutDirPath);
   const containedInput = inputs?.find((input) => containsPath(outDirPath, toCanonicalPath(input)));
   if (containedInput) {
     console.error(`The output directory (${outDirPath}) must not contain the input file (${containedInput}).`);
     process.exit(1);
   }
-  if (!argv.outDir) return lexicalOutDirPath;
+  if (!outDirOption) return lexicalOutDirPath;
 
   const canonicalPackageDirPath = toCanonicalPath(packageDirPath);
   if (containsPath(outDirPath, canonicalPackageDirPath)) {
