@@ -2096,6 +2096,28 @@ export const routes = { helper };
       '.tmp/test-fixtures/lib-platform-failure-out'
     );
     expect(ret.status).not.toBe(0);
+
+    // The input names an existing TypeScript file that the browser platform cannot resolve. Falling
+    // back to the literal path would compile it happily, declaring a build the bundler refuses.
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/package.json`,
+      JSON.stringify({ browser: { './index.ts': './missing.ts' } })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/index.ts`, 'export const v = "index";\n');
+    const literalOutDirPath = '.tmp/test-fixtures/lib-platform-failure-literal';
+    const literalRet = await buildWithPackagePathAndGetStatus(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--module-type',
+      'esm',
+      '--input',
+      `${fixtureDirPath}/src/index.ts`,
+      '--out-dir',
+      literalOutDirPath
+    );
+    expect(literalRet.status).not.toBe(0);
+    expect(fs.existsSync(`${literalOutDirPath}/index.d.ts`)).toBe(false);
   });
 
   it('lib skips declarations for entries the bundler ignores', async () => {
