@@ -54,7 +54,7 @@ export const functions: CommandModule<unknown, ArgumentsType<typeof functionsBui
         process.exit(1);
       }
       await generatePackageJsonForFunctions(
-        resolveOutDirPath(argv, process.cwd(), packageDirPath),
+        resolveOutDirPath(argv, process.cwd(), packageDirPath, undefined, 'functions'),
         packageJson,
         argv.moduleType
       );
@@ -91,7 +91,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
   const inputs = verifyInput(argv, cwd, packageDirPath);
   const targetDetail = detectTargetDetail(targetCategory, inputs, packageDirPath);
-  const outDirPath = resolveOutDirPath(argv, cwd, packageDirPath, inputs);
+  const outDirPath = resolveOutDirPath(argv, cwd, packageDirPath, inputs, targetCategory);
 
   if (verbose) {
     console.info('argv:', argv);
@@ -317,48 +317,71 @@ function resolveOutDirPath(
   argv: ArgumentsType<AnyBuilderType>,
   cwd: string,
   packageDirPath: string,
-  inputs?: string[]
+  inputs?: string[],
+  targetCategory?: TargetCategory
 ): string {
   const outDirOption = argv.outDir?.toString();
   if (outDirOption === '') {
     console.error('--out-dir must not be empty.');
     process.exit(1);
   }
-  const outDirPath = outDirOption ? path.resolve(cwd, outDirOption) : path.join(packageDirPath, 'dist');
 
-  // The output directory is removed before building, so refuse locations that would delete sources.
-  // The default `dist` is checked too, since an input may be given inside it. An input may also sit
-  // outside `src` (e.g. `--input scripts/main.ts`), so it needs its own check.
-  const realOutDirPath = toRealPath(outDirPath);
-  const containedInput = inputs?.find((input) => containsPath(realOutDirPath, toRealPath(input)));
+  // The output directory is removed before building, so refuse locations that would delete source
+  // files. Containment is checked on both the lexical and the canonical (symlink-resolved) form, and
+  // both are load-bearing: the canonical one catches a symlinked or case-variant parent component
+  // (`fs.rm` follows those), while the lexical one catches an output path that is itself a symlink
+  // sitting inside a protected directory. The lexical path is returned so that removing a symlinked
+  // output directory deletes the link itself rather than its target's contents.
+  const lexicalOutDirPath = outDirOption ? path.resolve(cwd, outDirOption) : path.join(packageDirPath, 'dist');
+  const outDirPath = toCanonicalPath(lexicalOutDirPath);
+  // The default `dist` is checked too, since an input may be given inside it, and an input may sit
+  // outside `src` (e.g. `--input scripts/main.ts`).
+  const containedInput = inputs?.find(
+    (input) => containsPath(outDirPath, toCanonicalPath(input)) || containsPath(lexicalOutDirPath, input)
+  );
   if (containedInput) {
     console.error(`The output directory (${outDirPath}) must not contain the input file (${containedInput}).`);
     process.exit(1);
   }
-  if (!outDirOption) return outDirPath;
+  if (!outDirOption) return lexicalOutDirPath;
 
-  if (containsPath(realOutDirPath, toRealPath(packageDirPath))) {
-    console.error(`--out-dir (${outDirPath}) must not contain the package directory (${packageDirPath}).`);
+  const canonicalPackageDirPath = toCanonicalPath(packageDirPath);
+  if (containsPath(outDirPath, canonicalPackageDirPath) || containsPath(lexicalOutDirPath, packageDirPath)) {
+    console.error(`--out-dir (${outDirPath}) must not contain the package directory (${canonicalPackageDirPath}).`);
     process.exit(1);
   }
-  const srcDirPath = path.join(packageDirPath, 'src');
-  if (containsPath(toRealPath(srcDirPath), realOutDirPath)) {
+  // `src` itself may be a symlink, so it needs its own canonicalization.
+  const srcDirPath = toCanonicalPath(path.join(canonicalPackageDirPath, 'src'));
+  if (containsPath(srcDirPath, outDirPath) || containsPath(path.join(packageDirPath, 'src'), lexicalOutDirPath)) {
     console.error(`--out-dir (${outDirPath}) must not be inside the source directory (${srcDirPath}).`);
     process.exit(1);
   }
-  return outDirPath;
+  // A package.json at the output directory root indicates another package's directory. The functions
+  // target is exempt because it generates a package.json there itself.
+  if (targetCategory !== 'functions' && fs.existsSync(path.join(outDirPath, 'package.json'))) {
+    console.error(`--out-dir (${outDirPath}) contains a package.json, so it looks like a package directory.`);
+    process.exit(1);
+  }
+  return lexicalOutDirPath;
 }
 
-// `fs.rm` resolves the real path, and a symlinked or case-variant alias names the same directory, so
-// containment must be compared on canonical paths. A path that does not exist yet cannot hold any
-// source file, so leaving it as is costs nothing. The lexical path is what gets removed, so that a
-// symlinked output directory loses the link itself rather than its target's contents.
-function toRealPath(targetPath: string): string {
-  try {
-    return fs.realpathSync.native(targetPath);
-  } catch {
-    return targetPath;
+// Resolves symlinks (and case variants) in the longest existing ancestor of the given path, keeping
+// the non-existent tail, so that a not-yet-created output directory is still compared correctly.
+function toCanonicalPath(targetPath: string): string {
+  const suffixes: string[] = [];
+  let currentPath = targetPath;
+  while (!fs.existsSync(currentPath)) {
+    suffixes.unshift(path.basename(currentPath));
+    const parentPath = path.dirname(currentPath);
+    if (parentPath === currentPath) break;
+    currentPath = parentPath;
   }
+  try {
+    currentPath = fs.realpathSync.native(currentPath);
+  } catch {
+    // Keep the original path when it cannot be resolved (e.g. removed concurrently).
+  }
+  return path.join(currentPath, ...suffixes);
 }
 
 function containsPath(parentPath: string, childPath: string): boolean {

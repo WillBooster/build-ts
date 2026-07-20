@@ -507,6 +507,38 @@ export const routes = { helper };
     );
     expect(aliasRet.status).not.toBe(0);
     expect(fs.existsSync(`${fixtureDirPath}/src/routes.ts`)).toBe(true);
+
+    // A not-yet-existing directory beneath a symlinked `src` alias resolves into `src` as well.
+    const nestedAliasRet = await buildWithPackagePathAndGetStatus(
+      fixtureDirPath,
+      'lib',
+      '--out-dir',
+      `${fixtureDirPath}/src-link/generated`
+    );
+    expect(nestedAliasRet.status).not.toBe(0);
+    expect(fs.existsSync(`${fixtureDirPath}/src/generated`)).toBe(false);
+
+    // An output symlink lexically inside `src` must be refused even though it points outside.
+    await fs.promises.symlink('../outside-output', `${fixtureDirPath}/src/output-link`);
+    const outwardLinkRet = await buildWithPackagePathAndGetStatus(
+      fixtureDirPath,
+      'lib',
+      '--out-dir',
+      `${fixtureDirPath}/src/output-link`
+    );
+    expect(outwardLinkRet.status).not.toBe(0);
+    expect(fs.lstatSync(`${fixtureDirPath}/src/output-link`).isSymbolicLink()).toBe(true);
+    await fs.promises.unlink(`${fixtureDirPath}/src/output-link`);
+
+    // An output directory holding its own package.json is another package, so it must be refused.
+    const victimDirPath = '.tmp/test-fixtures/lib-custom-out-victim';
+    await fs.promises.rm(victimDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${victimDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(`${victimDirPath}/package.json`, JSON.stringify({ name: 'victim' }));
+    await fs.promises.writeFile(`${victimDirPath}/src/important.ts`, 'export const important = 1;\n');
+    const victimRet = await buildWithPackagePathAndGetStatus(fixtureDirPath, 'lib', '--out-dir', victimDirPath);
+    expect(victimRet.status).not.toBe(0);
+    expect(fs.existsSync(`${victimDirPath}/src/important.ts`)).toBe(true);
   });
 
   it('lib with glob --input builds every matched module as an entry', async () => {
