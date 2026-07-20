@@ -1730,6 +1730,21 @@ export const routes = { helper };
       directoryOutDirPath
     );
     expect(fs.readdirSync(directoryOutDirPath)).toEqual(['schemas.d.ts']);
+
+    // A directory entry whose name contains glob metacharacters still resolves to its index file.
+    // Declarations are not generated here because tsgo cannot take a directory as an entry.
+    await fs.promises.mkdir(`${fixtureDirPath}/src/[b]racket`, { recursive: true });
+    await fs.promises.writeFile(`${fixtureDirPath}/src/[b]racket/index.ts`, 'export const bracket = true;\n');
+    const directoryEntryOutDirPath = '.tmp/test-fixtures/lib-glob-input-directory-entry';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'app',
+      '--input',
+      `${fixtureDirPath}/src/[b]racket`,
+      '--out-dir',
+      directoryEntryOutDirPath
+    );
+    await expectFileExists(`${directoryEntryOutDirPath}/index.js`);
   });
 
   it('functions fails on conflicting entry names instead of silently dropping one', async () => {

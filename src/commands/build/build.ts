@@ -400,9 +400,12 @@ function containsPath(parentPath: string, childPath: string): boolean {
 function isBundlerResolvablePath(literalPath: string): boolean {
   const extension = path.extname(literalPath);
   const aliasedExtensions = { '.cjs': ['.cts'], '.js': ['.ts', '.tsx'], '.mjs': ['.mts'] }[extension] ?? [];
+  const extensions = ['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'];
   const candidates = [
-    ...['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'].map((ext) => literalPath + ext),
+    ...extensions.map((ext) => literalPath + ext),
     ...aliasedExtensions.map((ext) => literalPath.slice(0, -extension.length) + ext),
+    // The bundler also resolves a directory to its index file.
+    ...extensions.map((ext) => path.join(literalPath, `index${ext}`)),
   ];
   return candidates.some((candidate) => fs.statSync(candidate, { throwIfNoEntry: false })?.isFile());
 }
