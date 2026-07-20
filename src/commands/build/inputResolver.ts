@@ -26,21 +26,35 @@ const platformResolveOptions: Record<BundlerPlatform, { aliasFields: string[][];
   node: { aliasFields: [], mainFields: ['main', 'module'] },
 };
 
+// The resolver reports a deliberately ignored entry as an error rather than as a distinct state, so
+// the two have to be told apart by this prefix.
+const ignoredPathErrorPrefix = 'Path is ignored';
+
 /** Reports whether the bundler can resolve the path on any platform, for validating an input. */
 export function isBundlerResolvablePath(literalPath: string): boolean {
-  return resolveSourceFilePaths(literalPath, createBundlerResolvers(['browser', 'node'])).length > 0;
+  return resolveSourceFilePaths(literalPath, createBundlerResolvers(['browser', 'node'])) !== undefined;
 }
 
 /**
  * Resolves an entry path to every source file the bundler loads for it, which is more than one when
  * the outputs resolve differently per platform (e.g. a "browser" entry for ESM and a "main" entry for
- * CommonJS). Returns an empty array when the bundler cannot resolve the path either.
+ * CommonJS). An empty array means the bundler deliberately ignores the entry on every platform (a
+ * `"browser"` mapping to `false`), which is a successful resolution that simply has no source file.
+ * Returns undefined only when the bundler cannot resolve the path either.
  */
-export function resolveSourceFilePaths(literalPath: string, resolvers: ResolverFactory[]): string[] {
-  const resolvedPaths = resolvers.map(
-    (resolver) => resolver.sync(path.dirname(literalPath), `./${path.basename(literalPath)}`).path
-  );
-  return [...new Set(resolvedPaths.filter((resolvedPath) => resolvedPath !== undefined))];
+export function resolveSourceFilePaths(literalPath: string, resolvers: ResolverFactory[]): string[] | undefined {
+  const resolvedPaths: string[] = [];
+  let isUnresolved = false;
+  for (const resolver of resolvers) {
+    const { error, path: resolvedPath } = resolver.sync(path.dirname(literalPath), `./${path.basename(literalPath)}`);
+    if (resolvedPath) {
+      resolvedPaths.push(resolvedPath);
+    } else if (!error?.startsWith(ignoredPathErrorPrefix)) {
+      isUnresolved = true;
+    }
+  }
+  // A path resolved for one platform still needs its declarations, even if another platform fails.
+  return isUnresolved && resolvedPaths.length === 0 ? undefined : [...new Set(resolvedPaths)];
 }
 
 /**

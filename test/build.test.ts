@@ -2026,6 +2026,63 @@ export const routes = { helper };
     await expectFileExists(`${outDirPath}/dir/main.d.ts`);
   });
 
+  it('lib skips declarations for entries the bundler ignores', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/lib-ignored-input';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src/dir`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({ type: 'module', packageManager: 'yarn@4.17.0' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/tsconfig.json`,
+      JSON.stringify({
+        compilerOptions: { module: 'esnext', moduleResolution: 'bundler', strict: true, target: 'es2022' },
+        include: ['src/**/*'],
+      })
+    );
+    // A "browser" mapping to false makes the bundler ignore the entry rather than fail to resolve it.
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/dir/package.json`,
+      JSON.stringify({ browser: { './main.ts': false }, main: './main.ts' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/dir/main.ts`, 'export const v = "main";\n');
+    await fs.promises.writeFile(`${fixtureDirPath}/src/unrelated.ts`, 'export const unrelated = 1;\n');
+
+    // Every platform ignores the entry, so there is nothing to declare. Emitting anyway would fall
+    // back to declaring every file under src/, including the unrelated one.
+    const ignoredOutDirPath = '.tmp/test-fixtures/lib-ignored-input-out';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--module-type',
+      'esm',
+      '--input',
+      `${fixtureDirPath}/src/dir`,
+      '--out-dir',
+      ignoredOutDirPath
+    );
+    const ignoredDeclarations = fs
+      .readdirSync(ignoredOutDirPath, { recursive: true })
+      .filter((name) => name.toString().endsWith('.d.ts'));
+    expect(ignoredDeclarations).toEqual([]);
+
+    // Only the browser platform ignores it, so the CommonJS output still needs its declaration.
+    const mixedOutDirPath = '.tmp/test-fixtures/lib-ignored-input-mixed';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--module-type',
+      'both',
+      '--input',
+      `${fixtureDirPath}/src/dir`,
+      '--out-dir',
+      mixedOutDirPath
+    );
+    await expectFileExists(`${mixedOutDirPath}/dir/main.d.ts`);
+  });
+
   it('functions fails on conflicting entry names instead of silently dropping one', async () => {
     const fixtureDirPath = '.tmp/test-fixtures/functions-conflicting-entries';
     await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });

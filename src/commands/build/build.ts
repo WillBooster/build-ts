@@ -127,6 +127,9 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   // The bundler resolves per output format, so declarations must cover every platform in play.
   const platforms = outputOptionsList.map((opts): BundlerPlatform => (opts.format === 'commonjs' ? 'node' : 'browser'));
   const declarationInputs = resolveDeclarationInputs(argv, inputs, platforms);
+  // Explicit inputs that the bundler ignores on every platform leave nothing to declare. Generating
+  // anyway would emit declarations for every file under src/, since an empty entry list is no filter.
+  const hasNothingToDeclare = declarationInputs?.length === 0;
 
   process.chdir(packageDirPath);
   await fs.promises.rm(outDirPath, { recursive: true, force: true });
@@ -143,7 +146,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
         )
       );
     }
-    if (!(await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs))) {
+    if (!hasNothingToDeclare && !(await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs))) {
       process.exit(1);
     }
     return;
@@ -221,6 +224,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     if (
       targetDetail !== 'app-node' &&
       targetDetail !== 'functions' &&
+      !hasNothingToDeclare &&
       !(await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs))
     ) {
       process.exit(1);
@@ -300,12 +304,10 @@ function watchRolldown(
             // The bundler re-resolves its literal inputs on every rebuild, so the declaration inputs
             // are resolved again here; reusing the initial list would describe the previous sources
             // after an entry (e.g. a package entry field) started resolving elsewhere.
-            await generateDeclarationFiles(
-              argv,
-              packageDirPath,
-              outDirPath,
-              resolveDeclarationInputs(argv, inputs, platforms)
-            );
+            const rebuiltInputs = resolveDeclarationInputs(argv, inputs, platforms);
+            if (rebuiltInputs?.length !== 0) {
+              await generateDeclarationFiles(argv, packageDirPath, outDirPath, rebuiltInputs);
+            }
           }
           break;
         }
@@ -439,11 +441,9 @@ function resolveDeclarationInputs(
   const resolvers = createBundlerResolvers(platforms);
   return [
     ...new Set(
-      inputs.flatMap((input) => {
-        const resolvedPaths = resolveSourceFilePaths(input, resolvers);
-        // An unresolvable path is kept as is to let the compiler report it.
-        return resolvedPaths.length > 0 ? resolvedPaths : [input];
-      })
+      // An unresolvable path is kept as is to let the compiler report it, whereas a path the bundler
+      // deliberately ignores contributes nothing.
+      inputs.flatMap((input) => resolveSourceFilePaths(input, resolvers) ?? [input])
     ),
   ];
 }
