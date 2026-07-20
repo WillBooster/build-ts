@@ -433,9 +433,10 @@ function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDi
   if (argv.input && argv.input.length > 0) {
     const inputs = argv.input.flatMap((p) => {
       const raw = p.toString();
-      // An existing file always wins over glob interpretation (e.g. "src/entry[1].ts").
+      // An existing file always wins over glob interpretation (e.g. "src/entry[1].ts"), but a
+      // directory must not, so that a directory literally named like a pattern still expands.
       const literalPath = path.resolve(cwd, raw);
-      if (fs.existsSync(literalPath)) return [literalPath];
+      if (fs.statSync(literalPath, { throwIfNoEntry: false })?.isFile()) return [literalPath];
 
       // `fs.globSync` requires "/" as the separator even on Windows (a no-op on POSIX).
       const pattern = raw.split(path.sep).join('/');
