@@ -45,10 +45,22 @@ describe('createExternalMatcher', () => {
     expect(matcher('fs/promises')).toBe(true);
   });
 
-  it('bundles dependencies listed in bundleBuiltins', () => {
-    const matcher = createMatcher({ bundleBuiltins: ['buffer'] });
-    expect(matcher('buffer')).toBe(false);
-    expect(matcher('node:buffer')).toBe(false);
-    expect(matcher('fs')).toBe(true);
+  it('bundles same-namespace dependencies only for apps', () => {
+    const scopedPackageJson: PackageJson = {
+      name: '@scope/app',
+      dependencies: { '@scope-private/pkg': '1.0.0', '@scope/pkg': '1.0.0' },
+    };
+    const createFor = (targetDetail: 'app-node' | 'lib'): ((id: string) => boolean) =>
+      createExternalMatcher(
+        {} as ArgumentsType<typeof builder>,
+        targetDetail,
+        scopedPackageJson,
+        'scope',
+        path.resolve('test/fixtures/lib')
+      );
+    expect(createFor('app-node')('@scope/pkg')).toBe(false);
+    expect(createFor('lib')('@scope/pkg')).toBe(true);
+    // A package merely sharing the scope prefix must stay external.
+    expect(createFor('app-node')('@scope-private/pkg')).toBe(true);
   });
 });

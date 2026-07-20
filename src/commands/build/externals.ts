@@ -17,14 +17,10 @@ export function createExternalMatcher(
   namespace: string | undefined,
   packageDirPath: string
 ): (id: string) => boolean {
-  const bundledBuiltinNames = getBundledBuiltinNames(argv);
   const externalDependencyNames = new Set(
-    collectExternalDependencies(argv, targetDetail, packageJson, packageDirPath, namespace, bundledBuiltinNames)
+    collectExternalDependencies(argv, targetDetail, packageJson, packageDirPath, namespace)
   );
-  return (id) => {
-    if (getBundledBuiltinPackageName(id, bundledBuiltinNames)) return false;
-    return isNodeBuiltin(id) || matchesModuleOrSubpath(id, externalDependencyNames);
-  };
+  return (id) => isNodeBuiltin(id) || matchesModuleOrSubpath(id, externalDependencyNames);
 }
 
 /** Checks whether `id` equals a name in `names` or is a subpath of it (e.g. `lodash.chunk/index.js`). */
@@ -41,8 +37,7 @@ function collectExternalDependencies(
   targetDetail: TargetDetail,
   packageJson: PackageJson,
   packageDirPath: string,
-  namespace: string | undefined,
-  bundledBuiltinNames: Set<string>
+  namespace: string | undefined
 ): string[] {
   const externalDeps = [...(argv.external ?? [])].map((item) => item.toString());
   if (packageJson.dependencies?.['@prisma/client']) {
@@ -75,39 +70,12 @@ function collectExternalDependencies(
     }
   }
 
-  const bundledNamespacePattern =
-    shouldBundleSameNamespaceDependencies(targetDetail) && namespace ? new RegExp(`^@?${namespace}(?:/.+)?`) : undefined;
-  return externalDeps.filter((dependencyName) => {
-    if (bundledBuiltinNames.has(normalizeNodeBuiltinName(dependencyName))) return false;
-    return !bundledNamespacePattern?.test(dependencyName);
-  });
+  // An app bundles its own namespace's packages instead of treating them as external dependencies.
+  const bundlesOwnNamespace = targetDetail === 'app-node' || targetDetail === 'functions';
+  const bundledPrefix = bundlesOwnNamespace && namespace ? `@${namespace}/` : undefined;
+  return bundledPrefix ? externalDeps.filter((name) => !name.startsWith(bundledPrefix)) : externalDeps;
 }
 
-export function getBundledBuiltinNames(argv: ArgumentsType<typeof builder>): Set<string> {
-  return new Set(argv.bundleBuiltins?.map((item) => normalizeNodeBuiltinName(item.toString())) ?? []);
-}
-
-function shouldBundleSameNamespaceDependencies(targetDetail: TargetDetail): boolean {
-  return targetDetail === 'app-node' || targetDetail === 'functions';
-}
-
-export function getBundledBuiltinPackageName(id: string, bundledBuiltinNames: Set<string>): string | undefined {
-  const normalizedId = normalizeNodeBuiltinName(id);
-  for (const packageName of bundledBuiltinNames) {
-    if (normalizedId === packageName || normalizedId.startsWith(`${packageName}/`)) return packageName;
-  }
-  return undefined;
-}
-
-export function getPackageSubpath(id: string, packageName: string): string {
-  const normalizedId = normalizeNodeBuiltinName(id);
-  return normalizedId === packageName ? '.' : `./${normalizedId.slice(packageName.length + 1)}`;
-}
-
-export function normalizeNodeBuiltinName(id: string): string {
-  return id.startsWith('node:') ? id.slice('node:'.length) : id;
-}
-
-export function isNodeBuiltin(id: string): boolean {
+function isNodeBuiltin(id: string): boolean {
   return id.startsWith('node:') || nodeBuiltinModules.has(id);
 }

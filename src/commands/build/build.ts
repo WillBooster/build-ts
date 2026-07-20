@@ -11,21 +11,26 @@ import type { CommandModule } from 'yargs';
 import { createEnvironmentVariablesDefinition, loadEnvironmentVariablesWithCache } from '../../env.js';
 import type { ArgumentsType, TargetCategory, TargetDetail } from '../../types.js';
 import { allTargetCategories } from '../../types.js';
-import { formatDateTime, formatDuration, getNamespaceAndName, readPackageJson } from '../../utils.js';
+import { formatDateTime, formatDuration, getNamespace, readPackageJson } from '../../utils.js';
 
 import type { AnyBuilderType, builder } from './builder.js';
 import { appBuilder, functionsBuilder, libBuilder } from './builder.js';
 import { handleError } from './bundlerLogger.js';
 import { createExternalMatcher } from './externals.js';
-import type { BundlerPlatform } from './inputResolver.js';
-import {
-  bundlerResolveOptions,
-  createBundlerResolvers,
-  isBundlerResolvablePath,
-  resolveSourceFilePaths,
-} from './inputResolver.js';
 import { setupPlugins } from './plugin.js';
 import { generateDeclarationFiles } from './typeScript.js';
+
+// Only the options the bundler is actually given: its remaining defaults are platform-dependent, so
+// pinning them here would change which source gets bundled.
+const bundlerResolveOptions = {
+  extensionAlias: {
+    '.cjs': ['.cjs', '.cts'],
+    '.js': ['.js', '.ts', '.tsx'],
+    '.jsx': ['.jsx', '.ts', '.tsx'],
+    '.mjs': ['.mjs', '.mts'],
+  },
+  extensions: ['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'],
+};
 
 export const app: CommandModule<unknown, ArgumentsType<typeof appBuilder>> = {
   command: 'app [package]',
@@ -94,14 +99,8 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     console.info('Target (Category):', `${targetDetail} (${targetCategory})`);
   }
 
-  const [namespace] = getNamespaceAndName(packageJson);
+  const namespace = getNamespace(packageJson);
   const isEsmPackage = packageJson.type === 'module';
-
-  if (argv['core-js']) {
-    process.env.BUILD_TS_COREJS = '1';
-  } else if (argv['core-js-proposals']) {
-    process.env.BUILD_TS_COREJS_WITH_PROPOSALS = '1';
-  }
 
   if (verbose) {
     process.env.BUILD_TS_VERBOSE = '1';
@@ -124,13 +123,9 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     process.exit(1);
   }
 
-  // The bundler resolves per output format, so declarations must cover every platform in play.
-  const platforms = outputOptionsList.map((opts): BundlerPlatform => (opts.format === 'commonjs' ? 'node' : 'browser'));
-  const declaration = resolveDeclarationInputs(argv, inputs, platforms);
-  const declarationInputs = declaration.paths;
-  // Explicit inputs that the bundler ignores on every platform leave nothing to declare. Generating
-  // anyway would emit declarations for every file under src/, since an empty entry list is no filter.
-  const hasNothingToDeclare = declarationInputs?.length === 0;
+  // Restricts declarations to the entry files (and their imports) only when inputs are explicit, so
+  // that the default keeps emitting declarations for every file under src/.
+  const declarationInputs = argv.input?.length ? inputs : undefined;
 
   process.chdir(packageDirPath);
   await fs.promises.rm(outDirPath, { recursive: true, force: true });
@@ -147,11 +142,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
         )
       );
     }
-    if (declaration.unresolvedInput) {
-      reportUnresolvedInput(declaration.unresolvedInput);
-      process.exit(1);
-    }
-    if (!hasNothingToDeclare && !(await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs))) {
+    if (!(await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs))) {
       process.exit(1);
     }
     return;
@@ -162,9 +153,8 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     external: createExternalMatcher(argv, targetDetail, packageJson, namespace, packageDirPath),
     input:
       targetDetail === 'functions' ? createFunctionsInputEntries(inputs) : inputs,
-    plugins: setupPlugins(argv, outputOptionsList, packageDirPath),
+    plugins: setupPlugins(),
     resolve: bundlerResolveOptions,
-    treeshake: argv['core-js'] || argv['core-js-proposals'] ? false : undefined,
     transform: getTransformOptions(argv, packageDirPath),
     watch: argv.watch ? { clearScreen: false } : undefined,
   };
@@ -189,8 +179,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
       targetDetail,
       packageDirPath,
       outDirPath,
-      inputs,
-      platforms,
+      declarationInputs,
       options,
       outputOptionsList,
       pathToRelativePath,
@@ -226,12 +215,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     await bundle?.close();
     if (buildFailed) process.exit(1);
 
-    if (targetDetail !== 'app-node' && targetDetail !== 'functions' && !hasNothingToDeclare) {
-      // The bundler reports an unresolvable entry itself, so reaching here means it somehow did not.
-      if (declaration.unresolvedInput) {
-        reportUnresolvedInput(declaration.unresolvedInput);
-        process.exit(1);
-      }
+    if (targetDetail !== 'app-node' && targetDetail !== 'functions') {
       if (!(await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs))) {
         process.exit(1);
       }
@@ -252,8 +236,7 @@ function watchRolldown(
   targetDetail: string,
   packageDirPath: string,
   outDirPath: string,
-  inputs: string[],
-  platforms: BundlerPlatform[],
+  declarationInputs: string[] | undefined,
   options: RolldownOptions,
   outputOptionsList: OutputOptions[],
   pathToRelativePath: (paths: string | Readonly<string[]>) => string[],
@@ -308,15 +291,7 @@ function watchRolldown(
           }
 
           if (targetDetail !== 'app-node' && targetDetail !== 'functions') {
-            // The bundler re-resolves its literal inputs on every rebuild, so the declaration inputs
-            // are resolved again here; reusing the initial list would describe the previous sources
-            // after an entry (e.g. a package entry field) started resolving elsewhere.
-            const rebuilt = resolveDeclarationInputs(argv, inputs, platforms);
-            if (rebuilt.unresolvedInput) {
-              reportUnresolvedInput(rebuilt.unresolvedInput);
-            } else if (rebuilt.paths?.length !== 0) {
-              await generateDeclarationFiles(argv, packageDirPath, outDirPath, rebuilt.paths);
-            }
+            await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs);
           }
           break;
         }
@@ -345,24 +320,22 @@ function resolveOutDirPath(
   inputs?: string[],
   targetCategory?: TargetCategory
 ): string {
-  if (Array.isArray(argv.outDir)) {
-    console.error('Multiple --out-dir options are not allowed.');
-    process.exit(1);
-  }
-  // yargs also accepts `--no-out-dir`, which yields `false` despite the declared string type.
-  const outDirOption = typeof argv.outDir === 'string' ? argv.outDir : undefined;
+  const outDirOption = argv.outDir?.toString();
   if (outDirOption === '') {
     console.error('--out-dir must not be empty.');
     process.exit(1);
   }
 
-  // The output directory is removed before building, so refuse locations that would delete source files.
-  // Containment checks compare both the lexical and the canonical (symlink-resolved) forms: canonical
-  // ones catch symlinked parent components (`fs.rm` follows them), and lexical ones catch an output path
-  // that is itself a symlink inside a protected directory. The lexical path is returned so that removing
-  // a symlinked output directory deletes the symlink itself rather than its target's contents.
-  const lexicalOutDirPath = path.resolve(cwd, outDirOption ?? path.join(packageDirPath, 'dist'));
+  // The output directory is removed before building, so refuse locations that would delete source
+  // files. Containment is checked on both the lexical and the canonical (symlink-resolved) form, and
+  // both are load-bearing: the canonical one catches a symlinked or case-variant parent component
+  // (`fs.rm` follows those), while the lexical one catches an output path that is itself a symlink
+  // sitting inside a protected directory. The lexical path is returned so that removing a symlinked
+  // output directory deletes the link itself rather than its target's contents.
+  const lexicalOutDirPath = outDirOption ? path.resolve(cwd, outDirOption) : path.join(packageDirPath, 'dist');
   const outDirPath = toCanonicalPath(lexicalOutDirPath);
+  // The default `dist` is checked too, since an input may be given inside it, and an input may sit
+  // outside `src` (e.g. `--input scripts/main.ts`).
   const containedInput = inputs?.find(
     (input) => containsPath(outDirPath, toCanonicalPath(input)) || containsPath(lexicalOutDirPath, input)
   );
@@ -392,7 +365,8 @@ function resolveOutDirPath(
   return lexicalOutDirPath;
 }
 
-// Resolves symlinks in the longest existing ancestor of the given path, keeping the non-existent tail.
+// Resolves symlinks (and case variants) in the longest existing ancestor of the given path, keeping
+// the non-existent tail, so that a not-yet-created output directory is still compared correctly.
 function toCanonicalPath(targetPath: string): string {
   const suffixes: string[] = [];
   let currentPath = targetPath;
@@ -403,7 +377,7 @@ function toCanonicalPath(targetPath: string): string {
     currentPath = parentPath;
   }
   try {
-    currentPath = fs.realpathSync(currentPath);
+    currentPath = fs.realpathSync.native(currentPath);
   } catch {
     // Keep the original path when it cannot be resolved (e.g. removed concurrently).
   }
@@ -419,62 +393,19 @@ function containsPath(parentPath: string, childPath: string): boolean {
 }
 
 function createFunctionsInputEntries(inputs: string[]): Record<string, string> {
-  // A null prototype avoids false conflicts with inherited members (e.g. an entry named "toString").
-  const entries: Record<string, string> = Object.create(null);
+  const entries = new Map<string, string>();
   for (const [index, input] of inputs.entries()) {
     const name = index === 0 ? 'index' : path.basename(input, path.extname(input));
-    if (entries[name]) {
+    const conflicting = entries.get(name);
+    if (conflicting) {
       console.error(
-        `Entry names conflict in the functions build: "${name}" (${entries[name]} vs ${input}). List --input files explicitly with unique base names, keeping the main entry first.`
+        `Entry names conflict in the functions build: "${name}" (${conflicting} vs ${input}). List --input files explicitly with unique base names, keeping the main entry first.`
       );
       process.exit(1);
     }
-    entries[name] = input;
+    entries.set(name, input);
   }
-  return entries;
-}
-
-// Restricts declaration files to the entry files (and their imports) only when inputs are explicit,
-// to keep the default behavior of emitting declarations for all files under src/. tsc cannot take a
-// bundler-style entry (a directory, or a ".js" specifier aliased to a ".ts" source) literally, so each
-// one is resolved to the source file it refers to; an unresolvable path is kept as is to let the
-// compiler report it. Resolution depends on the file system, so a watch rebuild has to redo it.
-interface DeclarationInputs {
-  /** Undefined restricts nothing, so declarations cover every file under src/. */
-  paths: string[] | undefined;
-  /** Set when the bundler cannot resolve an input for some output platform, which fails its build too. */
-  unresolvedInput: string | undefined;
-}
-
-// Restricts declaration files to the entry files (and their imports) only when inputs are explicit,
-// to keep the default behavior of emitting declarations for all files under src/. tsc cannot take a
-// bundler-style entry (a directory, or a ".js" specifier aliased to a ".ts" source) literally, so each
-// one is resolved to the source file it refers to. Resolution depends on the file system, so a watch
-// rebuild has to redo it.
-function resolveDeclarationInputs(
-  argv: ArgumentsType<AnyBuilderType>,
-  inputs: string[],
-  platforms: BundlerPlatform[]
-): DeclarationInputs {
-  if (!argv.input?.length) return { paths: undefined, unresolvedInput: undefined };
-
-  // The resolvers serve the whole pass: their caches are consistent within a build but never stale
-  // across rebuilds, since each call creates new ones.
-  const resolvers = createBundlerResolvers(platforms);
-  const paths: string[] = [];
-  for (const input of inputs) {
-    const resolvedPaths = resolveSourceFilePaths(input, resolvers);
-    // Falling back to the literal input would quietly succeed whenever it happens to be a valid
-    // TypeScript file, declaring a build the bundler refuses to produce.
-    if (!resolvedPaths) return { paths: undefined, unresolvedInput: input };
-
-    paths.push(...resolvedPaths);
-  }
-  return { paths: [...new Set(paths)], unresolvedInput: undefined };
-}
-
-function reportUnresolvedInput(input: string): void {
-  console.error(`Failed to resolve the input for declaration generation: ${input}`);
+  return Object.fromEntries(entries);
 }
 
 function getInputFiles(input: RolldownOptions['input']): string[] {
@@ -487,37 +418,23 @@ function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDi
   if (argv.input && argv.input.length > 0) {
     const inputs = argv.input.flatMap((p) => {
       const raw = p.toString();
-      // An existing file always wins over glob interpretation (e.g. "src/entry[1].ts"), but a
-      // directory must not, so that a directory literally named like a pattern still expands.
-      const literalPath = path.resolve(cwd, raw);
-      const literalStats = fs.statSync(literalPath, { throwIfNoEntry: false });
-      if (literalStats?.isFile()) return [literalPath];
+      if (!isGlobPattern(raw)) return [path.resolve(cwd, raw)];
 
       // `fs.globSync` requires "/" as the separator even on Windows (a no-op on POSIX).
-      const pattern = raw.split(path.sep).join('/');
       // Ambient declaration files always participate in type checking, so they must not become entries.
-      // `throwIfNoEntry: false` skips broken symlinks instead of crashing.
+      // `throwIfNoEntry: false` skips a broken symlink instead of crashing.
       const matches = fs
-        .globSync(pattern, { cwd })
+        .globSync(raw.split(path.sep).join('/'), { cwd })
         .filter(
           (m) => !/\.d\.[cm]?ts$/.test(m) && fs.statSync(path.resolve(cwd, m), { throwIfNoEntry: false })?.isFile()
         )
         .sort()
         .map((m) => path.resolve(cwd, m));
-      if (matches.length > 0) return matches;
-      // Once no file matched, an existing directory is left to the bundler, which resolves it
-      // through its "index" file or its package.json entry fields.
-      if (literalStats?.isDirectory()) return [literalPath];
-      // A non-existing path may still be resolvable by the bundler (e.g. an extension-less path or a
-      // ".js" specifier aliased to ".ts"), even when it contains glob metacharacters.
-      if (isBundlerResolvablePath(literalPath)) return [literalPath];
-      // Error only on actual glob syntax ("*", "?", "[...]", alternation/range braces, or extglob "@(...)" etc.);
-      // characters like a bare "+" or a single-item brace ("{entry}") are ordinary filename characters.
-      if (/[*?]|[@!+]\(|\[.*\]|\{[^}]*(,|\.\.)[^}]*\}/.test(raw)) {
+      if (matches.length === 0) {
         console.error(`No files matched the input pattern: ${raw}`);
         process.exit(1);
       }
-      return [literalPath];
+      return matches;
     });
     return [...new Set(inputs)];
   }
@@ -530,6 +447,12 @@ function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDi
 
   console.error('Failed to detect input file.');
   process.exit(1);
+}
+
+// Only real glob syntax counts as a pattern: "*", "?", a "[...]" class, or a "{a,b}" alternation.
+// A bare "+" or a single-item brace ("{entry}") is an ordinary filename character.
+function isGlobPattern(input: string): boolean {
+  return /[*?]|\[[^\]]*\]|\{[^}]*,[^}]*\}/.test(input);
 }
 
 function detectTargetDetail(targetCategory: string, inputs: string[], packageDirPath: string): TargetDetail {
@@ -620,11 +543,12 @@ function getOutputOptionsList(
   // Also, splitting a library is useful in both modules, so preserveModules should be true.
   const outputOptionsList: OutputOptions[] = [];
   const moduleType = argv.moduleType || 'both';
-  const jsExt = argv.jsExtension || 'either';
+  // .js files in a package with `"type": "module"` are treated as esm. To let a cjs project import an
+  // esm package, the format that does not match the package type uses .cjs or .mjs instead of .js.
   if (moduleType === 'cjs' || moduleType === 'both' || (moduleType === 'either' && !isEsmPackage)) {
     outputOptionsList.push({
       dir: outDirPath,
-      entryFileNames: jsExt === 'both' || (jsExt === 'either' && !isEsmPackage) ? '[name].js' : '[name].cjs',
+      entryFileNames: isEsmPackage ? '[name].cjs' : '[name].js',
       format: 'commonjs',
       minify: argv.minify,
       preserveModules: true,
@@ -636,7 +560,7 @@ function getOutputOptionsList(
   if (moduleType === 'esm' || moduleType === 'both' || (moduleType === 'either' && isEsmPackage)) {
     outputOptionsList.push({
       dir: outDirPath,
-      entryFileNames: jsExt === 'both' || (jsExt === 'either' && isEsmPackage) ? '[name].js' : '[name].mjs',
+      entryFileNames: isEsmPackage ? '[name].js' : '[name].mjs',
       format: 'module',
       minify: argv.minify,
       preserveModules: true,
