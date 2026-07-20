@@ -22,7 +22,10 @@ export function removeConsolePlugin(excludedMethods: Set<string>): Plugin {
   return {
     name: 'remove-console',
     transform(code, id) {
-      if (!isTransformTargetFile(id) || !code.includes('console')) return undefined;
+      if (!isTransformTargetFile(id)) return undefined;
+      // A global `console` may be written with Unicode escapes (`\u0063onsole`), which the parser
+      // normalizes, so the fast path must let escaped identifiers through too.
+      if (!/console|\\u/.test(code)) return undefined;
 
       return removeConsole(code, id, excludedMethods);
     },
@@ -280,7 +283,15 @@ function needsLeadingStatementSemicolon(node: AstNode, ancestors: AstNode[]): bo
 }
 
 function isStatementListNode(node: AstNode | undefined): boolean {
-  return node?.type === 'Program' || node?.type === 'BlockStatement' || node?.type === 'StaticBlock';
+  // A `case` clause and a namespace body are statement lists too: a replacement starting a statement
+  // there still needs the leading semicolon that keeps it from binding to the previous expression.
+  return (
+    node?.type === 'Program' ||
+    node?.type === 'BlockStatement' ||
+    node?.type === 'StaticBlock' ||
+    node?.type === 'SwitchCase' ||
+    node?.type === 'TSModuleBlock'
+  );
 }
 
 function isConsoleAssignmentTarget(

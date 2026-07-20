@@ -91,7 +91,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
   const inputs = verifyInput(argv, cwd, packageDirPath);
   const targetDetail = detectTargetDetail(targetCategory, inputs, packageDirPath);
-  const outDirPath = resolveOutDirPath(argv, cwd, packageDirPath);
+  const outDirPath = resolveOutDirPath(argv, cwd, packageDirPath, inputs);
 
   if (verbose) {
     console.info('argv:', argv);
@@ -313,7 +313,12 @@ function watchRolldown(
   });
 }
 
-function resolveOutDirPath(argv: ArgumentsType<AnyBuilderType>, cwd: string, packageDirPath: string): string {
+function resolveOutDirPath(
+  argv: ArgumentsType<AnyBuilderType>,
+  cwd: string,
+  packageDirPath: string,
+  inputs?: string[]
+): string {
   const outDirOption = argv.outDir?.toString();
   if (outDirOption === '') {
     console.error('--out-dir must not be empty.');
@@ -322,8 +327,14 @@ function resolveOutDirPath(argv: ArgumentsType<AnyBuilderType>, cwd: string, pac
   if (!outDirOption) return path.join(packageDirPath, 'dist');
 
   // The output directory is removed before building, so refuse locations that would delete sources.
+  // An input may sit outside `src` (e.g. `--input scripts/main.ts`), so it needs its own check.
   const outDirPath = path.resolve(cwd, outDirOption);
   const srcDirPath = path.join(packageDirPath, 'src');
+  const containedInput = inputs?.find((input) => containsPath(outDirPath, input));
+  if (containedInput) {
+    console.error(`--out-dir (${outDirPath}) must not contain the input file (${containedInput}).`);
+    process.exit(1);
+  }
   if (containsPath(outDirPath, packageDirPath)) {
     console.error(`--out-dir (${outDirPath}) must not contain the package directory (${packageDirPath}).`);
     process.exit(1);

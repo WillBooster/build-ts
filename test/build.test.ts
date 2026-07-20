@@ -45,6 +45,7 @@ else process.stdout.write(':member-else');
 if (Math.random() < 0) console.log.bind(console)();
 else process.stdout.write(':bind-else');
 for (let i = 0; i < 0; i++) console.log('global-for');
+\\u0063onsole.log('escaped-global');
 console.log || process.stdout.write(':fallback');
 console.log.bind(console)();
 if (Math.random() < 0) console?.log('optional-member');
@@ -113,6 +114,11 @@ createLogger()
 console.log;
 createLogger()
 console.log.bind(console)();
+switch (1) {
+  case 1:
+    createLogger()
+    console.log;
+}
 
 function parameterDefault(value = console.log('param-default-global')) {
   const console = { log: (message: string) => process.stdout.write(message) };
@@ -169,6 +175,7 @@ console.log('type-only-global');
     const code = await readGeneratedCode(`${fixtureDirPath}/dist/index.js`);
     expect(code).to.not.includes('global-if');
     expect(code).to.not.includes('global-for');
+    expect(code).to.not.includes('escaped-global');
     expect(code).to.not.includes('asi-global');
     expect(code).to.not.includes('call-expression-asi-global');
     expect(code).to.not.includes('extends-global');
@@ -189,7 +196,7 @@ console.log('type-only-global');
     const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
     expect(execRet.status).toBe(0);
     expect(execRet.stdout.toString()).toBe(
-      ':export:staticelse:member-else:bind-else:optional-call:block:var:function:foo:iife:foo:optional-asi:logger:logger:param-body'
+      ':export:staticelse:member-else:bind-else:optional-call:block:var:function:foo:iife:foo:optional-asi:logger:logger:logger:param-body'
     );
   });
 
@@ -442,6 +449,20 @@ export const routes = { helper };
     );
     expect(failedRet.status).not.toBe(0);
     expect(fs.existsSync(`${fixtureDirPath}/src/routes.ts`)).toBe(true);
+
+    // An input outside `src` still must not be erased by the output directory.
+    await fs.promises.mkdir(`${fixtureDirPath}/scripts`, { recursive: true });
+    await fs.promises.writeFile(`${fixtureDirPath}/scripts/main.ts`, 'export const main = 1;\n');
+    const containedRet = await buildWithPackagePathAndGetStatus(
+      fixtureDirPath,
+      'lib',
+      '--input',
+      `${fixtureDirPath}/scripts/main.ts`,
+      '--out-dir',
+      `${fixtureDirPath}/scripts`
+    );
+    expect(containedRet.status).not.toBe(0);
+    expect(fs.existsSync(`${fixtureDirPath}/scripts/main.ts`)).toBe(true);
   });
 
   it('lib with glob --input builds every matched module as an entry', async () => {
