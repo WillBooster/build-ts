@@ -396,6 +396,17 @@ function containsPath(parentPath: string, childPath: string): boolean {
   return relativePath !== '..' && !relativePath.startsWith(`..${path.sep}`);
 }
 
+// Mirrors the bundler's `resolve.extensions` / `extensionAlias` configuration above.
+function isBundlerResolvablePath(literalPath: string): boolean {
+  const extension = path.extname(literalPath);
+  const aliasedExtensions = { '.cjs': ['.cts'], '.js': ['.ts', '.tsx'], '.mjs': ['.mts'] }[extension] ?? [];
+  const candidates = [
+    ...['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'].map((ext) => literalPath + ext),
+    ...aliasedExtensions.map((ext) => literalPath.slice(0, -extension.length) + ext),
+  ];
+  return candidates.some((candidate) => fs.existsSync(candidate));
+}
+
 function createFunctionsInputEntries(inputs: string[]): Record<string, string> {
   // A null prototype avoids false conflicts with inherited members (e.g. an entry named "toString").
   const entries: Record<string, string> = Object.create(null);
@@ -438,13 +449,15 @@ function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDi
         .sort()
         .map((m) => path.resolve(cwd, m));
       if (matches.length > 0) return matches;
+      // A non-existing path may still be resolvable by the bundler (e.g. an extension-less path or a
+      // ".js" specifier aliased to ".ts"), even when it contains glob metacharacters.
+      if (isBundlerResolvablePath(literalPath)) return [literalPath];
       // Error only on actual glob syntax ("*", "?", "[...]", alternation/range braces, or extglob "@(...)" etc.);
       // characters like a bare "+" or a single-item brace ("{entry}") are ordinary filename characters.
       if (/[*?]|[@!+]\(|\[.*\]|\{[^}]*(,|\.\.)[^}]*\}/.test(raw)) {
         console.error(`No files matched the input pattern: ${raw}`);
         process.exit(1);
       }
-      // A non-existing non-pattern path may still be resolvable by the bundler (e.g. an extension-less path).
       return [literalPath];
     });
     return [...new Set(inputs)];
