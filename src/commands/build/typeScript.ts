@@ -65,8 +65,9 @@ async function runTsgo(
     console.info('runTsgo()', projectDirPath, configFile, outDir, inputs);
   }
 
-  const configFileDirPath = path.dirname(configFile);
-  const tempConfigFile = path.join(configFileDirPath, `.build-ts-tsgo.${process.pid}.${Date.now()}.json`);
+  // The temporary config must live in the project directory so that its relative `rootDir` and
+  // `include` resolve against the project even when the extended tsconfig is in an ancestor directory.
+  const tempConfigFile = path.join(projectDirPath, `.build-ts-tsgo.${process.pid}.${Date.now()}.json`);
   try {
     await fs.promises.writeFile(
       tempConfigFile,
@@ -110,7 +111,7 @@ async function createTypeScriptNativeConfig(
   }
   return {
     compilerOptions,
-    extends: toRelativeConfigPath(path.dirname(configFile), configFile),
+    extends: toRelativeConfigPath(projectDirPath, configFile),
     // With `files`, tsc also emits declarations for files transitively imported from the entries,
     // so the output is restricted to what the bundled JavaScript actually contains. `include` must be
     // overridden since an inherited `include` would add files back to the program; only ambient
@@ -118,7 +119,7 @@ async function createTypeScriptNativeConfig(
     ...(inputs?.length
       ? {
           files: inputs.map((input) => path.resolve(projectDirPath, input).replaceAll(path.sep, '/')),
-          include: ['src/**/*.d.ts'],
+          include: ['src/**/*.d.ts', 'src/**/*.d.mts', 'src/**/*.d.cts'],
         }
       : { include: ['src/**/*'] }),
   };
@@ -181,8 +182,8 @@ async function collectTypePackages(typeRootsDirPath: string): Promise<string[]> 
   }
 }
 
-// `fromDirPath` is always the directory containing `toFilePath`, so the result is a bare file name
-// prefixed with `./`; a cross-drive absolute result is impossible.
+// `toFilePath` is always a tsconfig in `fromDirPath` or one of its ancestor directories, so the
+// result is always relative (`./` or `../` chains); a cross-drive absolute result is impossible.
 function toRelativeConfigPath(fromDirPath: string, toFilePath: string): string {
   const relativePath = path.relative(fromDirPath, toFilePath).replaceAll(path.sep, '/');
   return relativePath.startsWith('.') ? relativePath : `./${relativePath}`;

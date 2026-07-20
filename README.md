@@ -105,7 +105,7 @@ npx build-ts run src/main.ts -- --foo bar
 
 When `--input` is given explicitly, declaration files are generated only for the entry files and the files they (transitively) import, matching the bundled JavaScript. Without `--input`, declarations cover all files under `src/`.
 
-Declaration generation compiles with `rootDir: src`, so when `--input` is explicit or `--declaration-only` is used, every file (transitively) imported by the entries must live under the package's `src/`; entries importing sibling-package sources fail with `TS6059`.
+Declaration generation compiles with `rootDir: src`, so every file (transitively) imported by the entries must live under the package's `src/`; entries importing sibling-package sources fail with `TS6059`.
 
 Run `npx build-ts <command> --help` for the full list of options, including environment-variable handling shared with other WillBooster tools.
 
