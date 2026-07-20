@@ -1885,7 +1885,9 @@ export const routes = { helper };
       '--out-dir',
       cyclicEntryOutDirPath
     );
-    expect(fs.readdirSync(`${cyclicEntryOutDirPath}/folder`)).toEqual(['index.d.ts']);
+    // The two platforms select different entries here, and both are emitted: the ESM output follows
+    // "module" into the cycle and falls through to "index", while the CommonJS output takes "main".
+    expect(fs.readdirSync(`${cyclicEntryOutDirPath}/folder`).toSorted()).toEqual(['index.d.ts', 'later.d.ts']);
     await fs.promises.rm(`${fixtureDirPath}/src/folder/loop`);
 
     // A malformed package.json must fail rather than fall back to "index": the bundler cannot resolve
@@ -1978,6 +1980,50 @@ export const routes = { helper };
       expect(await fs.promises.readFile(`${outDirPath}/entry.js`, 'utf8')).toContain(marker);
       await expectFileExists(`${outDirPath}/entry.d.ts`);
     }
+  });
+
+  it('lib resolves package entry fields per output platform', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/lib-platform-input';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src/dir`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({ type: 'module', packageManager: 'yarn@4.17.0' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/tsconfig.json`,
+      JSON.stringify({
+        compilerOptions: { module: 'esnext', moduleResolution: 'bundler', strict: true, target: 'es2022' },
+        include: ['src/**/*'],
+      })
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/dir/package.json`,
+      JSON.stringify({ browser: './browser.ts', module: './module.ts', main: './main.ts' })
+    );
+    for (const name of ['browser', 'module', 'main']) {
+      await fs.promises.writeFile(`${fixtureDirPath}/src/dir/${name}.ts`, `export const v = "${name}";\n`);
+    }
+
+    // The bundler picks the "browser" entry for an ESM output and the "main" entry for a CommonJS
+    // one, so overriding `mainFields` for both would silently change which source ships.
+    const outDirPath = '.tmp/test-fixtures/lib-platform-input-out';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--module-type',
+      'both',
+      '--input',
+      `${fixtureDirPath}/src/dir`,
+      '--out-dir',
+      outDirPath
+    );
+    expect(await fs.promises.readFile(`${outDirPath}/dir/browser.js`, 'utf8')).toContain('browser');
+    expect(await fs.promises.readFile(`${outDirPath}/dir/main.cjs`, 'utf8')).toContain('main');
+    // Both emitted sources need declarations, since each output resolved to a different one.
+    await expectFileExists(`${outDirPath}/dir/browser.d.ts`);
+    await expectFileExists(`${outDirPath}/dir/main.d.ts`);
   });
 
   it('functions fails on conflicting entry names instead of silently dropping one', async () => {

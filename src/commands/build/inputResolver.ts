@@ -2,8 +2,11 @@ import path from 'node:path';
 
 import { ResolverFactory } from 'rolldown/experimental';
 
-// The single source of truth for the bundler's `resolve` configuration: the same object configures
-// both the bundler and the resolver below, so the two cannot drift apart.
+/** The platform the bundler resolves for, which it derives from each output format. */
+export type BundlerPlatform = 'browser' | 'node';
+
+// Only the options the bundler is actually given: its remaining defaults are platform-dependent, so
+// pinning them here would change which source gets bundled.
 export const bundlerResolveOptions = {
   extensionAlias: {
     '.cjs': ['.cjs', '.cts'],
@@ -12,31 +15,45 @@ export const bundlerResolveOptions = {
     '.mjs': ['.mjs', '.mts'],
   },
   extensions: ['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'],
-  mainFields: ['module', 'main'],
-  mainFiles: ['index'],
 };
 
-/**
- * Creates a resolver for one resolution pass. Its cache never observes later file system changes, so
- * a watch rebuild must create a new one rather than reuse an earlier resolver.
- */
-export function createBundlerResolver(): ResolverFactory {
-  return new ResolverFactory(bundlerResolveOptions);
+// The bundler's defaults for each platform, which `ResolverFactory` does not apply on its own.
+// Verified against the bundler: a directory whose package.json has "browser", "module" and "main"
+// resolves to the browser entry for an ESM output and to the main entry for a CommonJS one, and the
+// "browser" alias map only takes effect for the former.
+const platformResolveOptions: Record<BundlerPlatform, { aliasFields: string[][]; mainFields: string[] }> = {
+  browser: { aliasFields: [['browser']], mainFields: ['browser', 'module', 'main'] },
+  node: { aliasFields: [], mainFields: ['main', 'module'] },
+};
+
+/** Reports whether the bundler can resolve the path on any platform, for validating an input. */
+export function isBundlerResolvablePath(literalPath: string): boolean {
+  return resolveSourceFilePaths(literalPath, createBundlerResolvers(['browser', 'node'])).length > 0;
 }
 
 /**
- * Resolves a bundler-style entry path to the source file the bundler loads for it, so that a
- * declaration is always generated for the file that ends up bundled. Returns undefined when the
- * bundler cannot resolve the path either.
+ * Resolves an entry path to every source file the bundler loads for it, which is more than one when
+ * the outputs resolve differently per platform (e.g. a "browser" entry for ESM and a "main" entry for
+ * CommonJS). Returns an empty array when the bundler cannot resolve the path either.
  */
-export function resolveSourceFilePath(literalPath: string, resolver?: ResolverFactory): string | undefined {
+export function resolveSourceFilePaths(literalPath: string, resolvers: ResolverFactory[]): string[] {
+  const resolvedPaths = resolvers.map(
+    (resolver) => resolver.sync(path.dirname(literalPath), `./${path.basename(literalPath)}`).path
+  );
+  return [...new Set(resolvedPaths.filter((resolvedPath) => resolvedPath !== undefined))];
+}
+
+/**
+ * Creates the resolvers for one resolution pass. Their caches never observe later file system
+ * changes, so a watch rebuild must create new ones rather than reuse earlier resolvers.
+ */
+export function createBundlerResolvers(platforms: Iterable<BundlerPlatform>): ResolverFactory[] {
   // The bundler's own resolver is used rather than a reimplementation of it: directory and package
   // entry resolution has many behaviors that are easy to get subtly wrong (entry field precedence,
   // nested packages, duplicate keys, byte order marks, symlink cycles), and any difference silently
   // describes a different source than the one bundled.
-  const { path: resolvedPath } = (resolver ?? createBundlerResolver()).sync(
-    path.dirname(literalPath),
-    `./${path.basename(literalPath)}`
+  return [...new Set(platforms)].map(
+    (platform) =>
+      new ResolverFactory({ ...bundlerResolveOptions, ...platformResolveOptions[platform], mainFiles: ['index'] })
   );
-  return resolvedPath;
 }

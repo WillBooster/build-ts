@@ -17,7 +17,13 @@ import type { AnyBuilderType, builder } from './builder.js';
 import { appBuilder, functionsBuilder, libBuilder } from './builder.js';
 import { handleError } from './bundlerLogger.js';
 import { createExternalMatcher } from './externals.js';
-import { bundlerResolveOptions, createBundlerResolver, resolveSourceFilePath } from './inputResolver.js';
+import type { BundlerPlatform } from './inputResolver.js';
+import {
+  bundlerResolveOptions,
+  createBundlerResolvers,
+  isBundlerResolvablePath,
+  resolveSourceFilePaths,
+} from './inputResolver.js';
 import { setupPlugins } from './plugin.js';
 import { generateDeclarationFiles } from './typeScript.js';
 
@@ -81,7 +87,6 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   const inputs = verifyInput(argv, cwd, packageDirPath);
   const targetDetail = detectTargetDetail(targetCategory, inputs, packageDirPath);
   const outDirPath = resolveOutDirPath(argv, cwd, packageDirPath, inputs, targetCategory);
-  const declarationInputs = resolveDeclarationInputs(argv, inputs);
 
   if (verbose) {
     console.info('argv:', argv);
@@ -118,6 +123,10 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     console.error('Failed to detect output files.');
     process.exit(1);
   }
+
+  // The bundler resolves per output format, so declarations must cover every platform in play.
+  const platforms = outputOptionsList.map((opts): BundlerPlatform => (opts.format === 'commonjs' ? 'node' : 'browser'));
+  const declarationInputs = resolveDeclarationInputs(argv, inputs, platforms);
 
   process.chdir(packageDirPath);
   await fs.promises.rm(outDirPath, { recursive: true, force: true });
@@ -173,6 +182,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
       packageDirPath,
       outDirPath,
       inputs,
+      platforms,
       options,
       outputOptionsList,
       pathToRelativePath,
@@ -232,6 +242,7 @@ function watchRolldown(
   packageDirPath: string,
   outDirPath: string,
   inputs: string[],
+  platforms: BundlerPlatform[],
   options: RolldownOptions,
   outputOptionsList: OutputOptions[],
   pathToRelativePath: (paths: string | Readonly<string[]>) => string[],
@@ -289,7 +300,12 @@ function watchRolldown(
             // The bundler re-resolves its literal inputs on every rebuild, so the declaration inputs
             // are resolved again here; reusing the initial list would describe the previous sources
             // after an entry (e.g. a package entry field) started resolving elsewhere.
-            await generateDeclarationFiles(argv, packageDirPath, outDirPath, resolveDeclarationInputs(argv, inputs));
+            await generateDeclarationFiles(
+              argv,
+              packageDirPath,
+              outDirPath,
+              resolveDeclarationInputs(argv, inputs, platforms)
+            );
           }
           break;
         }
@@ -414,13 +430,22 @@ function createFunctionsInputEntries(inputs: string[]): Record<string, string> {
 // compiler report it. Resolution depends on the file system, so a watch rebuild has to redo it.
 function resolveDeclarationInputs(
   argv: ArgumentsType<AnyBuilderType>,
-  inputs: string[]
+  inputs: string[],
+  platforms: BundlerPlatform[]
 ): string[] | undefined {
   if (!argv.input?.length) return undefined;
-  // One resolver serves the whole pass: its cache is consistent within a build but never stale
-  // across rebuilds, since each call creates a new one.
-  const resolver = createBundlerResolver();
-  return [...new Set(inputs.map((input) => resolveSourceFilePath(input, resolver) ?? input))];
+  // The resolvers serve the whole pass: their caches are consistent within a build but never stale
+  // across rebuilds, since each call creates new ones.
+  const resolvers = createBundlerResolvers(platforms);
+  return [
+    ...new Set(
+      inputs.flatMap((input) => {
+        const resolvedPaths = resolveSourceFilePaths(input, resolvers);
+        // An unresolvable path is kept as is to let the compiler report it.
+        return resolvedPaths.length > 0 ? resolvedPaths : [input];
+      })
+    ),
+  ];
 }
 
 function getInputFiles(input: RolldownOptions['input']): string[] {
@@ -456,7 +481,7 @@ function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDi
       if (literalStats?.isDirectory()) return [literalPath];
       // A non-existing path may still be resolvable by the bundler (e.g. an extension-less path or a
       // ".js" specifier aliased to ".ts"), even when it contains glob metacharacters.
-      if (resolveSourceFilePath(literalPath)) return [literalPath];
+      if (isBundlerResolvablePath(literalPath)) return [literalPath];
       // Error only on actual glob syntax ("*", "?", "[...]", alternation/range braces, or extglob "@(...)" etc.);
       // characters like a bare "+" or a single-item brace ("{entry}") are ordinary filename characters.
       if (/[*?]|[@!+]\(|\[.*\]|\{[^}]*(,|\.\.)[^}]*\}/.test(raw)) {
