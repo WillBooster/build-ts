@@ -1807,9 +1807,13 @@ export const routes = { helper };
     );
     expect(fs.readdirSync(`${packageEntryOutDirPath}/folder`)).toEqual(['entry.d.ts']);
 
-    // An unusable entry field falls back to "index" instead of failing, as the bundler does.
-    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/package.json`, '{ "main": ');
-    const brokenEntryOutDirPath = '.tmp/test-fixtures/lib-resolved-input-broken-entry';
+    // A byte order mark must not hide the entry field: the bundler's parser accepts one, so falling
+    // back to "index" would emit declarations for a different source than the bundled JavaScript.
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/folder/package.json`,
+      `\uFEFF${JSON.stringify({ main: './entry.ts' })}`
+    );
+    const bomEntryOutDirPath = '.tmp/test-fixtures/lib-resolved-input-bom-entry';
     await buildWithPackagePath(
       fixtureDirPath,
       'lib',
@@ -1817,9 +1821,76 @@ export const routes = { helper };
       '--input',
       `${fixtureDirPath}/src/folder`,
       '--out-dir',
-      brokenEntryOutDirPath
+      bomEntryOutDirPath
     );
-    await expectFileExists(`${brokenEntryOutDirPath}/folder/index.d.ts`);
+    expect(fs.readdirSync(`${bomEntryOutDirPath}/folder`)).toEqual(['entry.d.ts']);
+
+    // A package entry pointing back at its own directory through a symlink must not recurse forever.
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/package.json`, JSON.stringify({ main: './loop' }));
+    await fs.promises.symlink('.', `${fixtureDirPath}/src/folder/loop`);
+    const cyclicEntryOutDirPath = '.tmp/test-fixtures/lib-resolved-input-cyclic-entry';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/folder`,
+      '--out-dir',
+      cyclicEntryOutDirPath
+    );
+    await expectFileExists(`${cyclicEntryOutDirPath}/folder/index.d.ts`);
+    await fs.promises.rm(`${fixtureDirPath}/src/folder/loop`);
+
+    // A malformed package.json must fail rather than fall back to "index": the bundler cannot resolve
+    // such an entry either, so succeeding here would emit declarations for an unbundlable entry.
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/package.json`, '{ "main": ');
+    const brokenEntryRet = await buildWithPackagePathAndGetStatus(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/folder`,
+      '--out-dir',
+      '.tmp/test-fixtures/lib-resolved-input-broken-entry'
+    );
+    expect(brokenEntryRet.status).not.toBe(0);
+  });
+
+  it('lib resolves an entry file before an equally named directory', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/lib-sibling-input';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src/entry`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({ type: 'module', packageManager: 'yarn@4.17.0' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/tsconfig.json`,
+      JSON.stringify({
+        compilerOptions: { module: 'esnext', moduleResolution: 'bundler', strict: true, target: 'es2022' },
+        include: ['src/**/*'],
+      })
+    );
+    // The bundler prefers "src/entry.ts" over "src/entry/index.ts", so the declarations must too.
+    await fs.promises.writeFile(`${fixtureDirPath}/src/entry.ts`, 'export const selected = "sibling";\n');
+    await fs.promises.writeFile(`${fixtureDirPath}/src/entry/index.ts`, 'export const selected = "directory";\n');
+
+    const outDirPath = '.tmp/test-fixtures/lib-sibling-input-out';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--module-type',
+      'esm',
+      '--input',
+      `${fixtureDirPath}/src/entry`,
+      '--out-dir',
+      outDirPath
+    );
+    // The bundled JavaScript and its declarations must describe the same source file.
+    expect(await fs.promises.readFile(`${outDirPath}/entry.js`, 'utf8')).toContain('sibling');
+    await expectFileExists(`${outDirPath}/entry.d.ts`);
+    expect(fs.existsSync(`${outDirPath}/entry/index.d.ts`)).toBe(false);
   });
 
   it('functions fails on conflicting entry names instead of silently dropping one', async () => {

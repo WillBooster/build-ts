@@ -15,22 +15,30 @@ export const bundlerMainFields = ['module', 'main'];
 export const bundlerMainFiles = ['index'];
 
 /**
- * Resolves a bundler-style entry path to the source file the bundler loads for it: a directory
- * resolves through its package entry fields or its `index` file, a `.js` specifier falls back to its
- * aliased `.ts` source, and an extension-less path gains one of the configured extensions.
+ * Resolves a bundler-style entry path to the source file the bundler loads for it: a `.js` specifier
+ * falls back to its aliased `.ts` source, an extension-less path gains one of the configured
+ * extensions, and a directory resolves through its package entry fields or its `index` file.
  * Returns undefined when no file exists.
  */
 export function resolveSourceFilePath(literalPath: string, visitedDirPaths?: Set<string>): string | undefined {
   const stats = fs.statSync(literalPath, { throwIfNoEntry: false });
   if (stats?.isFile()) return literalPath;
-  if (stats?.isDirectory()) return resolveDirectoryPath(literalPath, visitedDirPaths ?? new Set());
-  return resolveWithExtensions(literalPath);
+
+  // The configured extensions are tried before an existing directory is treated as a package, so that
+  // `src/entry.ts` wins over `src/entry/index.ts` exactly as it does in the bundler.
+  const resolvedPath = resolveWithExtensions(literalPath);
+  if (resolvedPath) return resolvedPath;
+
+  return stats?.isDirectory() ? resolveDirectoryPath(literalPath, visitedDirPaths ?? new Set()) : undefined;
 }
 
 function resolveDirectoryPath(dirPath: string, visitedDirPaths: Set<string>): string | undefined {
-  // A package entry field may point back at an ancestor directory, which would otherwise recurse forever.
-  if (visitedDirPaths.has(dirPath)) return undefined;
-  visitedDirPaths.add(dirPath);
+  // A package entry field may point back at an ancestor directory, which would otherwise recurse
+  // forever. Symlinks make that cycle reachable through ever-growing lexical paths (`loop/loop/...`),
+  // so directories are identified by their canonical path.
+  const visitedKey = toCanonicalDirPath(dirPath);
+  if (visitedDirPaths.has(visitedKey)) return undefined;
+  visitedDirPaths.add(visitedKey);
 
   const packageJson = readPackageJson(path.join(dirPath, 'package.json'));
   for (const field of bundlerMainFields) {
@@ -47,6 +55,15 @@ function resolveDirectoryPath(dirPath: string, visitedDirPaths: Set<string>): st
   return undefined;
 }
 
+function toCanonicalDirPath(dirPath: string): string {
+  try {
+    return fs.realpathSync(dirPath);
+  } catch {
+    // An unresolvable path cannot form a cycle, so its lexical form is a sufficient identity.
+    return dirPath;
+  }
+}
+
 function resolveWithExtensions(basePath: string): string | undefined {
   const extension = path.extname(basePath);
   const candidates = [
@@ -57,13 +74,26 @@ function resolveWithExtensions(basePath: string): string | undefined {
   return candidates.find((candidate) => fs.statSync(candidate, { throwIfNoEntry: false })?.isFile());
 }
 
-// A malformed or unreadable package.json is ignored so that resolution falls back to the main files,
-// matching the bundler, which likewise does not fail the build over it.
 function readPackageJson(packageJsonPath: string): Record<string, unknown> | undefined {
+  let content: string;
   try {
-    const parsed: unknown = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    content = fs.readFileSync(packageJsonPath, 'utf8');
+  } catch (error) {
+    // Most directories simply have no package.json, which is not an error for the bundler either.
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT' || (error as NodeJS.ErrnoException).code === 'ENOTDIR') {
+      return undefined;
+    }
+    throw error;
+  }
+
+  try {
+    // The bundler's parser tolerates a byte order mark, so falling back to `index` over one would
+    // silently describe a different source than the bundled JavaScript.
+    const parsed: unknown = JSON.parse(content.replace(/^\uFEFF/, ''));
     return typeof parsed === 'object' && parsed !== null ? (parsed as Record<string, unknown>) : undefined;
-  } catch {
-    return undefined;
+  } catch (error) {
+    // Falling back to `index` here would let `--declaration-only` succeed for an entry the bundler
+    // cannot resolve at all, so a malformed package.json fails the build instead.
+    throw new Error(`Failed to parse ${packageJsonPath}: ${(error as Error).message}`);
   }
 }
