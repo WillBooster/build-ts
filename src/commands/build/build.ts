@@ -17,6 +17,13 @@ import type { AnyBuilderType, builder } from './builder.js';
 import { appBuilder, functionsBuilder, libBuilder } from './builder.js';
 import { handleError } from './bundlerLogger.js';
 import { createExternalMatcher } from './externals.js';
+import type { BundlerPlatform } from './inputResolver.js';
+import {
+  bundlerResolveOptions,
+  createBundlerResolvers,
+  isBundlerResolvablePath,
+  resolveSourceFilePaths,
+} from './inputResolver.js';
 import { setupPlugins } from './plugin.js';
 import { generateDeclarationFiles } from './typeScript.js';
 
@@ -80,9 +87,6 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   const inputs = verifyInput(argv, cwd, packageDirPath);
   const targetDetail = detectTargetDetail(targetCategory, inputs, packageDirPath);
   const outDirPath = resolveOutDirPath(argv, cwd, packageDirPath, inputs, targetCategory);
-  // Restrict declaration files to the entry files (and their imports) only when inputs are explicit,
-  // to keep the default behavior of emitting declarations for all files under src/.
-  const declarationInputs = argv.input?.length ? inputs : undefined;
 
   if (verbose) {
     console.info('argv:', argv);
@@ -120,6 +124,14 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     process.exit(1);
   }
 
+  // The bundler resolves per output format, so declarations must cover every platform in play.
+  const platforms = outputOptionsList.map((opts): BundlerPlatform => (opts.format === 'commonjs' ? 'node' : 'browser'));
+  const declaration = resolveDeclarationInputs(argv, inputs, platforms);
+  const declarationInputs = declaration.paths;
+  // Explicit inputs that the bundler ignores on every platform leave nothing to declare. Generating
+  // anyway would emit declarations for every file under src/, since an empty entry list is no filter.
+  const hasNothingToDeclare = declarationInputs?.length === 0;
+
   process.chdir(packageDirPath);
   await fs.promises.rm(outDirPath, { recursive: true, force: true });
   if (targetDetail === 'functions') {
@@ -135,7 +147,11 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
         )
       );
     }
-    if (!(await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs))) {
+    if (declaration.unresolvedInput) {
+      reportUnresolvedInput(declaration.unresolvedInput);
+      process.exit(1);
+    }
+    if (!hasNothingToDeclare && !(await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs))) {
       process.exit(1);
     }
     return;
@@ -147,14 +163,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     input:
       targetDetail === 'functions' ? createFunctionsInputEntries(inputs) : inputs,
     plugins: setupPlugins(argv, outputOptionsList, packageDirPath),
-    resolve: {
-      extensionAlias: {
-        '.cjs': ['.cjs', '.cts'],
-        '.js': ['.js', '.ts', '.tsx'],
-        '.mjs': ['.mjs', '.mts'],
-      },
-      extensions: ['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'],
-    },
+    resolve: bundlerResolveOptions,
     treeshake: argv['core-js'] || argv['core-js-proposals'] ? false : undefined,
     transform: getTransformOptions(argv, packageDirPath),
     watch: argv.watch ? { clearScreen: false } : undefined,
@@ -180,7 +189,8 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
       targetDetail,
       packageDirPath,
       outDirPath,
-      declarationInputs,
+      inputs,
+      platforms,
       options,
       outputOptionsList,
       pathToRelativePath,
@@ -216,12 +226,15 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     await bundle?.close();
     if (buildFailed) process.exit(1);
 
-    if (
-      targetDetail !== 'app-node' &&
-      targetDetail !== 'functions' &&
-      !(await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs))
-    ) {
-      process.exit(1);
+    if (targetDetail !== 'app-node' && targetDetail !== 'functions' && !hasNothingToDeclare) {
+      // The bundler reports an unresolvable entry itself, so reaching here means it somehow did not.
+      if (declaration.unresolvedInput) {
+        reportUnresolvedInput(declaration.unresolvedInput);
+        process.exit(1);
+      }
+      if (!(await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs))) {
+        process.exit(1);
+      }
     }
   }
 }
@@ -239,7 +252,8 @@ function watchRolldown(
   targetDetail: string,
   packageDirPath: string,
   outDirPath: string,
-  declarationInputs: string[] | undefined,
+  inputs: string[],
+  platforms: BundlerPlatform[],
   options: RolldownOptions,
   outputOptionsList: OutputOptions[],
   pathToRelativePath: (paths: string | Readonly<string[]>) => string[],
@@ -294,7 +308,15 @@ function watchRolldown(
           }
 
           if (targetDetail !== 'app-node' && targetDetail !== 'functions') {
-            await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs);
+            // The bundler re-resolves its literal inputs on every rebuild, so the declaration inputs
+            // are resolved again here; reusing the initial list would describe the previous sources
+            // after an entry (e.g. a package entry field) started resolving elsewhere.
+            const rebuilt = resolveDeclarationInputs(argv, inputs, platforms);
+            if (rebuilt.unresolvedInput) {
+              reportUnresolvedInput(rebuilt.unresolvedInput);
+            } else if (rebuilt.paths?.length !== 0) {
+              await generateDeclarationFiles(argv, packageDirPath, outDirPath, rebuilt.paths);
+            }
           }
           break;
         }
@@ -396,17 +418,6 @@ function containsPath(parentPath: string, childPath: string): boolean {
   return relativePath !== '..' && !relativePath.startsWith(`..${path.sep}`);
 }
 
-// Mirrors the bundler's `resolve.extensions` / `extensionAlias` configuration above.
-function isBundlerResolvablePath(literalPath: string): boolean {
-  const extension = path.extname(literalPath);
-  const aliasedExtensions = { '.cjs': ['.cts'], '.js': ['.ts', '.tsx'], '.mjs': ['.mts'] }[extension] ?? [];
-  const candidates = [
-    ...['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'].map((ext) => literalPath + ext),
-    ...aliasedExtensions.map((ext) => literalPath.slice(0, -extension.length) + ext),
-  ];
-  return candidates.some((candidate) => fs.statSync(candidate, { throwIfNoEntry: false })?.isFile());
-}
-
 function createFunctionsInputEntries(inputs: string[]): Record<string, string> {
   // A null prototype avoids false conflicts with inherited members (e.g. an entry named "toString").
   const entries: Record<string, string> = Object.create(null);
@@ -421,6 +432,49 @@ function createFunctionsInputEntries(inputs: string[]): Record<string, string> {
     entries[name] = input;
   }
   return entries;
+}
+
+// Restricts declaration files to the entry files (and their imports) only when inputs are explicit,
+// to keep the default behavior of emitting declarations for all files under src/. tsc cannot take a
+// bundler-style entry (a directory, or a ".js" specifier aliased to a ".ts" source) literally, so each
+// one is resolved to the source file it refers to; an unresolvable path is kept as is to let the
+// compiler report it. Resolution depends on the file system, so a watch rebuild has to redo it.
+interface DeclarationInputs {
+  /** Undefined restricts nothing, so declarations cover every file under src/. */
+  paths: string[] | undefined;
+  /** Set when the bundler cannot resolve an input for some output platform, which fails its build too. */
+  unresolvedInput: string | undefined;
+}
+
+// Restricts declaration files to the entry files (and their imports) only when inputs are explicit,
+// to keep the default behavior of emitting declarations for all files under src/. tsc cannot take a
+// bundler-style entry (a directory, or a ".js" specifier aliased to a ".ts" source) literally, so each
+// one is resolved to the source file it refers to. Resolution depends on the file system, so a watch
+// rebuild has to redo it.
+function resolveDeclarationInputs(
+  argv: ArgumentsType<AnyBuilderType>,
+  inputs: string[],
+  platforms: BundlerPlatform[]
+): DeclarationInputs {
+  if (!argv.input?.length) return { paths: undefined, unresolvedInput: undefined };
+
+  // The resolvers serve the whole pass: their caches are consistent within a build but never stale
+  // across rebuilds, since each call creates new ones.
+  const resolvers = createBundlerResolvers(platforms);
+  const paths: string[] = [];
+  for (const input of inputs) {
+    const resolvedPaths = resolveSourceFilePaths(input, resolvers);
+    // Falling back to the literal input would quietly succeed whenever it happens to be a valid
+    // TypeScript file, declaring a build the bundler refuses to produce.
+    if (!resolvedPaths) return { paths: undefined, unresolvedInput: input };
+
+    paths.push(...resolvedPaths);
+  }
+  return { paths: [...new Set(paths)], unresolvedInput: undefined };
+}
+
+function reportUnresolvedInput(input: string): void {
+  console.error(`Failed to resolve the input for declaration generation: ${input}`);
 }
 
 function getInputFiles(input: RolldownOptions['input']): string[] {

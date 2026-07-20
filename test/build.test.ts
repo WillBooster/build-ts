@@ -1732,7 +1732,6 @@ export const routes = { helper };
     expect(fs.readdirSync(directoryOutDirPath)).toEqual(['schemas.d.ts']);
 
     // A directory entry whose name contains glob metacharacters still resolves to its index file.
-    // Declarations are not generated here because tsgo cannot take a directory as an entry.
     await fs.promises.mkdir(`${fixtureDirPath}/src/[b]racket`, { recursive: true });
     await fs.promises.writeFile(`${fixtureDirPath}/src/[b]racket/index.ts`, 'export const bracket = true;\n');
     const directoryEntryOutDirPath = '.tmp/test-fixtures/lib-glob-input-directory-entry';
@@ -1745,6 +1744,437 @@ export const routes = { helper };
       directoryEntryOutDirPath
     );
     await expectFileExists(`${directoryEntryOutDirPath}/index.js`);
+  });
+
+  it('lib generates declarations for directory and extension-aliased inputs', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/lib-resolved-input';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src/folder`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({ type: 'module', packageManager: 'yarn@4.17.0' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/tsconfig.json`,
+      JSON.stringify({
+        compilerOptions: { module: 'esnext', moduleResolution: 'bundler', strict: true, target: 'es2022' },
+        include: ['src/**/*'],
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/index.ts`, 'export const fromIndex: number = 1;\n');
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/index.ts`, 'export const fromFolder: number = 2;\n');
+
+    // A directory input, which the bundler resolves through its "index" file (was TS6231).
+    const directoryOutDirPath = '.tmp/test-fixtures/lib-resolved-input-directory';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/folder`,
+      '--out-dir',
+      directoryOutDirPath
+    );
+    await expectFileExists(`${directoryOutDirPath}/folder/index.d.ts`);
+
+    // A ".js" specifier aliased to its ".ts" source (was TS6504).
+    const aliasOutDirPath = '.tmp/test-fixtures/lib-resolved-input-alias';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/index.js`,
+      '--out-dir',
+      aliasOutDirPath
+    );
+    await expectFileExists(`${aliasOutDirPath}/index.d.ts`);
+
+    // A package entry field wins over "index", so the declarations must describe the same source the
+    // bundler picks; resolving to "index.ts" here would silently describe the wrong file.
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/package.json`, JSON.stringify({ main: './entry.ts' }));
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/entry.ts`, 'export const fromEntry: number = 3;\n');
+    const packageEntryOutDirPath = '.tmp/test-fixtures/lib-resolved-input-package-entry';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/folder`,
+      '--out-dir',
+      packageEntryOutDirPath
+    );
+    expect(fs.readdirSync(`${packageEntryOutDirPath}/folder`)).toEqual(['entry.d.ts']);
+
+    // A byte order mark must not hide the entry field: the bundler's parser accepts one, so falling
+    // back to "index" would emit declarations for a different source than the bundled JavaScript.
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/folder/package.json`,
+      `\uFEFF${JSON.stringify({ main: './entry.ts' })}`
+    );
+    const bomEntryOutDirPath = '.tmp/test-fixtures/lib-resolved-input-bom-entry';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/folder`,
+      '--out-dir',
+      bomEntryOutDirPath
+    );
+    expect(fs.readdirSync(`${bomEntryOutDirPath}/folder`)).toEqual(['entry.d.ts']);
+
+    // A package entry field reaching another package directory does NOT honor that package's own
+    // entry fields; resolution falls through to its main files instead.
+    await fs.promises.mkdir(`${fixtureDirPath}/src/folder/nested`, { recursive: true });
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/package.json`, JSON.stringify({ main: './nested' }));
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/folder/nested/package.json`,
+      JSON.stringify({ main: './chosen.ts' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/nested/chosen.ts`, 'export const chosen = 5;\n');
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/nested/index.ts`, 'export const nested = 6;\n');
+    const nestedEntryOutDirPath = '.tmp/test-fixtures/lib-resolved-input-nested-entry';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/folder`,
+      '--out-dir',
+      nestedEntryOutDirPath
+    );
+    expect(fs.readdirSync(`${nestedEntryOutDirPath}/folder/nested`)).toEqual(['index.d.ts']);
+    await fs.promises.rm(`${fixtureDirPath}/src/folder/nested`, { recursive: true });
+
+    // Duplicate entry-field keys resolve to the first occurrence, unlike JSON.parse's last-wins.
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/folder/package.json`,
+      '{ "main": "./entry.ts", "main": "./later.ts" }'
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/later.ts`, 'export const fromLater: number = 7;\n');
+    const duplicateKeyOutDirPath = '.tmp/test-fixtures/lib-resolved-input-duplicate-key';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/folder`,
+      '--out-dir',
+      duplicateKeyOutDirPath
+    );
+    expect(fs.readdirSync(`${duplicateKeyOutDirPath}/folder`)).toEqual(['entry.d.ts']);
+
+    // A package entry pointing back at its own directory through a symlink must not recurse forever.
+    // The valid "main" here must NOT win: the bundler stops consulting later fields once one points
+    // back at the directory, and falls through to "index" instead.
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/folder/package.json`,
+      JSON.stringify({ module: './loop', main: './later.ts' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/later.ts`, 'export const fromLater: number = 4;\n');
+    await fs.promises.symlink('.', `${fixtureDirPath}/src/folder/loop`);
+    const cyclicEntryOutDirPath = '.tmp/test-fixtures/lib-resolved-input-cyclic-entry';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/folder`,
+      '--out-dir',
+      cyclicEntryOutDirPath
+    );
+    // The two platforms select different entries here, and both are emitted: the ESM output follows
+    // "module" into the cycle and falls through to "index", while the CommonJS output takes "main".
+    expect(fs.readdirSync(`${cyclicEntryOutDirPath}/folder`).toSorted()).toEqual(['index.d.ts', 'later.d.ts']);
+    await fs.promises.rm(`${fixtureDirPath}/src/folder/loop`);
+
+    // A malformed package.json must fail rather than fall back to "index": the bundler cannot resolve
+    // such an entry either, so succeeding here would emit declarations for an unbundlable entry.
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/package.json`, '{ "main": ');
+    const brokenEntryRet = await buildWithPackagePathAndGetStatus(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/folder`,
+      '--out-dir',
+      '.tmp/test-fixtures/lib-resolved-input-broken-entry'
+    );
+    expect(brokenEntryRet.status).not.toBe(0);
+  });
+
+  it('lib resolves an entry file before an equally named directory', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/lib-sibling-input';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src/entry`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({ type: 'module', packageManager: 'yarn@4.17.0' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/tsconfig.json`,
+      JSON.stringify({
+        compilerOptions: { module: 'esnext', moduleResolution: 'bundler', strict: true, target: 'es2022' },
+        include: ['src/**/*'],
+      })
+    );
+    // The bundler prefers "src/entry.ts" over "src/entry/index.ts", so the declarations must too.
+    await fs.promises.writeFile(`${fixtureDirPath}/src/entry.ts`, 'export const selected = "sibling";\n');
+    await fs.promises.writeFile(`${fixtureDirPath}/src/entry/index.ts`, 'export const selected = "directory";\n');
+
+    const outDirPath = '.tmp/test-fixtures/lib-sibling-input-out';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--module-type',
+      'esm',
+      '--input',
+      `${fixtureDirPath}/src/entry`,
+      '--out-dir',
+      outDirPath
+    );
+    // The bundled JavaScript and its declarations must describe the same source file.
+    expect(await fs.promises.readFile(`${outDirPath}/entry.js`, 'utf8')).toContain('sibling');
+    await expectFileExists(`${outDirPath}/entry.d.ts`);
+    expect(fs.existsSync(`${outDirPath}/entry/index.d.ts`)).toBe(false);
+  });
+
+  it('lib resolves a ".jsx" input to its TypeScript source', async () => {
+    for (const [extension, marker] of [
+      ['tsx', 'from-tsx'],
+      ['ts', 'from-ts'],
+    ]) {
+      const fixtureDirPath = `.tmp/test-fixtures/lib-jsx-input-${extension}`;
+      await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+      await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+      await fs.promises.writeFile(
+        `${fixtureDirPath}/package.json`,
+        JSON.stringify({ type: 'module', packageManager: 'yarn@4.17.0' })
+      );
+      await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+      await fs.promises.writeFile(
+        `${fixtureDirPath}/tsconfig.json`,
+        JSON.stringify({
+          compilerOptions: { module: 'esnext', moduleResolution: 'bundler', strict: true, target: 'es2022' },
+          include: ['src/**/*'],
+        })
+      );
+      await fs.promises.writeFile(`${fixtureDirPath}/src/entry.${extension}`, `export const v = "${marker}";\n`);
+
+      // The bundler substitutes the TypeScript source for the missing ".jsx" file, so declaration
+      // generation must not receive the unresolved ".jsx" path (which fails with TS6504).
+      const outDirPath = `${fixtureDirPath}-out`;
+      await buildWithPackagePath(
+        fixtureDirPath,
+        'lib',
+        '--module-type',
+        'esm',
+        '--input',
+        `${fixtureDirPath}/src/entry.jsx`,
+        '--out-dir',
+        outDirPath
+      );
+      expect(await fs.promises.readFile(`${outDirPath}/entry.js`, 'utf8')).toContain(marker);
+      await expectFileExists(`${outDirPath}/entry.d.ts`);
+    }
+  });
+
+  it('lib resolves package entry fields per output platform', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/lib-platform-input';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src/dir`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({ type: 'module', packageManager: 'yarn@4.17.0' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/tsconfig.json`,
+      JSON.stringify({
+        compilerOptions: { module: 'esnext', moduleResolution: 'bundler', strict: true, target: 'es2022' },
+        include: ['src/**/*'],
+      })
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/dir/package.json`,
+      JSON.stringify({ browser: './browser.ts', module: './module.ts', main: './main.ts' })
+    );
+    for (const name of ['browser', 'module', 'main']) {
+      await fs.promises.writeFile(`${fixtureDirPath}/src/dir/${name}.ts`, `export const v = "${name}";\n`);
+    }
+
+    // The bundler picks the "browser" entry for an ESM output and the "main" entry for a CommonJS
+    // one, so overriding `mainFields` for both would silently change which source ships.
+    const outDirPath = '.tmp/test-fixtures/lib-platform-input-out';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--module-type',
+      'both',
+      '--input',
+      `${fixtureDirPath}/src/dir`,
+      '--out-dir',
+      outDirPath
+    );
+    expect(await fs.promises.readFile(`${outDirPath}/dir/browser.js`, 'utf8')).toContain('browser');
+    expect(await fs.promises.readFile(`${outDirPath}/dir/main.cjs`, 'utf8')).toContain('main');
+    // Both emitted sources need declarations, since each output resolved to a different one.
+    await expectFileExists(`${outDirPath}/dir/browser.d.ts`);
+    await expectFileExists(`${outDirPath}/dir/main.d.ts`);
+
+    // Conditional exports are selected with the platform's condition names, so the declaration must
+    // describe the same condition's target as the bundled JavaScript.
+    await fs.promises.mkdir(`${fixtureDirPath}/src/cond/node_modules/dep`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/cond/package.json`,
+      JSON.stringify({ browser: { './main.ts': 'dep' }, main: './main.ts' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/cond/main.ts`, 'export const v = "main";\n');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/cond/node_modules/dep/package.json`,
+      JSON.stringify({ name: 'dep', exports: { browser: './browser.ts', default: './default.ts' } })
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/cond/node_modules/dep/browser.ts`,
+      'export const v = "dep-browser";\n'
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/cond/node_modules/dep/default.ts`,
+      'export const v = "dep-default";\n'
+    );
+    const conditionOutDirPath = '.tmp/test-fixtures/lib-platform-input-condition';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--module-type',
+      'esm',
+      '--input',
+      `${fixtureDirPath}/src/cond`,
+      '--out-dir',
+      conditionOutDirPath
+    );
+    await expectFileExists(`${conditionOutDirPath}/cond/node_modules/dep/browser.d.ts`);
+    expect(fs.existsSync(`${conditionOutDirPath}/cond/node_modules/dep/default.d.ts`)).toBe(false);
+  });
+
+  it('lib fails when an entry is unresolvable on any output platform', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/lib-platform-failure';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src/dir`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({ type: 'module', packageManager: 'yarn@4.17.0' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/tsconfig.json`,
+      JSON.stringify({
+        compilerOptions: { module: 'esnext', moduleResolution: 'bundler', strict: true, target: 'es2022' },
+        include: ['src/**/*'],
+      })
+    );
+    // Resolvable for the CommonJS output but not the ESM one, which the bundler rejects outright, so
+    // succeeding on the resolvable platform alone would declare a build that cannot be produced.
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/dir/package.json`,
+      JSON.stringify({ browser: { './main.ts': './missing.ts' }, main: './main.ts' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/dir/main.ts`, 'export const v = "main";\n');
+
+    const ret = await buildWithPackagePathAndGetStatus(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--module-type',
+      'both',
+      '--input',
+      `${fixtureDirPath}/src/dir`,
+      '--out-dir',
+      '.tmp/test-fixtures/lib-platform-failure-out'
+    );
+    expect(ret.status).not.toBe(0);
+
+    // The input names an existing TypeScript file that the browser platform cannot resolve. Falling
+    // back to the literal path would compile it happily, declaring a build the bundler refuses.
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/package.json`,
+      JSON.stringify({ browser: { './index.ts': './missing.ts' } })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/index.ts`, 'export const v = "index";\n');
+    const literalOutDirPath = '.tmp/test-fixtures/lib-platform-failure-literal';
+    const literalRet = await buildWithPackagePathAndGetStatus(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--module-type',
+      'esm',
+      '--input',
+      `${fixtureDirPath}/src/index.ts`,
+      '--out-dir',
+      literalOutDirPath
+    );
+    expect(literalRet.status).not.toBe(0);
+    expect(fs.existsSync(`${literalOutDirPath}/index.d.ts`)).toBe(false);
+  });
+
+  it('lib skips declarations for entries the bundler ignores', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/lib-ignored-input';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src/dir`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({ type: 'module', packageManager: 'yarn@4.17.0' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/tsconfig.json`,
+      JSON.stringify({
+        compilerOptions: { module: 'esnext', moduleResolution: 'bundler', strict: true, target: 'es2022' },
+        include: ['src/**/*'],
+      })
+    );
+    // A "browser" mapping to false makes the bundler ignore the entry rather than fail to resolve it.
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/dir/package.json`,
+      JSON.stringify({ browser: { './main.ts': false }, main: './main.ts' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/dir/main.ts`, 'export const v = "main";\n');
+    await fs.promises.writeFile(`${fixtureDirPath}/src/unrelated.ts`, 'export const unrelated = 1;\n');
+
+    // Every platform ignores the entry, so there is nothing to declare. Emitting anyway would fall
+    // back to declaring every file under src/, including the unrelated one.
+    const ignoredOutDirPath = '.tmp/test-fixtures/lib-ignored-input-out';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--module-type',
+      'esm',
+      '--input',
+      `${fixtureDirPath}/src/dir`,
+      '--out-dir',
+      ignoredOutDirPath
+    );
+    const ignoredDeclarations = fs
+      .readdirSync(ignoredOutDirPath, { recursive: true })
+      .filter((name) => name.toString().endsWith('.d.ts'));
+    expect(ignoredDeclarations).toEqual([]);
+
+    // Only the browser platform ignores it, so the CommonJS output still needs its declaration.
+    const mixedOutDirPath = '.tmp/test-fixtures/lib-ignored-input-mixed';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--module-type',
+      'both',
+      '--input',
+      `${fixtureDirPath}/src/dir`,
+      '--out-dir',
+      mixedOutDirPath
+    );
+    await expectFileExists(`${mixedOutDirPath}/dir/main.d.ts`);
   });
 
   it('functions fails on conflicting entry names instead of silently dropping one', async () => {
