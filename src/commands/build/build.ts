@@ -327,11 +327,16 @@ function resolveOutDirPath(
   inputs?: string[],
   targetCategory?: TargetCategory
 ): string {
-  if (!argv.outDir) return path.join(packageDirPath, 'dist');
-
   // The output directory is removed before building, so refuse locations that would delete source files.
   // Comparisons use canonical (symlink-resolved) paths because `fs.rm` follows symlinks in parent components.
-  const outDirPath = toCanonicalPath(path.resolve(cwd, argv.outDir));
+  const outDirPath = toCanonicalPath(path.resolve(cwd, argv.outDir ?? path.join(packageDirPath, 'dist')));
+  const containedInput = inputs?.find((input) => containsPath(outDirPath, toCanonicalPath(input)));
+  if (containedInput) {
+    console.error(`The output directory (${outDirPath}) must not contain the input file (${containedInput}).`);
+    process.exit(1);
+  }
+  if (!argv.outDir) return outDirPath;
+
   const canonicalPackageDirPath = toCanonicalPath(packageDirPath);
   if (containsPath(outDirPath, canonicalPackageDirPath)) {
     console.error(`--out-dir (${outDirPath}) must not contain the package directory (${canonicalPackageDirPath}).`);
@@ -341,11 +346,6 @@ function resolveOutDirPath(
   const srcDirPath = toCanonicalPath(path.join(canonicalPackageDirPath, 'src'));
   if (containsPath(srcDirPath, outDirPath)) {
     console.error(`--out-dir (${outDirPath}) must not be inside the source directory (${srcDirPath}).`);
-    process.exit(1);
-  }
-  const containedInput = inputs?.find((input) => containsPath(outDirPath, toCanonicalPath(input)));
-  if (containedInput) {
-    console.error(`--out-dir (${outDirPath}) must not contain the input file (${containedInput}).`);
     process.exit(1);
   }
   // A package.json at the output directory root indicates another package's directory. The functions
