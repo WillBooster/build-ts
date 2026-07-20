@@ -35,6 +35,7 @@ describe('build', { timeout: 60_000 }, () => {
       `${fixtureDirPath}/src/index.ts`,
       `import './declare.js';
 import './exported.js';
+import './namespace-local.js';
 import './static-block.js';
 import './type-only.js';
 
@@ -159,6 +160,23 @@ void StaticBlock;
 `
     );
     await fs.promises.writeFile(
+      `${fixtureDirPath}/src/namespace-local.ts`,
+      `namespace LexicalNamespace {
+  const console = { log: (value: string) => process.stdout.write(value) };
+  console.log(':namespace-lexical');
+}
+
+namespace VarNamespace {
+  if (Math.random() > -1) {
+    var console = { log: (value: string) => process.stdout.write(value) };
+  }
+  console.log(':namespace-var');
+}
+
+console.log('namespace-global');
+`
+    );
+    await fs.promises.writeFile(
       `${fixtureDirPath}/src/type-only.ts`,
       `import type { console } from './types.js';
 
@@ -183,6 +201,7 @@ console.log('type-only-global');
     expect(code).to.not.includes('param-default-global');
     expect(code).to.not.includes('power-global');
     expect(code).to.not.includes('static-global');
+    expect(code).to.not.includes('namespace-global');
     expect(code).to.not.includes('type-only-global');
     expect(code).to.includes('optional-member');
     expect(code).to.includes('optional-call');
@@ -192,11 +211,13 @@ console.log('type-only-global');
     expect(code).to.includes(':function');
     expect(code).to.includes(':export');
     expect(code).to.includes(':static');
+    expect(code).to.includes(':namespace-lexical');
+    expect(code).to.includes(':namespace-var');
     expect(code).to.includes(':param-body');
     const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
     expect(execRet.status).toBe(0);
     expect(execRet.stdout.toString()).toBe(
-      ':export:staticelse:member-else:bind-else:optional-call:block:var:function:foo:iife:foo:optional-asi:logger:logger:logger:param-body'
+      ':export:namespace-lexical:namespace-var:staticelse:member-else:bind-else:optional-call:block:var:function:foo:iife:foo:optional-asi:logger:logger:logger:param-body'
     );
   });
 
@@ -463,6 +484,29 @@ export const routes = { helper };
     );
     expect(containedRet.status).not.toBe(0);
     expect(fs.existsSync(`${fixtureDirPath}/scripts/main.ts`)).toBe(true);
+
+    // The default `dist` is removed too, so an input inside it must be refused.
+    await fs.promises.mkdir(`${fixtureDirPath}/dist`, { recursive: true });
+    await fs.promises.writeFile(`${fixtureDirPath}/dist/main.ts`, 'export const main = 1;\n');
+    const defaultRet = await buildWithPackagePathAndGetStatus(
+      fixtureDirPath,
+      'lib',
+      '--input',
+      `${fixtureDirPath}/dist/main.ts`
+    );
+    expect(defaultRet.status).not.toBe(0);
+    expect(fs.existsSync(`${fixtureDirPath}/dist/main.ts`)).toBe(true);
+
+    // An alias of `src` that differs only by symlink must not bypass the guard either.
+    await fs.promises.symlink('src', `${fixtureDirPath}/src-link`);
+    const aliasRet = await buildWithPackagePathAndGetStatus(
+      fixtureDirPath,
+      'lib',
+      '--out-dir',
+      `${fixtureDirPath}/src-link`
+    );
+    expect(aliasRet.status).not.toBe(0);
+    expect(fs.existsSync(`${fixtureDirPath}/src/routes.ts`)).toBe(true);
   });
 
   it('lib with glob --input builds every matched module as an entry', async () => {

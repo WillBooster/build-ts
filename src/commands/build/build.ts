@@ -324,26 +324,41 @@ function resolveOutDirPath(
     console.error('--out-dir must not be empty.');
     process.exit(1);
   }
-  if (!outDirOption) return path.join(packageDirPath, 'dist');
+  const outDirPath = outDirOption ? path.resolve(cwd, outDirOption) : path.join(packageDirPath, 'dist');
 
   // The output directory is removed before building, so refuse locations that would delete sources.
-  // An input may sit outside `src` (e.g. `--input scripts/main.ts`), so it needs its own check.
-  const outDirPath = path.resolve(cwd, outDirOption);
-  const srcDirPath = path.join(packageDirPath, 'src');
-  const containedInput = inputs?.find((input) => containsPath(outDirPath, input));
+  // The default `dist` is checked too, since an input may be given inside it. An input may also sit
+  // outside `src` (e.g. `--input scripts/main.ts`), so it needs its own check.
+  const realOutDirPath = toRealPath(outDirPath);
+  const containedInput = inputs?.find((input) => containsPath(realOutDirPath, toRealPath(input)));
   if (containedInput) {
-    console.error(`--out-dir (${outDirPath}) must not contain the input file (${containedInput}).`);
+    console.error(`The output directory (${outDirPath}) must not contain the input file (${containedInput}).`);
     process.exit(1);
   }
-  if (containsPath(outDirPath, packageDirPath)) {
+  if (!outDirOption) return outDirPath;
+
+  if (containsPath(realOutDirPath, toRealPath(packageDirPath))) {
     console.error(`--out-dir (${outDirPath}) must not contain the package directory (${packageDirPath}).`);
     process.exit(1);
   }
-  if (containsPath(srcDirPath, outDirPath)) {
+  const srcDirPath = path.join(packageDirPath, 'src');
+  if (containsPath(toRealPath(srcDirPath), realOutDirPath)) {
     console.error(`--out-dir (${outDirPath}) must not be inside the source directory (${srcDirPath}).`);
     process.exit(1);
   }
   return outDirPath;
+}
+
+// `fs.rm` resolves the real path, and a symlinked or case-variant alias names the same directory, so
+// containment must be compared on canonical paths. A path that does not exist yet cannot hold any
+// source file, so leaving it as is costs nothing. The lexical path is what gets removed, so that a
+// symlinked output directory loses the link itself rather than its target's contents.
+function toRealPath(targetPath: string): string {
+  try {
+    return fs.realpathSync.native(targetPath);
+  } catch {
+    return targetPath;
+  }
 }
 
 function containsPath(parentPath: string, childPath: string): boolean {

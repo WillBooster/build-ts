@@ -106,7 +106,9 @@ function getConsoleScope(node: AstNode, parent: AstNode | undefined): ConsoleSco
   if (node.type === 'CatchClause') {
     return { end: node.end, shadowsConsole: hasConsoleBindingPattern(node.param), start: node.start };
   }
-  if (node.type === 'StaticBlock') {
+  // A namespace body holds ordinary declarations too, so it scopes a `console` binding like a block.
+  // Only the namespace's own name (`namespace console {}`) is deliberately not treated as a binding.
+  if (node.type === 'StaticBlock' || node.type === 'TSModuleBlock') {
     return {
       end: node.end,
       shadowsConsole: hasBlockConsoleBinding(node, false) || hasHoistedVarConsoleBinding(node),
@@ -150,7 +152,12 @@ function hasHoistedVarConsoleBinding(root: AstNode | undefined): boolean {
   if (!root) return false;
 
   for (const child of getAstNodeChildren(root)) {
-    if (child !== root && (isConsoleFunctionScopeNode(child) || child.type === 'StaticBlock')) continue;
+    if (
+      child !== root &&
+      (isConsoleFunctionScopeNode(child) || child.type === 'StaticBlock' || child.type === 'TSModuleBlock')
+    ) {
+      continue;
+    }
     if (
       child.type === 'VariableDeclaration' &&
       child.kind === 'var' &&

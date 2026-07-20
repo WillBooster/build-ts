@@ -113,7 +113,7 @@ Run `npx build-ts <command> --help` for the full list of options, including envi
 - When `NODE_ENV` is `production`, `console.log`, `console.debug`, and other non-excluded global console methods are removed; `console.error`, `console.info`, and `console.warn` are preserved.
 - When `NODE_ENV` is `test`, `console.log` and other non-excluded methods are removed; `console.debug`, `console.error`, `console.info`, and `console.warn` are preserved.
 - When `NODE_ENV` is any other value, console removal is disabled.
-- Local bindings named `console` (function parameters, imports, `let`/`const`/`var` declarations, and class/function declarations) are always preserved. Bindings introduced only by TypeScript declaration-space constructs (`namespace console`, `enum console`, `import console = ...`) or by a `case` clause are not detected.
+- Local bindings named `console` (function parameters, imports, `let`/`const`/`var` declarations, and class/function declarations) are always preserved. A binding whose name comes from the declaring construct itself (`namespace console`, `enum console`, `import console = ...`) or one declared in a `case` clause is not detected.
 
 Console removal is controlled solely by `NODE_ENV`; there is no `--drop-console` option.
 
