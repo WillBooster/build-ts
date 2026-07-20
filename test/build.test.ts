@@ -1826,7 +1826,13 @@ export const routes = { helper };
     expect(fs.readdirSync(`${bomEntryOutDirPath}/folder`)).toEqual(['entry.d.ts']);
 
     // A package entry pointing back at its own directory through a symlink must not recurse forever.
-    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/package.json`, JSON.stringify({ main: './loop' }));
+    // The valid "main" here must NOT win: the bundler stops consulting later fields once one points
+    // back at the directory, and falls through to "index" instead.
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/folder/package.json`,
+      JSON.stringify({ module: './loop', main: './later.ts' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/later.ts`, 'export const fromLater: number = 4;\n');
     await fs.promises.symlink('.', `${fixtureDirPath}/src/folder/loop`);
     const cyclicEntryOutDirPath = '.tmp/test-fixtures/lib-resolved-input-cyclic-entry';
     await buildWithPackagePath(
@@ -1838,7 +1844,7 @@ export const routes = { helper };
       '--out-dir',
       cyclicEntryOutDirPath
     );
-    await expectFileExists(`${cyclicEntryOutDirPath}/folder/index.d.ts`);
+    expect(fs.readdirSync(`${cyclicEntryOutDirPath}/folder`)).toEqual(['index.d.ts']);
     await fs.promises.rm(`${fixtureDirPath}/src/folder/loop`);
 
     // A malformed package.json must fail rather than fall back to "index": the bundler cannot resolve
@@ -1891,6 +1897,46 @@ export const routes = { helper };
     expect(await fs.promises.readFile(`${outDirPath}/entry.js`, 'utf8')).toContain('sibling');
     await expectFileExists(`${outDirPath}/entry.d.ts`);
     expect(fs.existsSync(`${outDirPath}/entry/index.d.ts`)).toBe(false);
+  });
+
+  it('lib resolves a ".jsx" input to its TypeScript source', async () => {
+    for (const [extension, marker] of [
+      ['tsx', 'from-tsx'],
+      ['ts', 'from-ts'],
+    ]) {
+      const fixtureDirPath = `.tmp/test-fixtures/lib-jsx-input-${extension}`;
+      await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+      await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+      await fs.promises.writeFile(
+        `${fixtureDirPath}/package.json`,
+        JSON.stringify({ type: 'module', packageManager: 'yarn@4.17.0' })
+      );
+      await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+      await fs.promises.writeFile(
+        `${fixtureDirPath}/tsconfig.json`,
+        JSON.stringify({
+          compilerOptions: { module: 'esnext', moduleResolution: 'bundler', strict: true, target: 'es2022' },
+          include: ['src/**/*'],
+        })
+      );
+      await fs.promises.writeFile(`${fixtureDirPath}/src/entry.${extension}`, `export const v = "${marker}";\n`);
+
+      // The bundler substitutes the TypeScript source for the missing ".jsx" file, so declaration
+      // generation must not receive the unresolved ".jsx" path (which fails with TS6504).
+      const outDirPath = `${fixtureDirPath}-out`;
+      await buildWithPackagePath(
+        fixtureDirPath,
+        'lib',
+        '--module-type',
+        'esm',
+        '--input',
+        `${fixtureDirPath}/src/entry.jsx`,
+        '--out-dir',
+        outDirPath
+      );
+      expect(await fs.promises.readFile(`${outDirPath}/entry.js`, 'utf8')).toContain(marker);
+      await expectFileExists(`${outDirPath}/entry.d.ts`);
+    }
   });
 
   it('functions fails on conflicting entry names instead of silently dropping one', async () => {

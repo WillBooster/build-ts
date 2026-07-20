@@ -8,6 +8,9 @@ import path from 'node:path';
 export const bundlerExtensionAlias: Record<string, string[]> = {
   '.cjs': ['.cjs', '.cts'],
   '.js': ['.js', '.ts', '.tsx'],
+  // The bundler substitutes TypeScript sources for a missing `.jsx` file even without this entry;
+  // spelling it out keeps declaration resolution from having to rediscover the same precedence.
+  '.jsx': ['.jsx', '.ts', '.tsx'],
   '.mjs': ['.mjs', '.mts'],
 };
 export const bundlerExtensions = ['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'];
@@ -43,9 +46,16 @@ function resolveDirectoryPath(dirPath: string, visitedDirPaths: Set<string>): st
   const packageJson = readPackageJson(path.join(dirPath, 'package.json'));
   for (const field of bundlerMainFields) {
     const entry = packageJson?.[field];
+    if (typeof entry !== 'string') continue;
+
+    // An entry pointing back at an enclosing directory (directly or through a symlink) makes the
+    // bundler fall through to the main files rather than consider the remaining fields, so a later
+    // field must not win here.
+    const entryPath = path.resolve(dirPath, entry);
+    if (visitedDirPaths.has(toCanonicalDirPath(entryPath))) break;
+
     // The entry itself may be extension-aliased or another directory, so it is resolved recursively.
-    const resolvedPath =
-      typeof entry === 'string' ? resolveSourceFilePath(path.resolve(dirPath, entry), visitedDirPaths) : undefined;
+    const resolvedPath = resolveSourceFilePath(entryPath, visitedDirPaths);
     if (resolvedPath) return resolvedPath;
   }
   for (const mainFile of bundlerMainFiles) {
