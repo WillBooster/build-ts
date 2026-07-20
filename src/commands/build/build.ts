@@ -75,7 +75,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
   const inputs = verifyInput(argv, cwd, packageDirPath);
   const targetDetail = detectTargetDetail(targetCategory, inputs, packageDirPath);
-  const outDirPath = resolveOutDirPath(argv, cwd, packageDirPath);
+  const outDirPath = resolveOutDirPath(argv, cwd, packageDirPath, inputs);
   // Restrict declaration files to the entry files (and their imports) only when inputs are explicit,
   // to keep the default behavior of emitting declarations for all files under src/.
   const declarationInputs = argv.input?.length ? inputs : undefined;
@@ -281,17 +281,17 @@ function watchRolldown(
           break;
         }
         case 'BUNDLE_END': {
-          if (argv.silent) break;
-
-          console.info(
-            styleText(
-              'green',
-              `Created ${styleText('bold', pathToRelativePath(event.output).join(', '))} in ${styleText(
-                'bold',
-                formatDuration(event.duration)
-              )}`
-            )
-          );
+          if (!argv.silent) {
+            console.info(
+              styleText(
+                'green',
+                `Created ${styleText('bold', pathToRelativePath(event.output).join(', '))} in ${styleText(
+                  'bold',
+                  formatDuration(event.duration)
+                )}`
+              )
+            );
+          }
 
           if (targetDetail !== 'app-node' && targetDetail !== 'functions') {
             await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs);
@@ -316,17 +316,36 @@ function watchRolldown(
   });
 }
 
-function resolveOutDirPath(argv: ArgumentsType<AnyBuilderType>, cwd: string, packageDirPath: string): string {
+function resolveOutDirPath(
+  argv: ArgumentsType<AnyBuilderType>,
+  cwd: string,
+  packageDirPath: string,
+  inputs?: string[]
+): string {
   if (!argv.outDir) return path.join(packageDirPath, 'dist');
 
+  // The output directory is removed before building, so refuse locations that would delete source files.
   const outDirPath = path.resolve(cwd, argv.outDir);
-  // The output directory is removed before building, so refuse a directory containing the package.
-  const relativePath = path.relative(outDirPath, packageDirPath);
-  if (relativePath === '' || (!relativePath.startsWith('..') && !path.isAbsolute(relativePath))) {
+  if (containsPath(outDirPath, packageDirPath)) {
     console.error(`--out-dir (${outDirPath}) must not contain the package directory (${packageDirPath}).`);
     process.exit(1);
   }
+  const srcDirPath = path.join(packageDirPath, 'src');
+  if (containsPath(srcDirPath, outDirPath)) {
+    console.error(`--out-dir (${outDirPath}) must not be inside the source directory (${srcDirPath}).`);
+    process.exit(1);
+  }
+  const containedInput = inputs?.find((input) => containsPath(outDirPath, input));
+  if (containedInput) {
+    console.error(`--out-dir (${outDirPath}) must not contain the input file (${containedInput}).`);
+    process.exit(1);
+  }
   return outDirPath;
+}
+
+function containsPath(parentPath: string, childPath: string): boolean {
+  const relativePath = path.relative(parentPath, childPath);
+  return relativePath === '' || (!relativePath.startsWith('..') && !path.isAbsolute(relativePath));
 }
 
 function getInputFiles(input: RolldownOptions['input']): string[] {

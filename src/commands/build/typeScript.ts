@@ -91,10 +91,14 @@ async function createTypeScriptNativeConfig(
 ): Promise<Record<string, unknown>> {
   const compilerOptions: Record<string, unknown> = {
     declaration: true,
+    // An inherited `declarationDir` would silently redirect the output away from `outDir`.
+    declarationDir: outDir,
     emitDeclarationOnly: true,
     noEmit: false,
     noEmitOnError: true,
     outDir,
+    // TypeScript 7 requires an explicit `rootDir` (TS5011). Entries importing files outside src/
+    // (e.g. sibling packages in declaration-only mode) fail with TS6059; see the README limitation.
     rootDir: 'src',
   };
   if (await usesNodeProtocolImport(path.join(projectDirPath, 'src'))) {
@@ -109,8 +113,9 @@ async function createTypeScriptNativeConfig(
     extends: toRelativeConfigPath(path.dirname(configFile), configFile),
     // With `files`, tsc also emits declarations for files transitively imported from the entries,
     // so the output is restricted to what the bundled JavaScript actually contains.
+    // `include` must be emptied since an inherited `include` would add files back to the program.
     ...(inputs?.length
-      ? { files: inputs.map((input) => path.resolve(projectDirPath, input).replaceAll(path.sep, '/')) }
+      ? { files: inputs.map((input) => path.resolve(projectDirPath, input).replaceAll(path.sep, '/')), include: [] }
       : { include: ['src/**/*'] }),
   };
 }
@@ -172,6 +177,8 @@ async function collectTypePackages(typeRootsDirPath: string): Promise<string[]> 
   }
 }
 
+// `fromDirPath` is always the directory containing `toFilePath`, so the result is a bare file name
+// prefixed with `./`; a cross-drive absolute result is impossible.
 function toRelativeConfigPath(fromDirPath: string, toFilePath: string): string {
   const relativePath = path.relative(fromDirPath, toFilePath).replaceAll(path.sep, '/');
   return relativePath.startsWith('.') ? relativePath : `./${relativePath}`;

@@ -1563,7 +1563,16 @@ process.stdout.write(marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/tsconfig.json`,
       JSON.stringify({
-        compilerOptions: { module: 'esnext', moduleResolution: 'bundler', strict: true, target: 'es2022' },
+        // `declarationDir` and `include` must be overridden by build-ts; otherwise declarations
+        // would go to `configured-types` and cover `unreachable.ts` despite the explicit `--input`.
+        compilerOptions: {
+          declarationDir: 'configured-types',
+          module: 'esnext',
+          moduleResolution: 'bundler',
+          strict: true,
+          target: 'es2022',
+        },
+        include: ['src/**/*'],
       })
     );
     await fs.promises.writeFile(
@@ -1614,6 +1623,18 @@ export const routes = { helper };
     );
     const typesFileNames = await fs.promises.readdir(typesOutDirPath);
     expect(typesFileNames.toSorted()).toEqual(['helper.d.ts', 'routes.d.ts']);
+    expect(fs.existsSync(`${fixtureDirPath}/configured-types`)).toBe(false);
+
+    const failedRet = await buildWithPackagePathAndGetStatus(
+      fixtureDirPath,
+      'lib',
+      '--input',
+      `${fixtureDirPath}/src/routes.ts`,
+      '--out-dir',
+      `${fixtureDirPath}/src`
+    );
+    expect(failedRet.status).not.toBe(0);
+    expect(fs.existsSync(`${fixtureDirPath}/src/routes.ts`)).toBe(true);
   });
 
   it('lib-react-ts-entry', async () => {
