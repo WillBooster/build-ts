@@ -41,7 +41,11 @@ export const functions: CommandModule<unknown, ArgumentsType<typeof functionsBui
         console.error(`Failed to parse package.json (${packageJsonPath}).`);
         process.exit(1);
       }
-      await generatePackageJsonForFunctions(packageDirPath, packageJson, argv.moduleType);
+      await generatePackageJsonForFunctions(
+        resolveOutDirPath(argv, process.cwd(), packageDirPath, undefined, 'functions'),
+        packageJson,
+        argv.moduleType
+      );
     } else {
       return build(argv, 'functions');
     }
@@ -75,6 +79,10 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
   const inputs = verifyInput(argv, cwd, packageDirPath);
   const targetDetail = detectTargetDetail(targetCategory, inputs, packageDirPath);
+  const outDirPath = resolveOutDirPath(argv, cwd, packageDirPath, inputs, targetCategory);
+  // Restrict declaration files to the entry files (and their imports) only when inputs are explicit,
+  // to keep the default behavior of emitting declarations for all files under src/.
+  const declarationInputs = argv.input?.length ? inputs : undefined;
 
   if (verbose) {
     console.info('argv:', argv);
@@ -97,7 +105,13 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   process.env.BUILD_TS_TARGET_CATEGORY = targetCategory;
   process.env.BUILD_TS_TARGET_DETAIL = targetDetail;
 
-  const outputOptionsList = getOutputOptionsList(argv, targetDetail, packageDirPath, isEsmPackage);
+  const declarationOnly = 'declarationOnly' in argv && argv.declarationOnly;
+  if (declarationOnly && argv.watch) {
+    console.error('--declaration-only cannot be used with --watch.');
+    process.exit(1);
+  }
+
+  const outputOptionsList = getOutputOptionsList(argv, targetDetail, outDirPath, isEsmPackage, packageDirPath);
   if (verbose) {
     console.info('OutputOptions:', outputOptionsList);
   }
@@ -107,9 +121,24 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   }
 
   process.chdir(packageDirPath);
-  await fs.promises.rm(path.join(packageDirPath, 'dist'), { recursive: true, force: true });
+  await fs.promises.rm(outDirPath, { recursive: true, force: true });
   if (targetDetail === 'functions') {
-    await generatePackageJsonForFunctions(packageDirPath, packageJson, argv.moduleType);
+    await generatePackageJsonForFunctions(outDirPath, packageJson, argv.moduleType);
+  }
+
+  if (declarationOnly) {
+    if (!argv.silent) {
+      console.info(
+        styleText(
+          'cyan',
+          `Generates declaration files → ${styleText('bold', path.relative(packageDirPath, outDirPath))}\non ${packageDirPath} ...`
+        )
+      );
+    }
+    if (!(await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs))) {
+      process.exit(1);
+    }
+    return;
   }
 
   const options: RolldownOptions = {
@@ -150,7 +179,17 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     );
   };
   if (argv.watch) {
-    watchRolldown(argv, targetDetail, packageDirPath, options, outputOptionsList, pathToRelativePath, printBundlingMessage);
+    watchRolldown(
+      argv,
+      targetDetail,
+      packageDirPath,
+      outDirPath,
+      declarationInputs,
+      options,
+      outputOptionsList,
+      pathToRelativePath,
+      printBundlingMessage
+    );
   } else {
     if (!argv.silent) {
       printBundlingMessage(inputs);
@@ -184,7 +223,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     if (
       targetDetail !== 'app-node' &&
       targetDetail !== 'functions' &&
-      !(await generateDeclarationFiles(argv, packageDirPath))
+      !(await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs))
     ) {
       process.exit(1);
     }
@@ -203,6 +242,8 @@ function watchRolldown(
   argv: ArgumentsType<AnyBuilderType>,
   targetDetail: string,
   packageDirPath: string,
+  outDirPath: string,
+  declarationInputs: string[] | undefined,
   options: RolldownOptions,
   outputOptionsList: OutputOptions[],
   pathToRelativePath: (paths: string | Readonly<string[]>) => string[],
@@ -244,20 +285,20 @@ function watchRolldown(
           break;
         }
         case 'BUNDLE_END': {
-          if (argv.silent) break;
-
-          console.info(
-            styleText(
-              'green',
-              `Created ${styleText('bold', pathToRelativePath(event.output).join(', '))} in ${styleText(
-                'bold',
-                formatDuration(event.duration)
-              )}`
-            )
-          );
+          if (!argv.silent) {
+            console.info(
+              styleText(
+                'green',
+                `Created ${styleText('bold', pathToRelativePath(event.output).join(', '))} in ${styleText(
+                  'bold',
+                  formatDuration(event.duration)
+                )}`
+              )
+            );
+          }
 
           if (targetDetail !== 'app-node' && targetDetail !== 'functions') {
-            await generateDeclarationFiles(argv, packageDirPath);
+            await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs);
           }
           break;
         }
@@ -277,6 +318,86 @@ function watchRolldown(
       }
     }
   });
+}
+
+function resolveOutDirPath(
+  argv: ArgumentsType<AnyBuilderType>,
+  cwd: string,
+  packageDirPath: string,
+  inputs?: string[],
+  targetCategory?: TargetCategory
+): string {
+  if (Array.isArray(argv.outDir)) {
+    console.error('Multiple --out-dir options are not allowed.');
+    process.exit(1);
+  }
+  // yargs also accepts `--no-out-dir`, which yields `false` despite the declared string type.
+  const outDirOption = typeof argv.outDir === 'string' ? argv.outDir : undefined;
+  if (outDirOption === '') {
+    console.error('--out-dir must not be empty.');
+    process.exit(1);
+  }
+
+  // The output directory is removed before building, so refuse locations that would delete source files.
+  // Containment checks compare both the lexical and the canonical (symlink-resolved) forms: canonical
+  // ones catch symlinked parent components (`fs.rm` follows them), and lexical ones catch an output path
+  // that is itself a symlink inside a protected directory. The lexical path is returned so that removing
+  // a symlinked output directory deletes the symlink itself rather than its target's contents.
+  const lexicalOutDirPath = path.resolve(cwd, outDirOption ?? path.join(packageDirPath, 'dist'));
+  const outDirPath = toCanonicalPath(lexicalOutDirPath);
+  const containedInput = inputs?.find(
+    (input) => containsPath(outDirPath, toCanonicalPath(input)) || containsPath(lexicalOutDirPath, input)
+  );
+  if (containedInput) {
+    console.error(`The output directory (${outDirPath}) must not contain the input file (${containedInput}).`);
+    process.exit(1);
+  }
+  if (!outDirOption) return lexicalOutDirPath;
+
+  const canonicalPackageDirPath = toCanonicalPath(packageDirPath);
+  if (containsPath(outDirPath, canonicalPackageDirPath) || containsPath(lexicalOutDirPath, packageDirPath)) {
+    console.error(`--out-dir (${outDirPath}) must not contain the package directory (${canonicalPackageDirPath}).`);
+    process.exit(1);
+  }
+  // `src` itself may be a symlink, so it needs its own canonicalization.
+  const srcDirPath = toCanonicalPath(path.join(canonicalPackageDirPath, 'src'));
+  if (containsPath(srcDirPath, outDirPath) || containsPath(path.join(packageDirPath, 'src'), lexicalOutDirPath)) {
+    console.error(`--out-dir (${outDirPath}) must not be inside the source directory (${srcDirPath}).`);
+    process.exit(1);
+  }
+  // A package.json at the output directory root indicates another package's directory. The functions
+  // target is exempt because it generates a package.json there itself.
+  if (targetCategory !== 'functions' && fs.existsSync(path.join(outDirPath, 'package.json'))) {
+    console.error(`--out-dir (${outDirPath}) contains a package.json, so it looks like a package directory.`);
+    process.exit(1);
+  }
+  return lexicalOutDirPath;
+}
+
+// Resolves symlinks in the longest existing ancestor of the given path, keeping the non-existent tail.
+function toCanonicalPath(targetPath: string): string {
+  const suffixes: string[] = [];
+  let currentPath = targetPath;
+  while (!fs.existsSync(currentPath)) {
+    suffixes.unshift(path.basename(currentPath));
+    const parentPath = path.dirname(currentPath);
+    if (parentPath === currentPath) break;
+    currentPath = parentPath;
+  }
+  try {
+    currentPath = fs.realpathSync(currentPath);
+  } catch {
+    // Keep the original path when it cannot be resolved (e.g. removed concurrently).
+  }
+  return path.join(currentPath, ...suffixes);
+}
+
+function containsPath(parentPath: string, childPath: string): boolean {
+  const relativePath = path.relative(parentPath, childPath);
+  if (relativePath === '') return true;
+  if (path.isAbsolute(relativePath)) return false;
+  // Only an actual `..` segment means "outside"; a child name like `..foo` also starts with `..`.
+  return relativePath !== '..' && !relativePath.startsWith(`..${path.sep}`);
 }
 
 function getInputFiles(input: RolldownOptions['input']): string[] {
@@ -338,7 +459,7 @@ function doesDirectoryContainTsx(dirPath: string): boolean {
 }
 
 async function generatePackageJsonForFunctions(
-  packageDirPath: string,
+  outDirPath: string,
   packageJson: PackageJson,
   moduleType: string | undefined
 ): Promise<void> {
@@ -352,17 +473,17 @@ async function generatePackageJsonForFunctions(
   // devDependencies are not required since we are building code before deploying.
   delete packageJson.devDependencies;
 
-  await fs.promises.mkdir(path.join(packageDirPath, 'dist'), { recursive: true });
-  await fs.promises.writeFile(path.join(packageDirPath, 'dist', 'package.json'), JSON.stringify(packageJson));
+  await fs.promises.mkdir(outDirPath, { recursive: true });
+  await fs.promises.writeFile(path.join(outDirPath, 'package.json'), JSON.stringify(packageJson));
 }
 
 function getOutputOptionsList(
   argv: ArgumentsType<AnyBuilderType>,
   targetDetail: TargetDetail,
-  packageDirPath: string,
-  isEsmPackage: boolean
+  outDirPath: string,
+  isEsmPackage: boolean,
+  packageDirPath: string
 ): OutputOptions[] {
-  const outDirPath = path.join(packageDirPath, 'dist');
   if (targetDetail === 'app-node' || targetDetail === 'functions') {
     const esmOutput = isEsmOutput(isEsmPackage, argv.moduleType);
     return [

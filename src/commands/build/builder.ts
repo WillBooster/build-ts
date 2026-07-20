@@ -32,6 +32,11 @@ export const builder = {
     description: 'Additional external dependencies.',
     type: 'array',
   },
+  outDir: {
+    description: 'Output directory. Defaults to "dist" in the package directory.',
+    type: 'string',
+    alias: 'o',
+  },
   inline: {
     description: 'Environment variables to be inlined.',
     type: 'array',
@@ -87,6 +92,11 @@ export const libBuilder = {
     description: 'Whether to use .js in cjs and/or esm: either (default), both, or none.',
     type: 'string',
     alias: 'j',
+  },
+  declarationOnly: {
+    description: 'Emit only declaration (.d.ts) files without bundling JavaScript.',
+    type: 'boolean',
+    default: false,
   },
 } as const;
 

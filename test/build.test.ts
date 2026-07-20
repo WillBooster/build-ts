@@ -1526,6 +1526,12 @@ process.stdout.write(marker);
     );
     await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
     await fs.promises.writeFile(
+      `${fixtureDirPath}/tsconfig.json`,
+      JSON.stringify({
+        compilerOptions: { module: 'esnext', moduleResolution: 'bundler', strict: true, target: 'es2022' },
+      })
+    );
+    await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `export function run() {
   return [1, 2, 3].includes(2) && [1].flatMap((value) => [value]).at(-1) === 1;
@@ -1546,6 +1552,95 @@ process.stdout.write(marker);
     );
     expect(cjsRet.status).toBe(0);
     expect(esmRet.status).toBe(0);
+  });
+
+  it('lib with --out-dir and --declaration-only', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/lib-custom-out';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({
+        type: 'module',
+        packageManager: 'yarn@4.17.0',
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/tsconfig.json`,
+      JSON.stringify({
+        // `declarationDir` and `include` must be overridden by build-ts; otherwise declarations
+        // would go to `configured-types` and cover `unreachable.ts` despite the explicit `--input`.
+        compilerOptions: {
+          declarationDir: 'configured-types',
+          module: 'esnext',
+          moduleResolution: 'bundler',
+          strict: true,
+          target: 'es2022',
+        },
+        include: ['src/**/*'],
+      })
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/routes.ts`,
+      `import { helper } from './helper.js';
+export const routes = { helper };
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/helper.ts`,
+      'export function helper(): number {\n  return 1;\n}\n'
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/unreachable.ts`, 'export const secret = 42;\n');
+
+    const runtimeOutDirPath = '.tmp/test-fixtures/lib-custom-out-runtime';
+    await fs.promises.rm(runtimeOutDirPath, { recursive: true, force: true });
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--module-type',
+      'esm',
+      '--input',
+      `${fixtureDirPath}/src/routes.ts`,
+      '--out-dir',
+      runtimeOutDirPath
+    );
+    const runtimeFileNames = await fs.promises.readdir(runtimeOutDirPath);
+    expect(runtimeFileNames.toSorted()).toEqual([
+      'helper.d.ts',
+      'helper.js',
+      'helper.js.map',
+      'routes.d.ts',
+      'routes.js',
+      'routes.js.map',
+    ]);
+    expect(fs.existsSync(`${fixtureDirPath}/dist`)).toBe(false);
+
+    const typesOutDirPath = '.tmp/test-fixtures/lib-custom-out-types';
+    await fs.promises.rm(typesOutDirPath, { recursive: true, force: true });
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/routes.ts`,
+      '--out-dir',
+      typesOutDirPath
+    );
+    const typesFileNames = await fs.promises.readdir(typesOutDirPath);
+    expect(typesFileNames.toSorted()).toEqual(['helper.d.ts', 'routes.d.ts']);
+    expect(fs.existsSync(`${fixtureDirPath}/configured-types`)).toBe(false);
+
+    const failedRet = await buildWithPackagePathAndGetStatus(
+      fixtureDirPath,
+      'lib',
+      '--input',
+      `${fixtureDirPath}/src/routes.ts`,
+      '--out-dir',
+      `${fixtureDirPath}/src`
+    );
+    expect(failedRet.status).not.toBe(0);
+    expect(fs.existsSync(`${fixtureDirPath}/src/routes.ts`)).toBe(true);
   });
 
   it('lib-react-ts-entry', async () => {
