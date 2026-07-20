@@ -1825,6 +1825,47 @@ export const routes = { helper };
     );
     expect(fs.readdirSync(`${bomEntryOutDirPath}/folder`)).toEqual(['entry.d.ts']);
 
+    // A package entry field reaching another package directory does NOT honor that package's own
+    // entry fields; resolution falls through to its main files instead.
+    await fs.promises.mkdir(`${fixtureDirPath}/src/folder/nested`, { recursive: true });
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/package.json`, JSON.stringify({ main: './nested' }));
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/folder/nested/package.json`,
+      JSON.stringify({ main: './chosen.ts' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/nested/chosen.ts`, 'export const chosen = 5;\n');
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/nested/index.ts`, 'export const nested = 6;\n');
+    const nestedEntryOutDirPath = '.tmp/test-fixtures/lib-resolved-input-nested-entry';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/folder`,
+      '--out-dir',
+      nestedEntryOutDirPath
+    );
+    expect(fs.readdirSync(`${nestedEntryOutDirPath}/folder/nested`)).toEqual(['index.d.ts']);
+    await fs.promises.rm(`${fixtureDirPath}/src/folder/nested`, { recursive: true });
+
+    // Duplicate entry-field keys resolve to the first occurrence, unlike JSON.parse's last-wins.
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/folder/package.json`,
+      '{ "main": "./entry.ts", "main": "./later.ts" }'
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/later.ts`, 'export const fromLater: number = 7;\n');
+    const duplicateKeyOutDirPath = '.tmp/test-fixtures/lib-resolved-input-duplicate-key';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/folder`,
+      '--out-dir',
+      duplicateKeyOutDirPath
+    );
+    expect(fs.readdirSync(`${duplicateKeyOutDirPath}/folder`)).toEqual(['entry.d.ts']);
+
     // A package entry pointing back at its own directory through a symlink must not recurse forever.
     // The valid "main" here must NOT win: the bundler stops consulting later fields once one points
     // back at the directory, and falls through to "index" instead.
