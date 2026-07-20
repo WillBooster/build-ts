@@ -327,15 +327,23 @@ function resolveOutDirPath(
   inputs?: string[],
   targetCategory?: TargetCategory
 ): string {
+  if (argv.outDir === '') {
+    console.error('--out-dir must not be empty.');
+    process.exit(1);
+  }
+
   // The output directory is removed before building, so refuse locations that would delete source files.
-  // Comparisons use canonical (symlink-resolved) paths because `fs.rm` follows symlinks in parent components.
-  const outDirPath = toCanonicalPath(path.resolve(cwd, argv.outDir ?? path.join(packageDirPath, 'dist')));
+  // Containment checks use canonical (symlink-resolved) paths because `fs.rm` follows symlinks in parent
+  // components, but the lexical path is returned so that removing a symlinked output directory deletes
+  // the symlink itself rather than its target's contents.
+  const lexicalOutDirPath = path.resolve(cwd, argv.outDir ?? path.join(packageDirPath, 'dist'));
+  const outDirPath = toCanonicalPath(lexicalOutDirPath);
   const containedInput = inputs?.find((input) => containsPath(outDirPath, toCanonicalPath(input)));
   if (containedInput) {
     console.error(`The output directory (${outDirPath}) must not contain the input file (${containedInput}).`);
     process.exit(1);
   }
-  if (!argv.outDir) return outDirPath;
+  if (!argv.outDir) return lexicalOutDirPath;
 
   const canonicalPackageDirPath = toCanonicalPath(packageDirPath);
   if (containsPath(outDirPath, canonicalPackageDirPath)) {
@@ -354,7 +362,7 @@ function resolveOutDirPath(
     console.error(`--out-dir (${outDirPath}) contains a package.json, so it looks like a package directory.`);
     process.exit(1);
   }
-  return outDirPath;
+  return lexicalOutDirPath;
 }
 
 // Resolves symlinks in the longest existing ancestor of the given path, keeping the non-existent tail.
