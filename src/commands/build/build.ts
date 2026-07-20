@@ -41,7 +41,11 @@ export const functions: CommandModule<unknown, ArgumentsType<typeof functionsBui
         console.error(`Failed to parse package.json (${packageJsonPath}).`);
         process.exit(1);
       }
-      await generatePackageJsonForFunctions(resolveOutDirPath(argv, process.cwd(), packageDirPath), packageJson, argv.moduleType);
+      await generatePackageJsonForFunctions(
+        resolveOutDirPath(argv, process.cwd(), packageDirPath, undefined, 'functions'),
+        packageJson,
+        argv.moduleType
+      );
     } else {
       return build(argv, 'functions');
     }
@@ -75,7 +79,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
   const inputs = verifyInput(argv, cwd, packageDirPath);
   const targetDetail = detectTargetDetail(targetCategory, inputs, packageDirPath);
-  const outDirPath = resolveOutDirPath(argv, cwd, packageDirPath, inputs);
+  const outDirPath = resolveOutDirPath(argv, cwd, packageDirPath, inputs, targetCategory);
   // Restrict declaration files to the entry files (and their imports) only when inputs are explicit,
   // to keep the default behavior of emitting declarations for all files under src/.
   const declarationInputs = argv.input?.length ? inputs : undefined;
@@ -320,32 +324,62 @@ function resolveOutDirPath(
   argv: ArgumentsType<AnyBuilderType>,
   cwd: string,
   packageDirPath: string,
-  inputs?: string[]
+  inputs?: string[],
+  targetCategory?: TargetCategory
 ): string {
   if (!argv.outDir) return path.join(packageDirPath, 'dist');
 
   // The output directory is removed before building, so refuse locations that would delete source files.
-  const outDirPath = path.resolve(cwd, argv.outDir);
-  if (containsPath(outDirPath, packageDirPath)) {
-    console.error(`--out-dir (${outDirPath}) must not contain the package directory (${packageDirPath}).`);
+  // Comparisons use canonical (symlink-resolved) paths because `fs.rm` follows symlinks in parent components.
+  const outDirPath = toCanonicalPath(path.resolve(cwd, argv.outDir));
+  const canonicalPackageDirPath = toCanonicalPath(packageDirPath);
+  if (containsPath(outDirPath, canonicalPackageDirPath)) {
+    console.error(`--out-dir (${outDirPath}) must not contain the package directory (${canonicalPackageDirPath}).`);
     process.exit(1);
   }
-  const srcDirPath = path.join(packageDirPath, 'src');
+  const srcDirPath = path.join(canonicalPackageDirPath, 'src');
   if (containsPath(srcDirPath, outDirPath)) {
     console.error(`--out-dir (${outDirPath}) must not be inside the source directory (${srcDirPath}).`);
     process.exit(1);
   }
-  const containedInput = inputs?.find((input) => containsPath(outDirPath, input));
+  const containedInput = inputs?.find((input) => containsPath(outDirPath, toCanonicalPath(input)));
   if (containedInput) {
     console.error(`--out-dir (${outDirPath}) must not contain the input file (${containedInput}).`);
+    process.exit(1);
+  }
+  // A package.json at the output directory root indicates another package's directory. The functions
+  // target is exempt because it generates a package.json there itself.
+  if (targetCategory !== 'functions' && fs.existsSync(path.join(outDirPath, 'package.json'))) {
+    console.error(`--out-dir (${outDirPath}) contains a package.json, so it looks like a package directory.`);
     process.exit(1);
   }
   return outDirPath;
 }
 
+// Resolves symlinks in the longest existing ancestor of the given path, keeping the non-existent tail.
+function toCanonicalPath(targetPath: string): string {
+  const suffixes: string[] = [];
+  let currentPath = targetPath;
+  while (!fs.existsSync(currentPath)) {
+    suffixes.unshift(path.basename(currentPath));
+    const parentPath = path.dirname(currentPath);
+    if (parentPath === currentPath) break;
+    currentPath = parentPath;
+  }
+  try {
+    currentPath = fs.realpathSync(currentPath);
+  } catch {
+    // Keep the original path when it cannot be resolved (e.g. removed concurrently).
+  }
+  return path.join(currentPath, ...suffixes);
+}
+
 function containsPath(parentPath: string, childPath: string): boolean {
   const relativePath = path.relative(parentPath, childPath);
-  return relativePath === '' || (!relativePath.startsWith('..') && !path.isAbsolute(relativePath));
+  if (relativePath === '') return true;
+  if (path.isAbsolute(relativePath)) return false;
+  // Only an actual `..` segment means "outside"; a child name like `..foo` also starts with `..`.
+  return relativePath !== '..' && !relativePath.startsWith(`..${path.sep}`);
 }
 
 function getInputFiles(input: RolldownOptions['input']): string[] {

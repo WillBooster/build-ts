@@ -112,10 +112,14 @@ async function createTypeScriptNativeConfig(
     compilerOptions,
     extends: toRelativeConfigPath(path.dirname(configFile), configFile),
     // With `files`, tsc also emits declarations for files transitively imported from the entries,
-    // so the output is restricted to what the bundled JavaScript actually contains.
-    // `include` must be emptied since an inherited `include` would add files back to the program.
+    // so the output is restricted to what the bundled JavaScript actually contains. `include` must be
+    // overridden since an inherited `include` would add files back to the program; only ambient
+    // declaration files are kept because entries may rely on their global types without importing them.
     ...(inputs?.length
-      ? { files: inputs.map((input) => path.resolve(projectDirPath, input).replaceAll(path.sep, '/')), include: [] }
+      ? {
+          files: inputs.map((input) => path.resolve(projectDirPath, input).replaceAll(path.sep, '/')),
+          include: ['src/**/*.d.ts'],
+        }
       : { include: ['src/**/*'] }),
   };
 }
