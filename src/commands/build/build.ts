@@ -438,7 +438,9 @@ function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDi
         .sort()
         .map((m) => path.resolve(cwd, m));
       if (matches.length > 0) return matches;
-      if (/[*?{[(!@+]/.test(raw)) {
+      // Error only on actual glob syntax ("*", "?", "[...]", "{...}", or extglob "@(...)" etc.);
+      // characters like a bare "+" or "@" are ordinary filename characters.
+      if (/[*?]|[@!+]\(|\[.*\]|\{.*\}/.test(raw)) {
         console.error(`No files matched the input pattern: ${raw}`);
         process.exit(1);
       }
