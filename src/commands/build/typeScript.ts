@@ -91,10 +91,14 @@ async function createTypeScriptNativeConfig(
   inputs?: string[]
 ): Promise<Record<string, unknown>> {
   const compilerOptions: Record<string, unknown> = {
+    // An inherited `composite` would require listing every imported file explicitly (TS6307) and,
+    // like `incremental`, would write needless .tsbuildinfo files for this one-shot compilation.
+    composite: false,
     declaration: true,
     // An inherited `declarationDir` would silently redirect the output away from `outDir`.
     declarationDir: outDir,
     emitDeclarationOnly: true,
+    incremental: false,
     noEmit: false,
     noEmitOnError: true,
     outDir,

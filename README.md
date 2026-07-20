@@ -103,7 +103,7 @@ npx build-ts run src/main.ts -- --foo bar
 | `--js-extension`     | `-j`  | `either` | Which format uses the `.js` extension: `either`, `both`, or `none`. Other formats use `.cjs` / `.mjs`. Avoid `both` together with `--module-type both`, since the two formats would write the same `.js` files. |
 | `--declaration-only` |       | `false`  | Emit only declaration (`.d.ts`) files without bundling JavaScript.                                                                                                                                              |
 
-When `--input` is given explicitly, declaration files are generated only for the entry files and the files they (transitively) import, matching the bundled JavaScript. Without `--input`, declarations cover all files under `src/`.
+When `--input` is given explicitly, declaration files are generated only for the entry files and the files they (transitively) import, matching the bundled JavaScript. Without `--input`, declarations cover all files under `src/`. Ambient declaration files (`src/**/*.d.{ts,mts,cts}`) always participate in type checking, so files they import may also emit declarations.
 
 Declaration generation compiles with `rootDir: src`, so every file (transitively) imported by the entries must live under the package's `src/`; entries importing sibling-package sources fail with `TS6059`.
 
