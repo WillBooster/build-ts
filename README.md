@@ -76,6 +76,7 @@ npx build-ts run src/main.ts -- --foo bar
 | Option                           | Alias | Default  | Description                                                                                            |
 | -------------------------------- | ----- | -------- | ------------------------------------------------------------------------------------------------------ |
 | `--input`                        | `-i`  | (auto)   | Source files to build. The first file is the main entry. Defaults to `src/index.{ts,tsx,cts,mts}`.     |
+| `--out-dir`                      | `-o`  | `dist`   | Output directory, resolved from the current directory (e.g., `../../dist/shared`).                     |
 | `--module-type`                  | `-m`  | (varies) | Output module format: `esm`, `cjs`, `either` (follow `package.json`'s `type`), or `both` (`lib` only). |
 | `--minify` / `--no-minify`       |       | `true`   | Enable/disable minification.                                                                           |
 | `--sourcemap` / `--no-sourcemap` |       | `true`   | Enable/disable sourcemaps.                                                                             |
@@ -97,9 +98,12 @@ npx build-ts run src/main.ts -- --foo bar
 
 ### `lib`-specific options
 
-| Option           | Alias | Default  | Description                                                                                                                                                                                                     |
-| ---------------- | ----- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--js-extension` | `-j`  | `either` | Which format uses the `.js` extension: `either`, `both`, or `none`. Other formats use `.cjs` / `.mjs`. Avoid `both` together with `--module-type both`, since the two formats would write the same `.js` files. |
+| Option               | Alias | Default  | Description                                                                                                                                                                                                     |
+| -------------------- | ----- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--js-extension`     | `-j`  | `either` | Which format uses the `.js` extension: `either`, `both`, or `none`. Other formats use `.cjs` / `.mjs`. Avoid `both` together with `--module-type both`, since the two formats would write the same `.js` files. |
+| `--declaration-only` |       | `false`  | Emit only declaration (`.d.ts`) files without bundling JavaScript.                                                                                                                                              |
+
+When `--input` is given explicitly, declaration files are generated only for the entry files and the files they (transitively) import, matching the bundled JavaScript. Without `--input`, declarations cover all files under `src/`.
 
 Run `npx build-ts <command> --help` for the full list of options, including environment-variable handling shared with other WillBooster tools.
 

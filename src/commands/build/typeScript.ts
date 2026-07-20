@@ -11,7 +11,9 @@ const require = createRequire(import.meta.url);
 
 export async function generateDeclarationFiles(
   argv: ArgumentsType<AnyBuilderType>,
-  coreProjectDirPath: string
+  coreProjectDirPath: string,
+  outDirPath: string,
+  inputs?: string[]
 ): Promise<boolean> {
   const coreConfigFile = findConfigFile(coreProjectDirPath);
   if (!coreConfigFile) throw new Error(`Failed to find tsconfig.json in ${coreProjectDirPath}.`);
@@ -19,9 +21,12 @@ export async function generateDeclarationFiles(
     console.info('Found tsconfig.json:', coreConfigFile);
   }
 
-  const projects: [string, string, string][] = [];
-  let outDir = path.join('dist', path.basename(coreProjectDirPath), 'src');
-  if (fs.existsSync(outDir)) {
+  const projects: [string, string, string, string[] | undefined][] = [];
+  let coreOutDir = path.join(outDirPath, path.basename(coreProjectDirPath), 'src');
+  if (fs.existsSync(coreOutDir)) {
+    // The bundler emitted per-project directories (monorepo build), so entry-based restriction is unsafe:
+    // entries may import files outside each project's rootDir.
+    inputs = undefined;
     const parentDirPath = path.dirname(coreProjectDirPath);
     const dirents = await fs.promises.readdir(parentDirPath, { withFileTypes: true });
     coreProjectDirPath = path.resolve(coreProjectDirPath);
@@ -32,19 +37,19 @@ export async function generateDeclarationFiles(
       if (projectDirPath === coreProjectDirPath) continue;
 
       const configFile = findConfigFile(projectDirPath);
-      const outDir = path.join('dist', dirent.name, 'src');
+      const outDir = path.join(outDirPath, dirent.name, 'src');
       if (configFile && fs.existsSync(outDir)) {
-        projects.push([projectDirPath, configFile, outDir]);
+        projects.push([projectDirPath, configFile, outDir, undefined]);
       }
     }
   } else {
-    outDir = 'dist';
+    coreOutDir = outDirPath;
   }
-  projects.push([coreProjectDirPath, coreConfigFile, outDir]);
+  projects.push([coreProjectDirPath, coreConfigFile, coreOutDir, inputs]);
 
   let allSucceeded = true;
-  for (const [projectDirPath, configFile, outDir] of projects) {
-    allSucceeded &&= await runTsgo(argv, projectDirPath, configFile, path.join(coreProjectDirPath, outDir));
+  for (const [projectDirPath, configFile, outDir, projectInputs] of projects) {
+    allSucceeded &&= await runTsgo(argv, projectDirPath, configFile, outDir, projectInputs);
   }
   return allSucceeded;
 }
@@ -53,10 +58,11 @@ async function runTsgo(
   argv: ArgumentsType<AnyBuilderType>,
   projectDirPath: string,
   configFile: string,
-  outDir: string
+  outDir: string,
+  inputs?: string[]
 ): Promise<boolean> {
   if (argv.verbose) {
-    console.info('runTsgo()', projectDirPath, configFile, outDir);
+    console.info('runTsgo()', projectDirPath, configFile, outDir, inputs);
   }
 
   const configFileDirPath = path.dirname(configFile);
@@ -64,7 +70,7 @@ async function runTsgo(
   try {
     await fs.promises.writeFile(
       tempConfigFile,
-      JSON.stringify(await createTypeScriptNativeConfig(projectDirPath, configFile, outDir), undefined, 2)
+      JSON.stringify(await createTypeScriptNativeConfig(projectDirPath, configFile, outDir, inputs), undefined, 2)
     );
     const ret = child_process.spawnSync(process.execPath, [getTsgoPath(), '-p', tempConfigFile], {
       cwd: projectDirPath,
@@ -80,7 +86,8 @@ async function runTsgo(
 async function createTypeScriptNativeConfig(
   projectDirPath: string,
   configFile: string,
-  outDir: string
+  outDir: string,
+  inputs?: string[]
 ): Promise<Record<string, unknown>> {
   const compilerOptions: Record<string, unknown> = {
     declaration: true,
@@ -100,7 +107,11 @@ async function createTypeScriptNativeConfig(
   return {
     compilerOptions,
     extends: toRelativeConfigPath(path.dirname(configFile), configFile),
-    include: ['src/**/*'],
+    // With `files`, tsc also emits declarations for files transitively imported from the entries,
+    // so the output is restricted to what the bundled JavaScript actually contains.
+    ...(inputs?.length
+      ? { files: inputs.map((input) => path.resolve(projectDirPath, input).replaceAll(path.sep, '/')) }
+      : { include: ['src/**/*'] }),
   };
 }
 

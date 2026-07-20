@@ -1548,6 +1548,74 @@ process.stdout.write(marker);
     expect(esmRet.status).toBe(0);
   });
 
+  it('lib with --out-dir and --declaration-only', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/lib-custom-out';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({
+        type: 'module',
+        packageManager: 'yarn@4.17.0',
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/tsconfig.json`,
+      JSON.stringify({
+        compilerOptions: { module: 'esnext', moduleResolution: 'bundler', strict: true, target: 'es2022' },
+      })
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/routes.ts`,
+      `import { helper } from './helper.js';
+export const routes = { helper };
+`
+    );
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/helper.ts`,
+      'export function helper(): number {\n  return 1;\n}\n'
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/unreachable.ts`, 'export const secret = 42;\n');
+
+    const runtimeOutDirPath = '.tmp/test-fixtures/lib-custom-out-runtime';
+    await fs.promises.rm(runtimeOutDirPath, { recursive: true, force: true });
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--module-type',
+      'esm',
+      '--input',
+      `${fixtureDirPath}/src/routes.ts`,
+      '--out-dir',
+      runtimeOutDirPath
+    );
+    const runtimeFileNames = await fs.promises.readdir(runtimeOutDirPath);
+    expect(runtimeFileNames.toSorted()).toEqual([
+      'helper.d.ts',
+      'helper.js',
+      'helper.js.map',
+      'routes.d.ts',
+      'routes.js',
+      'routes.js.map',
+    ]);
+    expect(fs.existsSync(`${fixtureDirPath}/dist`)).toBe(false);
+
+    const typesOutDirPath = '.tmp/test-fixtures/lib-custom-out-types';
+    await fs.promises.rm(typesOutDirPath, { recursive: true, force: true });
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/routes.ts`,
+      '--out-dir',
+      typesOutDirPath
+    );
+    const typesFileNames = await fs.promises.readdir(typesOutDirPath);
+    expect(typesFileNames.toSorted()).toEqual(['helper.d.ts', 'routes.d.ts']);
+  });
+
   it('lib-react-ts-entry', async () => {
     const dirName = 'lib-react-ts-entry';
     await buildWithCommand(dirName, 'lib', '--module-type', 'both');

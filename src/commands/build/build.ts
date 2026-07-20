@@ -41,7 +41,7 @@ export const functions: CommandModule<unknown, ArgumentsType<typeof functionsBui
         console.error(`Failed to parse package.json (${packageJsonPath}).`);
         process.exit(1);
       }
-      await generatePackageJsonForFunctions(packageDirPath, packageJson, argv.moduleType);
+      await generatePackageJsonForFunctions(resolveOutDirPath(argv, process.cwd(), packageDirPath), packageJson, argv.moduleType);
     } else {
       return build(argv, 'functions');
     }
@@ -75,6 +75,10 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
   const inputs = verifyInput(argv, cwd, packageDirPath);
   const targetDetail = detectTargetDetail(targetCategory, inputs, packageDirPath);
+  const outDirPath = resolveOutDirPath(argv, cwd, packageDirPath);
+  // Restrict declaration files to the entry files (and their imports) only when inputs are explicit,
+  // to keep the default behavior of emitting declarations for all files under src/.
+  const declarationInputs = argv.input?.length ? inputs : undefined;
 
   if (verbose) {
     console.info('argv:', argv);
@@ -97,7 +101,13 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   process.env.BUILD_TS_TARGET_CATEGORY = targetCategory;
   process.env.BUILD_TS_TARGET_DETAIL = targetDetail;
 
-  const outputOptionsList = getOutputOptionsList(argv, targetDetail, packageDirPath, isEsmPackage);
+  const declarationOnly = 'declarationOnly' in argv && argv.declarationOnly;
+  if (declarationOnly && argv.watch) {
+    console.error('--declaration-only cannot be used with --watch.');
+    process.exit(1);
+  }
+
+  const outputOptionsList = getOutputOptionsList(argv, targetDetail, outDirPath, isEsmPackage, packageDirPath);
   if (verbose) {
     console.info('OutputOptions:', outputOptionsList);
   }
@@ -107,9 +117,24 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   }
 
   process.chdir(packageDirPath);
-  await fs.promises.rm(path.join(packageDirPath, 'dist'), { recursive: true, force: true });
+  await fs.promises.rm(outDirPath, { recursive: true, force: true });
   if (targetDetail === 'functions') {
-    await generatePackageJsonForFunctions(packageDirPath, packageJson, argv.moduleType);
+    await generatePackageJsonForFunctions(outDirPath, packageJson, argv.moduleType);
+  }
+
+  if (declarationOnly) {
+    if (!argv.silent) {
+      console.info(
+        styleText(
+          'cyan',
+          `Generates declaration files → ${styleText('bold', path.relative(packageDirPath, outDirPath))}\non ${packageDirPath} ...`
+        )
+      );
+    }
+    if (!(await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs))) {
+      process.exit(1);
+    }
+    return;
   }
 
   const options: RolldownOptions = {
@@ -150,7 +175,17 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     );
   };
   if (argv.watch) {
-    watchRolldown(argv, targetDetail, packageDirPath, options, outputOptionsList, pathToRelativePath, printBundlingMessage);
+    watchRolldown(
+      argv,
+      targetDetail,
+      packageDirPath,
+      outDirPath,
+      declarationInputs,
+      options,
+      outputOptionsList,
+      pathToRelativePath,
+      printBundlingMessage
+    );
   } else {
     if (!argv.silent) {
       printBundlingMessage(inputs);
@@ -184,7 +219,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     if (
       targetDetail !== 'app-node' &&
       targetDetail !== 'functions' &&
-      !(await generateDeclarationFiles(argv, packageDirPath))
+      !(await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs))
     ) {
       process.exit(1);
     }
@@ -203,6 +238,8 @@ function watchRolldown(
   argv: ArgumentsType<AnyBuilderType>,
   targetDetail: string,
   packageDirPath: string,
+  outDirPath: string,
+  declarationInputs: string[] | undefined,
   options: RolldownOptions,
   outputOptionsList: OutputOptions[],
   pathToRelativePath: (paths: string | Readonly<string[]>) => string[],
@@ -257,7 +294,7 @@ function watchRolldown(
           );
 
           if (targetDetail !== 'app-node' && targetDetail !== 'functions') {
-            await generateDeclarationFiles(argv, packageDirPath);
+            await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs);
           }
           break;
         }
@@ -277,6 +314,19 @@ function watchRolldown(
       }
     }
   });
+}
+
+function resolveOutDirPath(argv: ArgumentsType<AnyBuilderType>, cwd: string, packageDirPath: string): string {
+  if (!argv.outDir) return path.join(packageDirPath, 'dist');
+
+  const outDirPath = path.resolve(cwd, argv.outDir);
+  // The output directory is removed before building, so refuse a directory containing the package.
+  const relativePath = path.relative(outDirPath, packageDirPath);
+  if (relativePath === '' || (!relativePath.startsWith('..') && !path.isAbsolute(relativePath))) {
+    console.error(`--out-dir (${outDirPath}) must not contain the package directory (${packageDirPath}).`);
+    process.exit(1);
+  }
+  return outDirPath;
 }
 
 function getInputFiles(input: RolldownOptions['input']): string[] {
@@ -338,7 +388,7 @@ function doesDirectoryContainTsx(dirPath: string): boolean {
 }
 
 async function generatePackageJsonForFunctions(
-  packageDirPath: string,
+  outDirPath: string,
   packageJson: PackageJson,
   moduleType: string | undefined
 ): Promise<void> {
@@ -352,17 +402,17 @@ async function generatePackageJsonForFunctions(
   // devDependencies are not required since we are building code before deploying.
   delete packageJson.devDependencies;
 
-  await fs.promises.mkdir(path.join(packageDirPath, 'dist'), { recursive: true });
-  await fs.promises.writeFile(path.join(packageDirPath, 'dist', 'package.json'), JSON.stringify(packageJson));
+  await fs.promises.mkdir(outDirPath, { recursive: true });
+  await fs.promises.writeFile(path.join(outDirPath, 'package.json'), JSON.stringify(packageJson));
 }
 
 function getOutputOptionsList(
   argv: ArgumentsType<AnyBuilderType>,
   targetDetail: TargetDetail,
-  packageDirPath: string,
-  isEsmPackage: boolean
+  outDirPath: string,
+  isEsmPackage: boolean,
+  packageDirPath: string
 ): OutputOptions[] {
-  const outDirPath = path.join(packageDirPath, 'dist');
   if (targetDetail === 'app-node' || targetDetail === 'functions') {
     const esmOutput = isEsmOutput(isEsmPackage, argv.moduleType);
     return [
