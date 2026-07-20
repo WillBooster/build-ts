@@ -87,14 +87,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   const inputs = verifyInput(argv, cwd, packageDirPath);
   const targetDetail = detectTargetDetail(targetCategory, inputs, packageDirPath);
   const outDirPath = resolveOutDirPath(argv, cwd, packageDirPath, inputs, targetCategory);
-  // Restrict declaration files to the entry files (and their imports) only when inputs are explicit,
-  // to keep the default behavior of emitting declarations for all files under src/. tsc cannot take a
-  // bundler-style entry (a directory, or a ".js" specifier aliased to a ".ts" source) literally, so
-  // each one is resolved to the source file it refers to; an unresolvable path is kept as is to let
-  // the compiler report it.
-  const declarationInputs = argv.input?.length
-    ? [...new Set(inputs.map((input) => resolveSourceFilePath(input) ?? input))]
-    : undefined;
+  const declarationInputs = resolveDeclarationInputs(argv, inputs);
 
   if (verbose) {
     console.info('argv:', argv);
@@ -190,7 +183,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
       targetDetail,
       packageDirPath,
       outDirPath,
-      declarationInputs,
+      inputs,
       options,
       outputOptionsList,
       pathToRelativePath,
@@ -249,7 +242,7 @@ function watchRolldown(
   targetDetail: string,
   packageDirPath: string,
   outDirPath: string,
-  declarationInputs: string[] | undefined,
+  inputs: string[],
   options: RolldownOptions,
   outputOptionsList: OutputOptions[],
   pathToRelativePath: (paths: string | Readonly<string[]>) => string[],
@@ -304,7 +297,10 @@ function watchRolldown(
           }
 
           if (targetDetail !== 'app-node' && targetDetail !== 'functions') {
-            await generateDeclarationFiles(argv, packageDirPath, outDirPath, declarationInputs);
+            // The bundler re-resolves its literal inputs on every rebuild, so the declaration inputs
+            // are resolved again here; reusing the initial list would describe the previous sources
+            // after an entry (e.g. a package entry field) started resolving elsewhere.
+            await generateDeclarationFiles(argv, packageDirPath, outDirPath, resolveDeclarationInputs(argv, inputs));
           }
           break;
         }
@@ -420,6 +416,19 @@ function createFunctionsInputEntries(inputs: string[]): Record<string, string> {
     entries[name] = input;
   }
   return entries;
+}
+
+// Restricts declaration files to the entry files (and their imports) only when inputs are explicit,
+// to keep the default behavior of emitting declarations for all files under src/. tsc cannot take a
+// bundler-style entry (a directory, or a ".js" specifier aliased to a ".ts" source) literally, so each
+// one is resolved to the source file it refers to; an unresolvable path is kept as is to let the
+// compiler report it. Resolution depends on the file system, so a watch rebuild has to redo it.
+function resolveDeclarationInputs(
+  argv: ArgumentsType<AnyBuilderType>,
+  inputs: string[]
+): string[] | undefined {
+  if (!argv.input?.length) return undefined;
+  return [...new Set(inputs.map((input) => resolveSourceFilePath(input) ?? input))];
 }
 
 function getInputFiles(input: RolldownOptions['input']): string[] {
