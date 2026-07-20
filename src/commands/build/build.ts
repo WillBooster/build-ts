@@ -17,6 +17,7 @@ import type { AnyBuilderType, builder } from './builder.js';
 import { appBuilder, functionsBuilder, libBuilder } from './builder.js';
 import { handleError } from './bundlerLogger.js';
 import { createExternalMatcher } from './externals.js';
+import { bundlerExtensionAlias, bundlerExtensions, resolveSourceFilePath } from './inputResolver.js';
 import { setupPlugins } from './plugin.js';
 import { generateDeclarationFiles } from './typeScript.js';
 
@@ -81,8 +82,13 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
   const targetDetail = detectTargetDetail(targetCategory, inputs, packageDirPath);
   const outDirPath = resolveOutDirPath(argv, cwd, packageDirPath, inputs, targetCategory);
   // Restrict declaration files to the entry files (and their imports) only when inputs are explicit,
-  // to keep the default behavior of emitting declarations for all files under src/.
-  const declarationInputs = argv.input?.length ? inputs : undefined;
+  // to keep the default behavior of emitting declarations for all files under src/. tsc cannot take a
+  // bundler-style entry (a directory, or a ".js" specifier aliased to a ".ts" source) literally, so
+  // each one is resolved to the source file it refers to; an unresolvable path is kept as is to let
+  // the compiler report it.
+  const declarationInputs = argv.input?.length
+    ? [...new Set(inputs.map((input) => resolveSourceFilePath(input) ?? input))]
+    : undefined;
 
   if (verbose) {
     console.info('argv:', argv);
@@ -147,14 +153,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
     input:
       targetDetail === 'functions' ? createFunctionsInputEntries(inputs) : inputs,
     plugins: setupPlugins(argv, outputOptionsList, packageDirPath),
-    resolve: {
-      extensionAlias: {
-        '.cjs': ['.cjs', '.cts'],
-        '.js': ['.js', '.ts', '.tsx'],
-        '.mjs': ['.mjs', '.mts'],
-      },
-      extensions: ['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'],
-    },
+    resolve: { extensionAlias: bundlerExtensionAlias, extensions: bundlerExtensions },
     treeshake: argv['core-js'] || argv['core-js-proposals'] ? false : undefined,
     transform: getTransformOptions(argv, packageDirPath),
     watch: argv.watch ? { clearScreen: false } : undefined,
@@ -396,17 +395,6 @@ function containsPath(parentPath: string, childPath: string): boolean {
   return relativePath !== '..' && !relativePath.startsWith(`..${path.sep}`);
 }
 
-// Mirrors the bundler's `resolve.extensions` / `extensionAlias` configuration above.
-function isBundlerResolvablePath(literalPath: string): boolean {
-  const extension = path.extname(literalPath);
-  const aliasedExtensions = { '.cjs': ['.cts'], '.js': ['.ts', '.tsx'], '.mjs': ['.mts'] }[extension] ?? [];
-  const candidates = [
-    ...['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'].map((ext) => literalPath + ext),
-    ...aliasedExtensions.map((ext) => literalPath.slice(0, -extension.length) + ext),
-  ];
-  return candidates.some((candidate) => fs.statSync(candidate, { throwIfNoEntry: false })?.isFile());
-}
-
 function createFunctionsInputEntries(inputs: string[]): Record<string, string> {
   // A null prototype avoids false conflicts with inherited members (e.g. an entry named "toString").
   const entries: Record<string, string> = Object.create(null);
@@ -456,7 +444,7 @@ function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDi
       if (literalStats?.isDirectory()) return [literalPath];
       // A non-existing path may still be resolvable by the bundler (e.g. an extension-less path or a
       // ".js" specifier aliased to ".ts"), even when it contains glob metacharacters.
-      if (isBundlerResolvablePath(literalPath)) return [literalPath];
+      if (resolveSourceFilePath(literalPath)) return [literalPath];
       // Error only on actual glob syntax ("*", "?", "[...]", alternation/range braces, or extglob "@(...)" etc.);
       // characters like a bare "+" or a single-item brace ("{entry}") are ordinary filename characters.
       if (/[*?]|[@!+]\(|\[.*\]|\{[^}]*(,|\.\.)[^}]*\}/.test(raw)) {

@@ -1732,7 +1732,6 @@ export const routes = { helper };
     expect(fs.readdirSync(directoryOutDirPath)).toEqual(['schemas.d.ts']);
 
     // A directory entry whose name contains glob metacharacters still resolves to its index file.
-    // Declarations are not generated here because tsgo cannot take a directory as an entry.
     await fs.promises.mkdir(`${fixtureDirPath}/src/[b]racket`, { recursive: true });
     await fs.promises.writeFile(`${fixtureDirPath}/src/[b]racket/index.ts`, 'export const bracket = true;\n');
     const directoryEntryOutDirPath = '.tmp/test-fixtures/lib-glob-input-directory-entry';
@@ -1745,6 +1744,52 @@ export const routes = { helper };
       directoryEntryOutDirPath
     );
     await expectFileExists(`${directoryEntryOutDirPath}/index.js`);
+  });
+
+  it('lib generates declarations for directory and extension-aliased inputs', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/lib-resolved-input';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src/folder`, { recursive: true });
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/package.json`,
+      JSON.stringify({ type: 'module', packageManager: 'yarn@4.17.0' })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/tsconfig.json`,
+      JSON.stringify({
+        compilerOptions: { module: 'esnext', moduleResolution: 'bundler', strict: true, target: 'es2022' },
+        include: ['src/**/*'],
+      })
+    );
+    await fs.promises.writeFile(`${fixtureDirPath}/src/index.ts`, 'export const fromIndex: number = 1;\n');
+    await fs.promises.writeFile(`${fixtureDirPath}/src/folder/index.ts`, 'export const fromFolder: number = 2;\n');
+
+    // A directory input, which the bundler resolves through its "index" file (was TS6231).
+    const directoryOutDirPath = '.tmp/test-fixtures/lib-resolved-input-directory';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/folder`,
+      '--out-dir',
+      directoryOutDirPath
+    );
+    await expectFileExists(`${directoryOutDirPath}/folder/index.d.ts`);
+
+    // A ".js" specifier aliased to its ".ts" source (was TS6504).
+    const aliasOutDirPath = '.tmp/test-fixtures/lib-resolved-input-alias';
+    await buildWithPackagePath(
+      fixtureDirPath,
+      'lib',
+      '--declaration-only',
+      '--input',
+      `${fixtureDirPath}/src/index.js`,
+      '--out-dir',
+      aliasOutDirPath
+    );
+    await expectFileExists(`${aliasOutDirPath}/index.d.ts`);
   });
 
   it('functions fails on conflicting entry names instead of silently dropping one', async () => {
