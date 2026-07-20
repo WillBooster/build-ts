@@ -397,7 +397,8 @@ function containsPath(parentPath: string, childPath: string): boolean {
 }
 
 function createFunctionsInputEntries(inputs: string[]): Record<string, string> {
-  const entries: Record<string, string> = {};
+  // A null prototype avoids false conflicts with inherited members (e.g. an entry named "toString").
+  const entries: Record<string, string> = Object.create(null);
   for (const [index, input] of inputs.entries()) {
     const name = index === 0 ? 'index' : path.basename(input, path.extname(input));
     if (entries[name]) {
