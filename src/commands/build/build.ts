@@ -327,6 +327,10 @@ function resolveOutDirPath(
   inputs?: string[],
   targetCategory?: TargetCategory
 ): string {
+  if (Array.isArray(argv.outDir)) {
+    console.error('Multiple --out-dir options are not allowed.');
+    process.exit(1);
+  }
   // yargs also accepts `--no-out-dir`, which yields `false` despite the declared string type.
   const outDirOption = typeof argv.outDir === 'string' ? argv.outDir : undefined;
   if (outDirOption === '') {
@@ -335,12 +339,15 @@ function resolveOutDirPath(
   }
 
   // The output directory is removed before building, so refuse locations that would delete source files.
-  // Containment checks use canonical (symlink-resolved) paths because `fs.rm` follows symlinks in parent
-  // components, but the lexical path is returned so that removing a symlinked output directory deletes
-  // the symlink itself rather than its target's contents.
+  // Containment checks compare both the lexical and the canonical (symlink-resolved) forms: canonical
+  // ones catch symlinked parent components (`fs.rm` follows them), and lexical ones catch an output path
+  // that is itself a symlink inside a protected directory. The lexical path is returned so that removing
+  // a symlinked output directory deletes the symlink itself rather than its target's contents.
   const lexicalOutDirPath = path.resolve(cwd, outDirOption ?? path.join(packageDirPath, 'dist'));
   const outDirPath = toCanonicalPath(lexicalOutDirPath);
-  const containedInput = inputs?.find((input) => containsPath(outDirPath, toCanonicalPath(input)));
+  const containedInput = inputs?.find(
+    (input) => containsPath(outDirPath, toCanonicalPath(input)) || containsPath(lexicalOutDirPath, input)
+  );
   if (containedInput) {
     console.error(`The output directory (${outDirPath}) must not contain the input file (${containedInput}).`);
     process.exit(1);
@@ -348,13 +355,13 @@ function resolveOutDirPath(
   if (!outDirOption) return lexicalOutDirPath;
 
   const canonicalPackageDirPath = toCanonicalPath(packageDirPath);
-  if (containsPath(outDirPath, canonicalPackageDirPath)) {
+  if (containsPath(outDirPath, canonicalPackageDirPath) || containsPath(lexicalOutDirPath, packageDirPath)) {
     console.error(`--out-dir (${outDirPath}) must not contain the package directory (${canonicalPackageDirPath}).`);
     process.exit(1);
   }
   // `src` itself may be a symlink, so it needs its own canonicalization.
   const srcDirPath = toCanonicalPath(path.join(canonicalPackageDirPath, 'src'));
-  if (containsPath(srcDirPath, outDirPath)) {
+  if (containsPath(srcDirPath, outDirPath) || containsPath(path.join(packageDirPath, 'src'), lexicalOutDirPath)) {
     console.error(`--out-dir (${outDirPath}) must not be inside the source directory (${srcDirPath}).`);
     process.exit(1);
   }
