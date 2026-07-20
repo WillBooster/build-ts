@@ -404,7 +404,7 @@ function isBundlerResolvablePath(literalPath: string): boolean {
     ...['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'].map((ext) => literalPath + ext),
     ...aliasedExtensions.map((ext) => literalPath.slice(0, -extension.length) + ext),
   ];
-  return candidates.some((candidate) => fs.existsSync(candidate));
+  return candidates.some((candidate) => fs.statSync(candidate, { throwIfNoEntry: false })?.isFile());
 }
 
 function createFunctionsInputEntries(inputs: string[]): Record<string, string> {

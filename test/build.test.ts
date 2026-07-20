@@ -1717,18 +1717,19 @@ export const routes = { helper };
     expect(fs.readdirSync(literalOutDirPath)).toEqual(['entry[1].d.ts']);
 
     // A directory named like a pattern must not shadow glob expansion.
-    await fs.promises.mkdir(`${fixtureDirPath}/src/*.ts`, { recursive: true });
+    // "[s]chemas.ts" keeps the fixture portable: Windows forbids "*" in names but allows "[]".
+    await fs.promises.mkdir(`${fixtureDirPath}/src/[s]chemas.ts`, { recursive: true });
     const directoryOutDirPath = '.tmp/test-fixtures/lib-glob-input-directory';
     await buildWithPackagePath(
       fixtureDirPath,
       'lib',
       '--declaration-only',
       '--input',
-      `${fixtureDirPath}/src/*.ts`,
+      `${fixtureDirPath}/src/[s]chemas.ts`,
       '--out-dir',
       directoryOutDirPath
     );
-    expect(fs.readdirSync(directoryOutDirPath).toSorted()).toContain('schemas.d.ts');
+    expect(fs.readdirSync(directoryOutDirPath)).toEqual(['schemas.d.ts']);
   });
 
   it('functions fails on conflicting entry names instead of silently dropping one', async () => {
