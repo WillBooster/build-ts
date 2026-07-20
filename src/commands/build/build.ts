@@ -400,12 +400,9 @@ function containsPath(parentPath: string, childPath: string): boolean {
 function isBundlerResolvablePath(literalPath: string): boolean {
   const extension = path.extname(literalPath);
   const aliasedExtensions = { '.cjs': ['.cts'], '.js': ['.ts', '.tsx'], '.mjs': ['.mts'] }[extension] ?? [];
-  const extensions = ['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'];
   const candidates = [
-    ...extensions.map((ext) => literalPath + ext),
+    ...['.cts', '.mts', '.ts', '.tsx', '.cjs', '.mjs', '.js', '.jsx', '.json'].map((ext) => literalPath + ext),
     ...aliasedExtensions.map((ext) => literalPath.slice(0, -extension.length) + ext),
-    // The bundler also resolves a directory to its index file.
-    ...extensions.map((ext) => path.join(literalPath, `index${ext}`)),
   ];
   return candidates.some((candidate) => fs.statSync(candidate, { throwIfNoEntry: false })?.isFile());
 }
@@ -439,7 +436,8 @@ function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDi
       // An existing file always wins over glob interpretation (e.g. "src/entry[1].ts"), but a
       // directory must not, so that a directory literally named like a pattern still expands.
       const literalPath = path.resolve(cwd, raw);
-      if (fs.statSync(literalPath, { throwIfNoEntry: false })?.isFile()) return [literalPath];
+      const literalStats = fs.statSync(literalPath, { throwIfNoEntry: false });
+      if (literalStats?.isFile()) return [literalPath];
 
       // `fs.globSync` requires "/" as the separator even on Windows (a no-op on POSIX).
       const pattern = raw.split(path.sep).join('/');
@@ -453,6 +451,9 @@ function verifyInput(argv: ArgumentsType<typeof builder>, cwd: string, packageDi
         .sort()
         .map((m) => path.resolve(cwd, m));
       if (matches.length > 0) return matches;
+      // Once no file matched, an existing directory is left to the bundler, which resolves it
+      // through its "index" file or its package.json entry fields.
+      if (literalStats?.isDirectory()) return [literalPath];
       // A non-existing path may still be resolvable by the bundler (e.g. an extension-less path or a
       // ".js" specifier aliased to ".ts"), even when it contains glob metacharacters.
       if (isBundlerResolvablePath(literalPath)) return [literalPath];
