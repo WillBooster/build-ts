@@ -468,6 +468,8 @@ export const routes = { helper };
       '--out-dir',
       `${fixtureDirPath}/src`
     );
+    // The input lives inside the requested output directory, so the input guard rejects it first.
+    expect(failedRet.stderr.toString()).toContain('must not contain the input file');
     expect(failedRet.status).not.toBe(0);
     expect(fs.existsSync(`${fixtureDirPath}/src/routes.ts`)).toBe(true);
 
@@ -482,6 +484,7 @@ export const routes = { helper };
       '--out-dir',
       `${fixtureDirPath}/scripts`
     );
+    expect(containedRet.stderr.toString()).toContain('must not contain the input file');
     expect(containedRet.status).not.toBe(0);
     expect(fs.existsSync(`${fixtureDirPath}/scripts/main.ts`)).toBe(true);
 
@@ -494,6 +497,7 @@ export const routes = { helper };
       '--input',
       `${fixtureDirPath}/dist/main.ts`
     );
+    expect(defaultRet.stderr.toString()).toContain('must not contain the input file');
     expect(defaultRet.status).not.toBe(0);
     expect(fs.existsSync(`${fixtureDirPath}/dist/main.ts`)).toBe(true);
 
@@ -502,9 +506,12 @@ export const routes = { helper };
     const aliasRet = await buildWithPackagePathAndGetStatus(
       fixtureDirPath,
       'lib',
+      '--input',
+      `${fixtureDirPath}/scripts/main.ts`,
       '--out-dir',
       `${fixtureDirPath}/src-link`
     );
+    expect(aliasRet.stderr.toString()).toContain('must not be inside the source directory');
     expect(aliasRet.status).not.toBe(0);
     expect(fs.existsSync(`${fixtureDirPath}/src/routes.ts`)).toBe(true);
 
@@ -512,20 +519,29 @@ export const routes = { helper };
     const nestedAliasRet = await buildWithPackagePathAndGetStatus(
       fixtureDirPath,
       'lib',
+      '--input',
+      `${fixtureDirPath}/scripts/main.ts`,
       '--out-dir',
       `${fixtureDirPath}/src-link/generated`
     );
+    expect(nestedAliasRet.stderr.toString()).toContain('must not be inside the source directory');
     expect(nestedAliasRet.status).not.toBe(0);
     expect(fs.existsSync(`${fixtureDirPath}/src/generated`)).toBe(false);
 
-    // An output symlink lexically inside `src` must be refused even though it points outside.
+    // An output symlink lexically inside `src` must be refused even though it resolves outside, which
+    // only the lexical half of the containment check catches. Its target must exist, or the canonical
+    // half would already reject it.
+    await fs.promises.mkdir(`${fixtureDirPath}/outside-output`, { recursive: true });
     await fs.promises.symlink('../outside-output', `${fixtureDirPath}/src/output-link`);
     const outwardLinkRet = await buildWithPackagePathAndGetStatus(
       fixtureDirPath,
       'lib',
+      '--input',
+      `${fixtureDirPath}/scripts/main.ts`,
       '--out-dir',
       `${fixtureDirPath}/src/output-link`
     );
+    expect(outwardLinkRet.stderr.toString()).toContain('must not be inside the source directory');
     expect(outwardLinkRet.status).not.toBe(0);
     expect(fs.lstatSync(`${fixtureDirPath}/src/output-link`).isSymbolicLink()).toBe(true);
     await fs.promises.unlink(`${fixtureDirPath}/src/output-link`);
@@ -536,7 +552,15 @@ export const routes = { helper };
     await fs.promises.mkdir(`${victimDirPath}/src`, { recursive: true });
     await fs.promises.writeFile(`${victimDirPath}/package.json`, JSON.stringify({ name: 'victim' }));
     await fs.promises.writeFile(`${victimDirPath}/src/important.ts`, 'export const important = 1;\n');
-    const victimRet = await buildWithPackagePathAndGetStatus(fixtureDirPath, 'lib', '--out-dir', victimDirPath);
+    const victimRet = await buildWithPackagePathAndGetStatus(
+      fixtureDirPath,
+      'lib',
+      '--input',
+      `${fixtureDirPath}/scripts/main.ts`,
+      '--out-dir',
+      victimDirPath
+    );
+    expect(victimRet.stderr.toString()).toContain('contains a package.json');
     expect(victimRet.status).not.toBe(0);
     expect(fs.existsSync(`${victimDirPath}/src/important.ts`)).toBe(true);
   });
@@ -695,9 +719,10 @@ async function buildWithPackagePathAndGetStatus(
   await fs.promises.rm(`${packagePath}/node_modules`, { recursive: true, force: true });
   const installRet = await spawnAsync('yarn', [], { cwd: packagePath, env: fixtureEnv, stdio: 'inherit' });
   expect(installRet.status).toBe(0);
+  // stderr is piped so that a failure can be attributed to the guard that rejected it.
   return spawnAsync('yarn', ['start', subCommand, packagePath, ...options], {
     env: fixtureEnv,
-    stdio: 'inherit',
+    stdio: ['inherit', 'inherit', 'pipe'],
   });
 }
 
