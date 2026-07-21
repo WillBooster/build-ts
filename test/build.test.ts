@@ -4,7 +4,6 @@ import path from 'node:path';
 import { removeNpmAndYarnEnvironmentVariables, spawnAsync } from '@willbooster/shared-lib-node';
 import { describe, expect, it } from 'vitest';
 
-const buildTsBinPath = `${process.cwd()}/bin/index.js`;
 const bunfigPath = `${process.cwd()}/bunfig.toml`;
 
 describe('build', { timeout: 60_000 }, () => {
@@ -708,7 +707,7 @@ async function buildWithPackagePathAndGetStatus(
   });
   expect(installRet.status).toBe(0);
   // stderr is piped so that a failure can be attributed to the guard that rejected it.
-  return spawnAsync('node', [buildTsBinPath, subCommand, absolutePackagePath, ...options], {
+  return spawnAsync('bun', ['run', 'start', subCommand, absolutePackagePath, ...options], {
     env: fixtureEnv,
     stdio: ['inherit', 'inherit', 'pipe'],
   });
