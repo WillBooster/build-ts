@@ -3,22 +3,22 @@ import { describe, expect, it } from 'vitest';
 
 describe('run env.ts', { timeout: 60_000 }, () => {
   it.each([
-    ['yarn start-prod run test/fixtures/env.ts --no-auto-cascade-env', '0'],
-    ['yarn start-prod run test/fixtures/env.ts', '1'],
-    ['yarn start-prod run test/fixtures/env.ts --env .env', '1'],
-    ['yarn start-prod run test/fixtures/env.ts --cascade-env ""', '1'],
-    ['yarn start-prod run test/fixtures/env.ts --cascade-node-env', '1'],
-    ['yarn start-prod run --cascade-env="" test/fixtures/env.ts', '1'],
-    ['yarn start-prod run --cascade-node-env test/fixtures/env.ts', '1'],
-    ['yarn start-prod --cascade-env="" run test/fixtures/env.ts', '1'],
-    ['yarn start-prod --cascade-node-env run test/fixtures/env.ts', '1'],
+    ['bun run start-prod run test/fixtures/env.ts --no-auto-cascade-env', '1'],
+    ['bun run start-prod run test/fixtures/env.ts', '1'],
+    ['bun run start-prod run test/fixtures/env.ts --env .env', '1'],
+    ['bun run start-prod run test/fixtures/env.ts --cascade-env ""', '1'],
+    ['bun run start-prod run test/fixtures/env.ts --cascade-node-env', '1'],
+    ['bun run start-prod run --cascade-env="" test/fixtures/env.ts', '1'],
+    ['bun run start-prod run --cascade-node-env test/fixtures/env.ts', '1'],
+    ['bun run start-prod --cascade-env="" run test/fixtures/env.ts', '1'],
+    ['bun run start-prod --cascade-node-env run test/fixtures/env.ts', '1'],
     // Options with a non-empty argument must be after positional arguments.
-    // ['yarn start-prod run --env .env test/fixtures/env.ts', '1'],
-    // ['yarn start-prod run --env=.env test/fixtures/env.ts', '1'],
-    // ['yarn start-prod run --cascade-env "" test/fixtures/env.ts', '1'],
-    // ['yarn start-prod --env .env run test/fixtures/env.ts', '1'],
-    // ['yarn start-prod --env=.env run test/fixtures/env.ts', '1'],
-    // ['yarn start-prod --cascade-env "" run test/fixtures/env.ts', '1'],
+    // ['bun run start-prod run --env .env test/fixtures/env.ts', '1'],
+    // ['bun run start-prod run --env=.env test/fixtures/env.ts', '1'],
+    // ['bun run start-prod run --cascade-env "" test/fixtures/env.ts', '1'],
+    // ['bun run start-prod --env .env run test/fixtures/env.ts', '1'],
+    // ['bun run start-prod --env=.env run test/fixtures/env.ts', '1'],
+    // ['bun run start-prod --cascade-env "" run test/fixtures/env.ts', '1'],
   ])('%s', async (commandWithArgs, expectedStdout) => {
     const [command, ...args] = commandWithArgs.split(' ') as [string, ...string[]];
     const execRet = await spawnAsync(command, args, { env: getTestEnvironment() });
@@ -28,7 +28,7 @@ describe('run env.ts', { timeout: 60_000 }, () => {
 });
 
 describe('run hello.(c|m)ts', { timeout: 60_000 }, () => {
-  it.each([['yarn start-prod run test/fixtures/hello.cts'], ['yarn start-prod run test/fixtures/hello.mts']])(
+  it.each([['bun run start-prod run test/fixtures/hello.cts'], ['bun run start-prod run test/fixtures/hello.mts']])(
     '%s',
     async (commandWithArgs) => {
       const [command, ...args] = commandWithArgs.split(' ') as [string, ...string[]];

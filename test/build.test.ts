@@ -1,7 +1,10 @@
 import fs from 'node:fs';
+import path from 'node:path';
 
 import { removeNpmAndYarnEnvironmentVariables, spawnAsync } from '@willbooster/shared-lib-node';
 import { describe, expect, it } from 'vitest';
+
+const bunfigPath = `${process.cwd()}/bunfig.toml`;
 
 describe('build', { timeout: 60_000 }, () => {
   it('app-node', async () => {
@@ -24,13 +27,7 @@ describe('build', { timeout: 60_000 }, () => {
     const fixtureDirPath = '.tmp/test-fixtures/app-node-console-scope';
     await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
     await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
-    await fs.promises.writeFile(
-      `${fixtureDirPath}/package.json`,
-      JSON.stringify({
-        packageManager: 'yarn@4.17.0',
-      })
-    );
-    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(`${fixtureDirPath}/package.json`, JSON.stringify({}));
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import './declare.js';
@@ -225,8 +222,7 @@ console.log('type-only-global');
     const fixtureDirPath = '.tmp/test-fixtures/app-node-cjs-return';
     await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
     await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
-    await fs.promises.writeFile(`${fixtureDirPath}/package.json`, JSON.stringify({ packageManager: 'yarn@4.17.0' }));
-    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(`${fixtureDirPath}/package.json`, JSON.stringify({}));
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.cjs`,
       `console.log('cjs-before');
@@ -243,8 +239,7 @@ console.log('cjs-after');
     const jsFixtureDirPath = '.tmp/test-fixtures/app-node-cjs-js-return';
     await fs.promises.rm(jsFixtureDirPath, { recursive: true, force: true });
     await fs.promises.mkdir(`${jsFixtureDirPath}/src`, { recursive: true });
-    await fs.promises.writeFile(`${jsFixtureDirPath}/package.json`, JSON.stringify({ packageManager: 'yarn@4.17.0' }));
-    await fs.promises.writeFile(`${jsFixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(`${jsFixtureDirPath}/package.json`, JSON.stringify({}));
     await fs.promises.writeFile(
       `${jsFixtureDirPath}/src/index.js`,
       `console.log('cjs-js-before');
@@ -263,8 +258,7 @@ console.log('cjs-js-after');
     const fixtureDirPath = '.tmp/test-fixtures/app-node-multiple-inputs';
     await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
     await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
-    await fs.promises.writeFile(`${fixtureDirPath}/package.json`, JSON.stringify({ packageManager: 'yarn@4.17.0' }));
-    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(`${fixtureDirPath}/package.json`, JSON.stringify({}));
     await fs.promises.writeFile(`${fixtureDirPath}/src/a.ts`, `console.log('a');\n`);
     await fs.promises.writeFile(`${fixtureDirPath}/src/b.ts`, `console.log('b');\n`);
 
@@ -287,11 +281,9 @@ console.log('cjs-js-after');
     await fs.promises.writeFile(
       `${fixtureDirPath}/package.json`,
       JSON.stringify({
-        packageManager: 'yarn@4.17.0',
         type: 'module',
       })
     );
-    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `const mod = await import('./lazy.js');
@@ -315,11 +307,9 @@ process.stdout.write(mod.marker);
     await fs.promises.writeFile(
       `${fixtureDirPath}/package.json`,
       JSON.stringify({
-        packageManager: 'yarn@4.17.0',
         type: 'module',
       })
     );
-    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
     await fs.promises.writeFile(
       `${fixtureDirPath}/src/index.ts`,
       `import { marker } from './mod.js';
@@ -391,10 +381,8 @@ process.stdout.write(marker);
       `${fixtureDirPath}/package.json`,
       JSON.stringify({
         type: 'module',
-        packageManager: 'yarn@4.17.0',
       })
     );
-    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
     await fs.promises.writeFile(
       `${fixtureDirPath}/tsconfig.json`,
       JSON.stringify({
@@ -573,10 +561,8 @@ export const routes = { helper };
       `${fixtureDirPath}/package.json`,
       JSON.stringify({
         type: 'module',
-        packageManager: 'yarn@4.17.0',
       })
     );
-    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
     await fs.promises.writeFile(
       `${fixtureDirPath}/tsconfig.json`,
       JSON.stringify({
@@ -642,11 +628,7 @@ export const routes = { helper };
     await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
     await fs.promises.mkdir(`${fixtureDirPath}/src/one`, { recursive: true });
     await fs.promises.mkdir(`${fixtureDirPath}/src/two`, { recursive: true });
-    await fs.promises.writeFile(
-      `${fixtureDirPath}/package.json`,
-      JSON.stringify({ type: 'module', packageManager: 'yarn@4.17.0' })
-    );
-    await fs.promises.writeFile(`${fixtureDirPath}/yarn.lock`, '');
+    await fs.promises.writeFile(`${fixtureDirPath}/package.json`, JSON.stringify({ type: 'module' }));
     await fs.promises.writeFile(`${fixtureDirPath}/src/index.ts`, 'export const main = 1;\n');
     await fs.promises.writeFile(`${fixtureDirPath}/src/one/handler.ts`, 'export const marker = "one";\n');
     await fs.promises.writeFile(`${fixtureDirPath}/src/two/handler.ts`, 'export const marker = "two";\n');
@@ -715,12 +697,17 @@ async function buildWithPackagePathAndGetStatus(
   subCommand: string,
   ...options: string[]
 ): Promise<Awaited<ReturnType<typeof spawnAsync>>> {
+  const absolutePackagePath = path.resolve(packagePath);
   const fixtureEnv = createFixtureCommandEnv();
   await fs.promises.rm(`${packagePath}/node_modules`, { recursive: true, force: true });
-  const installRet = await spawnAsync('yarn', [], { cwd: packagePath, env: fixtureEnv, stdio: 'inherit' });
+  const installRet = await spawnAsync('bun', ['install', `--config=${bunfigPath}`], {
+    cwd: packagePath,
+    env: fixtureEnv,
+    stdio: 'inherit',
+  });
   expect(installRet.status).toBe(0);
   // stderr is piped so that a failure can be attributed to the guard that rejected it.
-  return spawnAsync('yarn', ['start', subCommand, packagePath, ...options], {
+  return spawnAsync('bun', ['run', 'start', subCommand, absolutePackagePath, ...options], {
     env: fixtureEnv,
     stdio: ['inherit', 'inherit', 'pipe'],
   });
@@ -729,7 +716,6 @@ async function buildWithPackagePathAndGetStatus(
 function createFixtureCommandEnv(): NodeJS.ProcessEnv {
   const fixtureEnv = { ...process.env };
   removeNpmAndYarnEnvironmentVariables(fixtureEnv);
-  fixtureEnv.YARN_ENABLE_HARDENED_MODE = '0';
   delete fixtureEnv.CI;
   delete fixtureEnv.GITHUB_ACTIONS;
   delete fixtureEnv.GITHUB_EVENT_NAME;

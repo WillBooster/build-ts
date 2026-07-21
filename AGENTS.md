@@ -1,7 +1,7 @@
 ## Project Information
 
 - Name: `build-ts`
-- Package Manager: yarn
+- Package Manager: bun
 
 ## General Instructions
 
@@ -14,13 +14,14 @@
   - Prefer actual API calls over mocks, unless actual calls are impractical, have unintended side effects, or mocks are explicitly requested.
   - Avoid fixed waits in E2E tests; wait for conditions instead.
 - When fixing issues (including test failures), investigate the root cause first (e.g., via debug logs or screenshots) and fix it instead of applying workarounds.
-- After making changes, run `yarn verify` (type checking and linting; takes up to 10 minutes), or `yarn verify-full` (all tests; takes up to 1 hour) if you changed runtime behavior or tests. Fix errors and re-run until it passes.
+- After making changes, run `bun verify` (type checking and linting; takes up to 10 minutes), or `bun verify-full` (all tests; takes up to 1 hour) if you changed runtime behavior or tests. Fix errors and re-run until it passes.
 - Once verified, commit and push to the current (non-main) branch, and create a PR via `gh` if none exists for the branch.
   - Follow the Conventional Commits format (e.g., `feat:`, `fix:`).
   - End your commit message with a blank line followed by `Co-authored-by: WillBooster (Codex CLI) <agent@willbooster.com>`.
   - Always create new commits; avoid `--amend`.
 - Use heredoc for multi-line command input (e.g., `git commit -F -`, `gh pr create --body-file -`).
 - Put temporary files in `.tmp`; use `/tmp` only for files that must live outside the repo.
+- Environment variables and secrets are managed in `fnox.toml` via mise + fnox; run commands through `bun wb ...` or `fnox run -P <profile> -- <command>` instead of expecting `.env` files. Profile secrets load only when a profile is selected: mode-aware wb commands (e.g. `wb start`, `wb test`) select it themselves, while `wb dotenv` and bare `fnox run` need an explicit `WB_ENV=<profile>` / `-P <profile>`.
 
 ## Coding Style
 
@@ -33,3 +34,5 @@
 - Prefer `undefined` over `null` unless required by APIs or libraries.
 - Build prompts as a single template literal instead of `join()` on a pre-computable array of strings.
 - Assume all environment variables are defined; if validation is needed, `assert` at startup to fail fast.
+- Assume local tools such as `git`, `gh`, and `ghq` are installed and authenticated.
+- Ensure compatibility only with macOS and Linux; do not include Windows-specific code.

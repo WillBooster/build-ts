@@ -10,6 +10,5 @@
   },
   "peerDependencies": {
     "react": ">=19"
-  },
-  "packageManager": "yarn@4.9.3"
+  }
 }
