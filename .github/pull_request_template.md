@@ -6,7 +6,7 @@ Close #<IssueNumber>
   - PR title follows [Angular's commit message format](https://github.com/angular/angular/blob/main/CONTRIBUTING.md#-commit-message-format).
     - PR title doesn't have `WIP:`.
   - All tests are passed.
-    - Test command (e.g., `bun test`) is passed.
+    - Test command (e.g., `bun run test`) is passed.
     - Lint command (e.g., `bun lint`) is passed.
 - [ ] I've reviewed my changes on PR's diff view.
 

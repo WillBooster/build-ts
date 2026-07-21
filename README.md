@@ -133,7 +133,7 @@ npx build-ts lib test/fixtures/lib-react
 
 ```sh
 bun install          # install dependencies
-bun test             # run tests
+bun run test         # run tests
 bun verify           # type check and lint
 bun verify-full      # type check, lint, and all tests
 ```
