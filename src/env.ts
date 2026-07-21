@@ -7,7 +7,7 @@ import type { ArgumentsType } from './types.js';
 let envVars: Record<string, string | undefined> | undefined;
 
 /**
- * This function loads environment variables from `.env` files.
+ * This function loads environment variables from the configured sources.
  * */
 export function loadEnvironmentVariablesWithCache(
   argv: ArgumentsType<typeof sharedOptionsBuilder>,

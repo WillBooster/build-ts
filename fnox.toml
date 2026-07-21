@@ -2,6 +2,8 @@
 type = "age"
 recipients = [
   "age1j2354xhvm3fv9y77t5g6y3q8mexgk2mf00tgrkzgp73tynrvz55s8auayw", # exkazuu
+  "age18rugldf9htc6um5eplpx27k53ep4zn0lhzwffgnxzhrq0c7zgvyq3zccdy", # ponharu1
+  "age1nz2n99crjr7np9xjglwfffc3dud45dhewqzqfzpztkdwu4hj74gq6el533", # ponharu2
   "age1a2c6ef6ahl6mmkhgqtxg0mgtd7ysspntq7rxusv26efxhnuhlcdsr9dpak", # ci
 ]
 

@@ -1,0 +1,40 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "app-node",
+      "dependencies": {
+        "lodash.chunk": "4.2.0",
+        "punycode": "2.3.1",
+      },
+      "devDependencies": {
+        "@types/lodash.chunk": "4.2.9",
+        "@types/lodash.compact": "3.0.9",
+        "@types/lodash.concat": "4.5.9",
+        "lodash.compact": "3.0.1",
+        "lodash.concat": "4.5.0",
+      },
+      "peerDependencies": {
+        "lodash.concat": "4.5.0",
+      },
+    },
+  },
+  "packages": {
+    "@types/lodash": ["@types/lodash@4.17.24", "", {}, "sha512-gIW7lQLZbue7lRSWEFql49QJJWThrTFFeIMJdp3eH4tKoxm1OvEPg02rm4wCCSHS0cL3/Fizimb35b7k8atwsQ=="],
+
+    "@types/lodash.chunk": ["@types/lodash.chunk@4.2.9", "", { "dependencies": { "@types/lodash": "*" } }, "sha512-Z9VtFUSnmT0No/QymqfG9AGbfOA4O5qB/uyP89xeZBqDAsKsB4gQFTqt7d0pHjbsTwtQ4yZObQVHuKlSOhIJ5Q=="],
+
+    "@types/lodash.compact": ["@types/lodash.compact@3.0.9", "", { "dependencies": { "@types/lodash": "*" } }, "sha512-b4uMY3aQri4SnRm4ptQXxE11CCqv//k7DQBSpDepLnoJ7lcunUnIxfvA5uOVidiKEKF8JkSCT9EyjFVszBjgqg=="],
+
+    "@types/lodash.concat": ["@types/lodash.concat@4.5.9", "", { "dependencies": { "@types/lodash": "*" } }, "sha512-wf3uo5EYw5SzMOl9oFZtPDtc+soWjLzbZfV4CgJkesq05EQUxHu41ETQAY9E/yRdpyApedWi/jzf7gC8OuJaPw=="],
+
+    "lodash.chunk": ["lodash.chunk@4.2.0", "", {}, "sha512-ZzydJKfUHJwHa+hF5X66zLFCBrWn5GeF28OHEr4WVWtNDXlQ/IjWKPBiikqKo2ne0+v6JgCgJ0GzJp8k8bHC7w=="],
+
+    "lodash.compact": ["lodash.compact@3.0.1", "", {}, "sha512-2ozeiPi+5eBXW1CLtzjk8XQFhQOEMwwfxblqeq6EGyTxZJ1bPATqilY0e6g2SLQpP4KuMeuioBhEnWz5Pr7ICQ=="],
+
+    "lodash.concat": ["lodash.concat@4.5.0", "", {}, "sha512-US6b1Nqek3shg2qmv1IjTN5P7tPL1RKu77VpdGtVprxmnTI/HlsHGqI2Oa5Irznk0ZB5IXHwocMeMZK8vf4+CA=="],
+
+    "punycode": ["punycode@2.3.1", "", {}, "sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg=="],
+  }
+}

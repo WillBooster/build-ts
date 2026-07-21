@@ -2,6 +2,7 @@
 
 [![Test](https://github.com/WillBooster/build-ts/actions/workflows/test.yml/badge.svg)](https://github.com/WillBooster/build-ts/actions/workflows/test.yml)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
+[![wbfy](https://img.shields.io/badge/wbfy-8138692b--local-1e90ff.svg)](https://github.com/WillBooster/shared/tree/main/packages/wbfy)
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
@@ -21,7 +22,7 @@ An opinionated, low-config build tool for Node.js applications and libraries wri
 
 ## Usage
 
-`build-ts` works without installation via `npx build-ts` (or `yarn dlx build-ts`), or can be added as a dev dependency:
+`build-ts` works without installation via `npx build-ts` (or `bunx build-ts`), or can be added as a dev dependency:
 
 ```sh
 npm install --save-dev build-ts
@@ -131,10 +132,10 @@ npx build-ts lib test/fixtures/lib-react
 ## Development
 
 ```sh
-yarn                 # install dependencies
-yarn test            # run tests
-yarn verify          # type check and lint
-yarn verify-full     # type check, lint, and all tests
+bun install          # install dependencies
+bun test             # run tests
+bun verify           # type check and lint
+bun verify-full      # type check, lint, and all tests
 ```
 
 ## License
