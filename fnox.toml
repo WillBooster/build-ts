@@ -1,0 +1,22 @@
+[providers.age]
+type = "age"
+recipients = [
+  "age1j2354xhvm3fv9y77t5g6y3q8mexgk2mf00tgrkzgp73tynrvz55s8auayw", # exkazuu
+  "age1a2c6ef6ahl6mmkhgqtxg0mgtd7ysspntq7rxusv26efxhnuhlcdsr9dpak", # ci
+]
+
+[secrets]
+A = { default = "1" }
+WB_ENV = { default = "development" }
+
+[profiles.development.secrets]
+WB_ENV = { default = "development" }
+
+[profiles.test.secrets]
+WB_ENV = { default = "test" }
+
+[profiles.staging.secrets]
+WB_ENV = { default = "staging" }
+
+[profiles.production.secrets]
+WB_ENV = { default = "production" }
