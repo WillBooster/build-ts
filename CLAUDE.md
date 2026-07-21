@@ -21,7 +21,7 @@
   - Always create new commits; avoid `--amend`.
 - Use heredoc for multi-line command input (e.g., `git commit -F -`, `gh pr create --body-file -`).
 - Put temporary files in `.tmp`; use `/tmp` only for files that must live outside the repo.
-- Environment variables and secrets are managed in `fnox.toml` via mise + fnox; run commands through `bun wb ...` or `fnox run -P <profile> -- <command>` instead of expecting `.env` files. Profile secrets load only when a profile is selected: mode-aware wb commands (e.g. `wb start`, `wb test`) select it themselves, while `wb dotenv` and bare `fnox run` need an explicit `WB_ENV=<profile>` / `-P <profile>`.
+- Environment variables and secrets are managed in `fnox.toml` via mise + fnox; run commands through `bun wb ...` or `fnox run -P <profile> -- <command>` instead of expecting `.env` files. Profile secrets load only when a profile is selected: mode-aware wb commands (e.g. `wb start`, `wb test`) and `wb dotenv` select it themselves (`wb dotenv` uses `WB_ENV`, else `FNOX_PROFILE`, else `NODE_ENV`, else the development profile; `WB_ENV` accepts only `development`/`test`/`staging`/`production`, so use `FNOX_PROFILE` for any other profile), while bare `fnox run` needs an explicit `-P <profile>`.
 
 ## Coding Style
 
