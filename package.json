@@ -36,7 +36,7 @@
     "@babel/preset-env": "8.0.2",
     "@babel/preset-react": "8.0.1",
     "@babel/preset-typescript": "8.0.1",
-    "@willbooster/shared-lib-node": "10.1.0",
+    "@willbooster/shared-lib-node": "11.0.0",
     "magic-string": "0.30.21",
     "oxc-parser": "0.139.0",
     "rolldown": "1.1.5",
@@ -54,7 +54,7 @@
     "@types/yargs": "17.0.35",
     "@willbooster/oxfmt-config": "1.2.2",
     "@willbooster/oxlint-config": "1.4.8",
-    "@willbooster/wb": "15.3.0",
+    "@willbooster/wb": "17.0.0",
     "conventional-changelog-conventionalcommits": "10.2.1",
     "lefthook": "2.1.10",
     "oxfmt": "0.59.0",
@@ -69,6 +69,7 @@
     "node": ">=24"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }
