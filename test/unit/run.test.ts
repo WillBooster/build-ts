@@ -1,5 +1,7 @@
+import fs from 'node:fs';
+
 import { spawnAsync } from '@willbooster/shared-lib-node';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 describe('run env.ts', { timeout: 60_000 }, () => {
   it.each([
@@ -37,6 +39,33 @@ describe('run hello.(c|m)ts', { timeout: 60_000 }, () => {
       expect(execRet.status).toBe(0);
     }
   );
+});
+
+describe('run with --env', { timeout: 60_000 }, () => {
+  // The name must be absent from fnox.toml and the ambient environment, otherwise these tests would
+  // still pass if --env stopped reading .env files at all.
+  const fixtureDirPath = '.tmp/test-fixtures/run-env-file';
+
+  beforeAll(async () => {
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(fixtureDirPath, { recursive: true });
+    await fs.promises.writeFile(`${fixtureDirPath}/custom.env`, 'BUILD_TS_TEST_RUN_ENV=from-env-file\n');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/print.ts`,
+      `process.stdout.write(process.env.BUILD_TS_TEST_RUN_ENV ?? 'missing');\n`
+    );
+  });
+
+  it.each([
+    [['--env', `${fixtureDirPath}/custom.env`], 'from-env-file'],
+    [[], 'missing'],
+  ])('%s', async (options, expectedStdout) => {
+    const execRet = await spawnAsync('bun', ['run', 'start-prod', 'run', `${fixtureDirPath}/print.ts`, ...options], {
+      env: getTestEnvironment(),
+    });
+    expect(execRet.stdout.trim().split('\n').at(-1)?.trim()).toBe(expectedStdout);
+    expect(execRet.status).toBe(0);
+  });
 });
 
 function getTestEnvironment(): NodeJS.ProcessEnv {
