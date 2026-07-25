@@ -23,41 +23,39 @@ describe('build', { timeout: 60_000 }, () => {
     expect(indexJs).to.not.includes('process.env.A');
   });
 
-  it('app-node inlines env vars read from the package .env with --auto-inline', async () => {
+  it('app-node inlines fnox-declared env vars with --auto-inline', async () => {
     const fixtureDirPath = '.tmp/test-fixtures/app-node-auto-inline';
-    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
-    await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
-    await fs.promises.writeFile(`${fixtureDirPath}/package.json`, JSON.stringify({}));
-    // The name must be absent from fnox.toml and the ambient environment, otherwise this test would
-    // still pass if --auto-inline stopped reading .env files at all.
-    await fs.promises.writeFile(`${fixtureDirPath}/.env`, 'BUILD_TS_TEST_AUTO_INLINE=from-env-file\n');
-    await fs.promises.writeFile(
-      `${fixtureDirPath}/src/index.ts`,
-      `process.stdout.write(process.env.BUILD_TS_TEST_AUTO_INLINE ?? 'missing');\n`
-    );
+    await writeAutoInlineFixture(fixtureDirPath);
 
-    await buildWithPackagePath(fixtureDirPath, 'app', '--auto-inline');
+    await buildWithPackagePathInEnv(fixtureDirPath, environmentWithoutA(), 'app', '--auto-inline');
     const indexJs = await readGeneratedCode(`${fixtureDirPath}/dist/index.js`);
-    expect(indexJs).to.not.includes('process.env.BUILD_TS_TEST_AUTO_INLINE');
-    // The built app runs without the variable in its environment, so only an inlined value can print it.
-    const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
+    expect(indexJs).to.not.includes('process.env.A');
+    // The built app runs without A in its environment, so only an inlined value can print it.
+    const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath, env: environmentWithoutA() });
     expect(execRet.status).toBe(0);
-    expect(execRet.stdout.trim()).toBe('from-env-file');
+    expect(execRet.stdout.trim()).toBe('1');
+  });
+
+  it('app-node ignores a package .env with --auto-inline', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/app-node-auto-inline-dot-env';
+    await writeAutoInlineFixture(fixtureDirPath);
+    // fnox.toml declares A = "1", so a .env file overriding it must have no effect at all.
+    await fs.promises.writeFile(`${fixtureDirPath}/.env`, 'A=from-env-file\n');
+
+    await buildWithPackagePathInEnv(fixtureDirPath, environmentWithoutA(), 'app', '--auto-inline');
+    const indexJs = await readGeneratedCode(`${fixtureDirPath}/dist/index.js`);
+    expect(indexJs).to.not.includes('from-env-file');
+    const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath, env: environmentWithoutA() });
+    expect(execRet.status).toBe(0);
+    expect(execRet.stdout.trim()).toBe('1');
   });
 
   it('app-node keeps env vars unresolved without --auto-inline', async () => {
     const fixtureDirPath = '.tmp/test-fixtures/app-node-no-auto-inline';
-    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
-    await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
-    await fs.promises.writeFile(`${fixtureDirPath}/package.json`, JSON.stringify({}));
-    await fs.promises.writeFile(`${fixtureDirPath}/.env`, 'BUILD_TS_TEST_AUTO_INLINE=from-env-file\n');
-    await fs.promises.writeFile(
-      `${fixtureDirPath}/src/index.ts`,
-      `process.stdout.write(process.env.BUILD_TS_TEST_AUTO_INLINE ?? 'missing');\n`
-    );
+    await writeAutoInlineFixture(fixtureDirPath);
 
-    await buildWithPackagePath(fixtureDirPath, 'app');
-    const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
+    await buildWithPackagePathInEnv(fixtureDirPath, environmentWithoutA(), 'app');
+    const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath, env: environmentWithoutA() });
     expect(execRet.status).toBe(0);
     expect(execRet.stdout.trim()).toBe('missing');
   });
@@ -726,8 +724,35 @@ async function buildWithCommand(dirName: string, subCommand: string, ...options:
   await buildWithPackagePath(`test/fixtures/${dirName}`, subCommand, ...options);
 }
 
+async function writeAutoInlineFixture(fixtureDirPath: string): Promise<void> {
+  await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+  await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+  await fs.promises.writeFile(`${fixtureDirPath}/package.json`, JSON.stringify({}));
+  await fs.promises.writeFile(`${fixtureDirPath}/src/index.ts`, `process.stdout.write(process.env.A ?? 'missing');\n`);
+}
+
+/**
+ * `--auto-inline` only inlines variables it loads itself, so `A` must be absent from the build
+ * process's own environment for these tests to prove that fnox supplied it.
+ */
+function environmentWithoutA(): NodeJS.ProcessEnv {
+  const env = createFixtureCommandEnv();
+  delete env.A;
+  return env;
+}
+
 async function buildWithPackagePath(packagePath: string, subCommand: string, ...options: string[]): Promise<void> {
   const buildRet = await buildWithPackagePathAndGetStatus(packagePath, subCommand, ...options);
+  expect(buildRet.status).toBe(0);
+}
+
+async function buildWithPackagePathInEnv(
+  packagePath: string,
+  env: NodeJS.ProcessEnv,
+  subCommand: string,
+  ...options: string[]
+): Promise<void> {
+  const buildRet = await spawnBuild(packagePath, env, subCommand, options);
   expect(buildRet.status).toBe(0);
 }
 
@@ -736,8 +761,16 @@ async function buildWithPackagePathAndGetStatus(
   subCommand: string,
   ...options: string[]
 ): Promise<Awaited<ReturnType<typeof spawnAsync>>> {
+  return spawnBuild(packagePath, createFixtureCommandEnv(), subCommand, options);
+}
+
+async function spawnBuild(
+  packagePath: string,
+  fixtureEnv: NodeJS.ProcessEnv,
+  subCommand: string,
+  options: string[]
+): Promise<Awaited<ReturnType<typeof spawnAsync>>> {
   const absolutePackagePath = path.resolve(packagePath);
-  const fixtureEnv = createFixtureCommandEnv();
   await fs.promises.rm(`${packagePath}/node_modules`, { recursive: true, force: true });
   const installRet = await spawnAsync('bun', ['install', `--config=${bunfigPath}`], {
     cwd: packagePath,
