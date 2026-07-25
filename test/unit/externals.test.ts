@@ -3,9 +3,9 @@ import path from 'node:path';
 import type { PackageJson } from 'type-fest';
 import { describe, expect, it } from 'vitest';
 
-import type { builder } from '../src/commands/build/builder.js';
-import { createExternalMatcher } from '../src/commands/build/externals.js';
-import type { ArgumentsType } from '../src/types.js';
+import type { builder } from '../../src/commands/build/builder.js';
+import { createExternalMatcher } from '../../src/commands/build/externals.js';
+import type { ArgumentsType } from '../../src/types.js';
 
 describe('createExternalMatcher', () => {
   const packageJson: PackageJson = {
