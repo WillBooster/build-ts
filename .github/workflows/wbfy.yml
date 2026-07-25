@@ -7,7 +7,8 @@ concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: true
 permissions:
-  contents: read
+  actions: write
+  contents: write
 jobs:
   wbfy:
     uses: WillBooster/reusable-workflows/.github/workflows/wbfy.yml@main
@@ -15,4 +16,3 @@ jobs:
       github_hosted_runner: true
     secrets:
       VERDACCIO_TOKEN: ${{ secrets.VERDACCIO_TOKEN }}
-      WBFY_GH_TOKEN: ${{ secrets.WBFY_GH_TOKEN }}

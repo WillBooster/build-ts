@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { containsDecorator } from '../src/commands/build/decoratorDetection.js';
+import { containsDecorator } from '../../src/commands/build/decoratorDetection.js';
 
 describe('build plugins', () => {
   it('detects decorator syntax without matching comment tags', () => {

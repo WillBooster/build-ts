@@ -23,6 +23,45 @@ describe('build', { timeout: 60_000 }, () => {
     expect(indexJs).to.not.includes('process.env.A');
   });
 
+  it('app-node inlines env vars read from the package .env with --auto-inline', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/app-node-auto-inline';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(`${fixtureDirPath}/package.json`, JSON.stringify({}));
+    // The name must be absent from fnox.toml and the ambient environment, otherwise this test would
+    // still pass if --auto-inline stopped reading .env files at all.
+    await fs.promises.writeFile(`${fixtureDirPath}/.env`, 'BUILD_TS_TEST_AUTO_INLINE=from-env-file\n');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/index.ts`,
+      `process.stdout.write(process.env.BUILD_TS_TEST_AUTO_INLINE ?? 'missing');\n`
+    );
+
+    await buildWithPackagePath(fixtureDirPath, 'app', '--auto-inline');
+    const indexJs = await readGeneratedCode(`${fixtureDirPath}/dist/index.js`);
+    expect(indexJs).to.not.includes('process.env.BUILD_TS_TEST_AUTO_INLINE');
+    // The built app runs without the variable in its environment, so only an inlined value can print it.
+    const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
+    expect(execRet.status).toBe(0);
+    expect(execRet.stdout.trim()).toBe('from-env-file');
+  });
+
+  it('app-node keeps env vars unresolved without --auto-inline', async () => {
+    const fixtureDirPath = '.tmp/test-fixtures/app-node-no-auto-inline';
+    await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
+    await fs.promises.mkdir(`${fixtureDirPath}/src`, { recursive: true });
+    await fs.promises.writeFile(`${fixtureDirPath}/package.json`, JSON.stringify({}));
+    await fs.promises.writeFile(`${fixtureDirPath}/.env`, 'BUILD_TS_TEST_AUTO_INLINE=from-env-file\n');
+    await fs.promises.writeFile(
+      `${fixtureDirPath}/src/index.ts`,
+      `process.stdout.write(process.env.BUILD_TS_TEST_AUTO_INLINE ?? 'missing');\n`
+    );
+
+    await buildWithPackagePath(fixtureDirPath, 'app');
+    const execRet = await spawnAsync('node', ['dist/index.js'], { cwd: fixtureDirPath });
+    expect(execRet.status).toBe(0);
+    expect(execRet.stdout.trim()).toBe('missing');
+  });
+
   it('app-node removes only global console calls in valid statements', async () => {
     const fixtureDirPath = '.tmp/test-fixtures/app-node-console-scope';
     await fs.promises.rm(fixtureDirPath, { recursive: true, force: true });
