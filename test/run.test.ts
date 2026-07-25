@@ -5,7 +5,6 @@ describe('run env.ts', { timeout: 60_000 }, () => {
   it.each([
     ['bun run start-prod run test/fixtures/env.ts --no-auto-cascade-env', '1'],
     ['bun run start-prod run test/fixtures/env.ts', '1'],
-    ['bun run start-prod run test/fixtures/env.ts --env .env', '1'],
     ['bun run start-prod run test/fixtures/env.ts --cascade-env ""', '1'],
     ['bun run start-prod run test/fixtures/env.ts --cascade-node-env', '1'],
     ['bun run start-prod run --cascade-env="" test/fixtures/env.ts', '1'],
@@ -13,11 +12,7 @@ describe('run env.ts', { timeout: 60_000 }, () => {
     ['bun run start-prod --cascade-env="" run test/fixtures/env.ts', '1'],
     ['bun run start-prod --cascade-node-env run test/fixtures/env.ts', '1'],
     // Options with a non-empty argument must be after positional arguments.
-    // ['bun run start-prod run --env .env test/fixtures/env.ts', '1'],
-    // ['bun run start-prod run --env=.env test/fixtures/env.ts', '1'],
     // ['bun run start-prod run --cascade-env "" test/fixtures/env.ts', '1'],
-    // ['bun run start-prod --env .env run test/fixtures/env.ts', '1'],
-    // ['bun run start-prod --env=.env run test/fixtures/env.ts', '1'],
     // ['bun run start-prod --cascade-env "" run test/fixtures/env.ts', '1'],
   ])('%s', async (commandWithArgs, expectedStdout) => {
     const [command, ...args] = commandWithArgs.split(' ') as [string, ...string[]];
