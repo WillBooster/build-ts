@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - wbfy
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -13,14 +12,12 @@ permissions:
   actions: write
   contents: write
   pull-requests: read
-  statuses: write
 jobs:
   test:
     uses: WillBooster/reusable-workflows/.github/workflows/test.yml@main
     with:
       github_hosted_runner: true
     secrets:
-      FNOX_AGE_KEY: ${{ secrets.FNOX_AGE_KEY }}
+      FNOX_AGE_KEY: ${{ secrets.PUBLIC_FNOX_AGE_KEY }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       TAKUMI_GUARD_TOKEN: ${{ secrets.TAKUMI_GUARD_TOKEN }}
-      VERDACCIO_TOKEN: ${{ secrets.VERDACCIO_TOKEN }}
