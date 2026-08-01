@@ -38,7 +38,7 @@
     "@babel/preset-react": "8.0.1",
     "@babel/preset-typescript": "8.0.1",
     "@willbooster/shared-lib-node": "13.0.2",
-    "magic-string": "0.30.21",
+    "magic-string": "1.1.0",
     "oxc-parser": "0.141.0",
     "rolldown": "1.2.0",
     "signal-exit": "4.1.0",
