@@ -49,7 +49,6 @@ function collectExternalDependencies(
     ...Object.keys(packageJson.peerDependencies ?? {}),
     ...Object.keys(packageJson.optionalDependencies ?? {})
   );
-  // Add external dependencies from sibling packages
   const parentDirPath = path.dirname(packageDirPath);
   if (fs.existsSync(path.join(path.dirname(parentDirPath), 'package.json'))) {
     const packageDirs = fs.readdirSync(parentDirPath, { withFileTypes: true });
