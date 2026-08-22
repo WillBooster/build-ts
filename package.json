@@ -21,7 +21,7 @@
     "format": "bun wb lint --format",
     "lint": "bun wb lint",
     "lint-fix": "bun wb lint --fix",
-    "prepare": "bun lefthook install || true",
+    "prepare": "(bun lefthook install || true) && (test ! -f .lefthook/normalize-bun-lockfile.sh || bash .lefthook/normalize-bun-lockfile.sh)",
     "start": "tsx src/index.ts",
     "start-prod": "bun run build && node bin/index.js",
     "test": "bun wb test",
