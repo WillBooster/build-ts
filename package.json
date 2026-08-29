@@ -64,7 +64,7 @@
     "semantic-release": "25.0.9",
     "sort-package-json": "4.0.0",
     "type-fest": "5.8.0",
-    "vitest": "4.1.10"
+    "vitest": "4.1.11"
   },
   "engines": {
     "node": ">=24"
