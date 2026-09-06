@@ -1,17 +1,23 @@
 Close #<IssueNumber>
 
-## Self Check
+<!-- Write for a reviewer who has not followed the work. Scale each section to the change: a sentence for a small change, numbered subsections for a large one. Delete this comment and the placeholder comments below. -->
 
-- [ ] I've confirmed `All checks have passed` on PR page. (You may leave this box unchecked due to long workflows.)
-  - PR title follows [Angular's commit message format](https://github.com/angular/angular/blob/main/CONTRIBUTING.md#-commit-message-format).
-    - PR title doesn't have `WIP:`.
-  - All tests are passed.
-    - Test command (e.g., `bun run test`) is passed.
-    - Lint command (e.g., `bun lint`) is passed.
-- [ ] I've reviewed my changes on PR's diff view.
+## Why
 
-<!-- Please add screenshots if you modify the UI.
-| Current                  | In coming                |
-| ------------------------ | ------------------------ |
-| <img src="" width="400"> | <img src="" width="400"> |
--->
+<!-- The problem, with the numbers or observations behind it, and why this approach over the alternatives. -->
+
+## Customer Summary
+
+<!-- Behavior, workflow, or user-visible changes, written for readers who know nothing about the implementation. -->
+
+## Technical Summary
+
+<!-- Decisions and their reasons, data flow, where to look (the files that matter most), and what to check hardest: the parts whose correctness is argued rather than proven. -->
+
+## Testing
+
+<!-- Commands run, tests added, and what was NOT exercised and why. -->
+
+## Notes
+
+<!-- Known limitations, compatibility and migration, follow-up work; delete this section if there is none. -->
