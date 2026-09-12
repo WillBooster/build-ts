@@ -1,10 +1,10 @@
 # build-ts
 
 [![npm version](https://img.shields.io/npm/v/build-ts.svg)](https://www.npmjs.com/package/build-ts)
+[![license](https://img.shields.io/npm/l/build-ts.svg)](https://www.npmjs.com/package/build-ts)
 [![Test](https://github.com/WillBooster/build-ts/actions/workflows/test.yml/badge.svg)](https://github.com/WillBooster/build-ts/actions/workflows/test.yml)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
-[![wbfy](https://img.shields.io/badge/wbfy-20.10.0-1e90ff.svg)](https://github.com/WillBooster/shared/tree/main/packages/wbfy)
-
+[![wbfy](https://img.shields.io/badge/wbfy-20.14.0-1e90ff.svg)](https://github.com/WillBooster/shared/tree/main/packages/wbfy)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 An opinionated, low-config build tool for Node.js applications and libraries written in TypeScript, powered by [Rolldown](https://rolldown.rs/).
