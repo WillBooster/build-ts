@@ -39,7 +39,7 @@
     "@babel/preset-typescript": "8.0.1",
     "@willbooster/shared-lib-node": "13.3.0",
     "magic-string": "1.2.3",
-    "oxc-parser": "0.147.0",
+    "oxc-parser": "0.148.0",
     "rolldown": "1.2.6",
     "signal-exit": "4.1.0",
     "tsx": "4.23.12",
@@ -63,7 +63,7 @@
     "oxlint-tsgolint": "7.0.2001",
     "semantic-release": "25.0.9",
     "sort-package-json": "4.0.0",
-    "type-fest": "5.8.0",
+    "type-fest": "5.9.0",
     "vitest": "5.0.0"
   },
   "engines": {
