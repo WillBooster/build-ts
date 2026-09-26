@@ -39,7 +39,7 @@ function collectExternalDependencies(
   packageDirPath: string,
   namespace: string | undefined
 ): string[] {
-  const externalDeps = [...(argv.external ?? [])].map((item) => item.toString());
+  const externalDeps: string[] = [];
   if (packageJson.dependencies?.['@prisma/client']) {
     externalDeps.push('prisma-client');
   }
@@ -69,10 +69,14 @@ function collectExternalDependencies(
     }
   }
 
-  // An app bundles its own namespace's packages instead of treating them as external dependencies.
+  // An app bundles its own namespace's packages instead of treating them as external dependencies,
+  // unless `--external` names them explicitly (e.g., a native addon that must load from node_modules).
   const bundlesOwnNamespace = targetDetail === 'app-node' || targetDetail === 'functions';
   const bundledPrefix = bundlesOwnNamespace && namespace ? `@${namespace}/` : undefined;
-  return bundledPrefix ? externalDeps.filter((name) => !name.startsWith(bundledPrefix)) : externalDeps;
+  return [
+    ...(bundledPrefix ? externalDeps.filter((name) => !name.startsWith(bundledPrefix)) : externalDeps),
+    ...(argv.external ?? []).map((item) => item.toString()),
+  ];
 }
 
 function isNodeBuiltin(id: string): boolean {
