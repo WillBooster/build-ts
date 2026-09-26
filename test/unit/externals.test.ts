@@ -50,9 +50,9 @@ describe('createExternalMatcher', () => {
       name: '@scope/app',
       dependencies: { '@scope-private/pkg': '1.0.0', '@scope/pkg': '1.0.0' },
     };
-    const createFor = (targetDetail: 'app-node' | 'lib'): ((id: string) => boolean) =>
+    const createFor = (targetDetail: 'app-node' | 'lib', external?: string[]): ((id: string) => boolean) =>
       createExternalMatcher(
-        {} as ArgumentsType<typeof builder>,
+        { external } as ArgumentsType<typeof builder>,
         targetDetail,
         scopedPackageJson,
         'scope',
@@ -60,6 +60,7 @@ describe('createExternalMatcher', () => {
       );
     expect(createFor('app-node')('@scope/pkg')).toBe(false);
     expect(createFor('lib')('@scope/pkg')).toBe(true);
+    expect(createFor('app-node', ['@scope/pkg'])('@scope/pkg')).toBe(true);
     // A package merely sharing the scope prefix must stay external.
     expect(createFor('app-node')('@scope-private/pkg')).toBe(true);
   });
