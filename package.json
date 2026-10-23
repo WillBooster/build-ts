@@ -44,7 +44,7 @@
     "@willbooster/shared-lib-node": "13.8.0",
     "magic-string": "1.4.3",
     "oxc-parser": "0.153.0",
-    "rolldown": "1.2.13",
+    "rolldown": "1.2.14",
     "signal-exit": "4.1.0",
     "tsx": "4.23.15",
     "typescript": "7.0.2",
