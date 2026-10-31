@@ -35,7 +35,7 @@
     "verify-full": "bun wb verify --full"
   },
   "dependencies": {
-    "@babel/core": "8.0.7",
+    "@babel/core": "8.0.9",
     "@babel/plugin-proposal-decorators": "8.0.2",
     "@babel/plugin-transform-explicit-resource-management": "8.0.5",
     "@babel/preset-env": "8.0.7",
@@ -44,7 +44,7 @@
     "@willbooster/shared-lib-node": "13.10.0",
     "magic-string": "1.4.3",
     "oxc-parser": "0.155.0",
-    "rolldown": "1.2.14",
+    "rolldown": "1.2.15",
     "signal-exit": "4.1.0",
     "tsx": "4.23.15",
     "typescript": "7.0.2",
