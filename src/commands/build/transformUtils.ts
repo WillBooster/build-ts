@@ -1,4 +1,4 @@
-import { parseSync, visitorKeys } from 'oxc-parser';
+import { parseSync } from 'rolldown/utils';
 
 const sourceFileExtensions = ['.cjs', '.mjs', '.js', '.jsx', '.cts', '.mts', '.ts', '.tsx'];
 
@@ -47,11 +47,8 @@ export type AstNode = {
 };
 
 export function getAstNodeChildren(node: AstNode): AstNode[] {
-  return (visitorKeys[node.type] ?? [])
-    .flatMap((key) => {
-      const value = node[key];
-      return Array.isArray(value) ? value : [value];
-    })
+  return Object.values(node)
+    .flatMap((value) => (Array.isArray(value) ? value : [value]))
     .filter((value): value is AstNode => isAstNode(value));
 }
 

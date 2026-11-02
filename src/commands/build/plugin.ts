@@ -25,7 +25,7 @@ function babelDecoratorsPlugin(): Plugin {
   return {
     name: 'babel-decorators',
     async transform(code, id) {
-      if (!isTransformTargetFile(id) || !containsDecorator(code)) {
+      if (!isTransformTargetFile(id) || !containsDecorator(code, id)) {
         return undefined;
       }
 

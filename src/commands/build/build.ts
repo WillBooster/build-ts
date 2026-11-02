@@ -150,6 +150,7 @@ export async function build(argv: ArgumentsType<AnyBuilderType>, targetCategory:
 
   const options: RolldownOptions = {
     checks: { preferBuiltinFeature: false },
+    experimental: { nativeMagicString: true },
     external: createExternalMatcher(argv, targetDetail, packageJson, namespace, packageDirPath),
     input:
       targetDetail === 'functions' ? createFunctionsInputEntries(inputs) : inputs,

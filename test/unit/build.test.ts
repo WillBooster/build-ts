@@ -403,6 +403,7 @@ process.stdout.write(marker);
     expect(esmCode).to.includes('use client');
     expect(cjsCode).to.includes('lodash.chunk');
     expect(esmCode).to.includes('lodash.chunk');
+    expect(esmCode).to.not.includes('@sealed');
     const sourceMap = JSON.parse(await fs.promises.readFile(`test/fixtures/${dirName}/dist/index.js.map`, 'utf8'));
     expect(sourceMap.mappings).not.toBe('');
     await expectDeclarationFiles(dirName, {
