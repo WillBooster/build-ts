@@ -5,17 +5,6 @@ import presetTypescript from '@babel/preset-typescript';
 // (TypeScript leftovers, JSX, and syntax above the target) after this config runs.
 /** @type {import('@babel/core').InputOptions} */
 const config = {
-  assumptions: {
-    constantSuper: true,
-    ignoreFunctionLength: true,
-    noClassCalls: true,
-    noDocumentAll: true,
-    privateFieldsAsSymbols: true,
-    setClassMethods: true,
-    setComputedProperties: true,
-    setPublicClassFields: true,
-    superIsCallableConstructor: true,
-  },
   presets: [presetTypescript],
   plugins: [
     // cf. https://babeljs.io/blog/2024/02/28/7.24.0#decorators-updates-16242
