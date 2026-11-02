@@ -1,5 +1,6 @@
-import MagicString from 'magic-string';
-import type { Plugin, SourceMapInput } from 'rolldown';
+import assert from 'node:assert';
+
+import type { Plugin, RolldownMagicString } from 'rolldown';
 
 import type { AstNode } from './transformUtils.js';
 import {
@@ -21,22 +22,27 @@ export function getConsoleRemovalExcludedMethods(): Set<string> | undefined {
 export function removeConsolePlugin(excludedMethods: Set<string>): Plugin {
   return {
     name: 'remove-console',
-    transform(code, id) {
+    transform(code, id, { magicString }) {
       if (!isTransformTargetFile(id)) return undefined;
       // A global `console` may be written with Unicode escapes (`\u0063onsole`), which the parser
       // normalizes, so the fast path must let escaped identifiers through too.
       if (!/console|\\u/.test(code)) return undefined;
 
-      return removeConsole(code, id, excludedMethods);
+      assert(magicString, 'remove-console requires `experimental.nativeMagicString`.');
+      return removeConsole(code, id, magicString, excludedMethods);
     },
   };
 }
 
-function removeConsole(code: string, id: string, excludedMethods: Set<string>): { code: string; map: SourceMapInput } | undefined {
+function removeConsole(
+  code: string,
+  id: string,
+  magicString: RolldownMagicString,
+  excludedMethods: Set<string>
+): { code: RolldownMagicString } | undefined {
   const ast = parseSourceFile(id, code);
   if (!ast || !isAstNode(ast.program)) return undefined;
 
-  const magicString = new MagicString(code);
   const replacements: ConsoleReplacement[] = [];
   const scopes: ConsoleScope[] = [];
   collectConsoleReplacements(ast.program, [], scopes, replacements, excludedMethods);
@@ -45,10 +51,7 @@ function removeConsole(code: string, id: string, excludedMethods: Set<string>): 
   }
 
   if (!magicString.hasChanged()) return undefined;
-  return {
-    code: magicString.toString(),
-    map: magicString.generateMap({ hires: true }) as SourceMapInput,
-  };
+  return { code: magicString };
 }
 
 type ConsoleReplacement = {
